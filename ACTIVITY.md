@@ -13,3 +13,4 @@
 - 2025-04-28T09:19:26 — chore: adjust notes
 - 2025-04-28T17:28:41 — chore: housekeeping
 - 2025-04-29T19:45:17 — chore: small improvement
+- 2025-05-01T17:00:45 — docs: add activity note
