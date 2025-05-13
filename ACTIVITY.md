@@ -52,3 +52,4 @@
 - 2025-05-12T11:35:09 — chore: adjust notes
 - 2025-05-12T12:20:56 — chore: progress update
 - 2025-05-13T19:32:22 — chore: progress update
+- 2025-05-13T14:14:06 — docs: add activity note
