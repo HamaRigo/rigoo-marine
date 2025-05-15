@@ -64,3 +64,4 @@
 - 2025-05-14T09:43:38 — chore: incremental update
 - 2025-05-15T09:03:44 — chore: housekeeping
 - 2025-05-15T09:59:57 — chore: progress update
+- 2025-05-15T10:20:40 — docs: add activity note
