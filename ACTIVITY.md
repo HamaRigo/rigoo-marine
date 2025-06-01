@@ -115,3 +115,4 @@
 - 2025-06-01T12:16:48 — chore: incremental update
 - 2025-06-01T10:27:49 — chore: routine entry
 - 2025-06-01T11:04:25 — chore: minor update
+- 2025-06-01T12:18:31 — docs: add activity note
