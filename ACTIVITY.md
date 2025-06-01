@@ -111,3 +111,4 @@
 - 2025-05-31T09:48:32 — chore: incremental update
 - 2025-05-31T17:35:02 — chore: adjust notes
 - 2025-06-01T14:54:13 — chore: log daily activity
+- 2025-06-01T17:52:12 — docs: add activity note
