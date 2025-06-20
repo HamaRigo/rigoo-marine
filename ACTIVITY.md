@@ -170,3 +170,4 @@
 - 2025-06-19T13:53:18 — chore: log daily activity
 - 2025-06-19T15:57:52 — chore: housekeeping
 - 2025-06-19T15:20:41 — chore: incremental update
+- 2025-06-20T19:57:25 — docs: add activity note
