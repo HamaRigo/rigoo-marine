@@ -186,3 +186,4 @@
 - 2025-06-22T08:13:59 — chore: housekeeping
 - 2025-06-23T10:29:26 — chore: adjust notes
 - 2025-06-24T11:44:29 — chore: routine entry
+- 2025-06-25T08:03:56 — docs: add activity note
