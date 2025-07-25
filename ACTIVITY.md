@@ -284,3 +284,4 @@
 - 2025-07-25T08:01:39 — chore: housekeeping
 - 2025-07-25T18:19:44 — chore: refresh notes
 - 2025-07-25T13:52:54 — chore: small improvement
+- 2025-07-25T16:41:46 — docs: add activity note
