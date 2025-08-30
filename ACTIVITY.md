@@ -397,3 +397,4 @@
 - 2025-08-29T09:30:50 — chore: incremental update
 - 2025-08-29T11:29:36 — chore: routine entry
 - 2025-08-29T12:49:43 — chore: refresh notes
+- 2025-08-30T16:16:53 — docs: add activity note
