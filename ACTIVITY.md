@@ -407,3 +407,4 @@
 - 2025-09-01T17:16:19 — chore: adjust notes
 - 2025-09-02T11:35:35 — chore: refresh notes
 - 2025-09-02T09:12:34 — chore: refresh notes
+- 2025-09-02T08:44:04 — docs: add activity note
