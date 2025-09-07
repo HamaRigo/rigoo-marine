@@ -426,3 +426,4 @@
 - 2025-09-05T11:03:22 — chore: refresh notes
 - 2025-09-05T19:05:13 — chore: routine entry
 - 2025-09-05T16:55:54 — chore: housekeeping
+- 2025-09-07T15:05:26 — docs: add activity note
