@@ -605,3 +605,4 @@
 - 2025-10-26T08:14:58 — chore: adjust notes
 - 2025-10-26T12:02:03 — chore: housekeeping
 - 2025-10-27T14:31:43 — chore: adjust notes
+- 2025-10-27T13:34:43 — docs: add activity note
