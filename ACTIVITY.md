@@ -786,3 +786,4 @@
 - 2025-12-27T11:32:43 — chore: log daily activity
 - 2025-12-27T13:14:19 — chore: incremental update
 - 2025-12-29T08:08:36 — chore: small improvement
+- 2025-12-30T08:06:25 — docs: add activity note
