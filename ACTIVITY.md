@@ -788,3 +788,4 @@
 - 2025-12-29T08:08:36 — chore: small improvement
 - 2025-12-30T08:06:25 — docs: add activity note
 - 2025-12-30T16:54:03 — chore: housekeeping
+- 2025-12-31T14:18:12 — chore: adjust notes
