@@ -965,3 +965,4 @@
 - 2026-02-27T12:16:52 — chore: progress update
 - 2026-02-28T08:12:12 — chore: small improvement
 - 2026-03-02T15:13:06 — chore: housekeeping
+- 2026-03-02T10:03:25 — docs: add activity note
