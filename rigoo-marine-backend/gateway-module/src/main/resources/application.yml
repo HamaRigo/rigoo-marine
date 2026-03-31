@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: client-service
+          uri: lb://client-service
+          predicates:
+            - Path=/api/clients/**
+        - id: vessel-service
+          uri: lb://vessel-service
+          predicates:
+            - Path=/api/vessels/**
+        - id: service-service
+          uri: lb://service-service
+          predicates:
+            - Path=/api/services/**
+        - id: work-order-service
+          uri: lb://work-order-service
+          predicates:
+            - Path=/api/work-orders/**
+        - id: technician-service
+          uri: lb://technician-service
+          predicates:
+            - Path=/api/technicians/**
+        - id: invoice-service
+          uri: lb://invoice-service
+          predicates:
+            - Path=/api/invoices/**
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
