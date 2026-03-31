@@ -1,0 +1,74 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+
+env:
+  DOCKER_COMPOSE_VERSION: '2.20'
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Tag images with release version
+        run: |
+          export VERSION=${{ github.event.release.tag_name }}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Deploy to production server
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} << 'EOF'
+            cd /opt/rigoo-marine-prod
+
+            # Pull production images with version tag
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/client-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/service-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:${{ env.VERSION }}
+
+            # Update docker-compose.yml with new version
+            export DOCKER_TAG=${{ env.VERSION }}
+            docker compose up -d --remove-orphans
+
+            # Wait for services to be healthy
+            echo "Waiting for services to start..."
+            sleep 60
+
+            # Verify deployment
+            docker compose ps
+
+            # Clean up old images
+            docker image prune -f
+          EOF
+
+      - name: Health check
+        run: |
+          echo "Running production health checks..."
+          sleep 30
+          curl -f https://${{ secrets.PROD_DOMAIN }}/api/clients || echo "API check failed"
+          curl -f https://${{ secrets.PROD_DOMAIN }}/ || echo "Frontend check failed"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Production deployment failed! Check GitHub Actions for details."
