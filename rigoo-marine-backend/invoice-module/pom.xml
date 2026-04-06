@@ -13,7 +13,7 @@
 
     <artifactId>invoice-module</artifactId>
     <name>Invoice Module</name>
-    <description>Invoice & Billing Management</description>
+    <description>Invoice and Billing Management</description>
 
     <dependencies>
         <dependency>

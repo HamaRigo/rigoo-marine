@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CreateClientRequest {
 
     @NotBlank(message = "Name is required")

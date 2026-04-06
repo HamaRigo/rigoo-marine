@@ -76,6 +76,27 @@ public class ClientService {
         return toDTO(updated);
     }
 
+    public ClientDTO updateClientWithPassword(Long id, CreateClientRequest request) {
+        Client client = clientRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        client.setName(request.getName());
+        client.setPhone(request.getPhone());
+        client.setAddress(request.getAddress());
+        client.setCompany(request.getCompany());
+
+        if (request.getRole() != null) {
+            client.setRole(Client.UserRole.valueOf(request.getRole()));
+        }
+
+        if (request.getPassword() != null) {
+            client.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        Client updated = clientRepository.save(client);
+        return toDTO(updated);
+    }
+
     public void deleteClient(Long id) {
         clientRepository.deleteById(id);
     }

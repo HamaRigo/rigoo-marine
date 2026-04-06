@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CreateVesselRequest {
 
     @NotNull(message = "Client ID is required")

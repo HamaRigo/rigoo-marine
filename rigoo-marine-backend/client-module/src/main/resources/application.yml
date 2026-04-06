@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: client-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:rigoomarine}
     username: ${DB_USERNAME:postgres}
@@ -27,3 +29,7 @@ eureka:
 logging:
   level:
     com.rigoomarine.client: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
+  expiration: 86400000
