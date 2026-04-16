@@ -445,6 +445,49 @@ export const adminApi = {
     const response = await httpClient.delete(`/admin/services/${id}`);
     return response.data;
   },
+
+  // Invoices
+  getAllInvoices: async (filters = {}) => {
+    const response = await httpClient.get('/admin/invoices', { params: filters });
+    return response.data;
+  },
+
+  createInvoice: async (invoiceData) => {
+    const response = await httpClient.post('/admin/invoices', invoiceData);
+    return response.data;
+  },
+
+  updateInvoiceStatus: async (invoiceId, status) => {
+    const response = await httpClient.put(`/admin/invoices/${invoiceId}/status`, null, {
+      params: { status },
+    });
+    return response.data;
+  },
+
+  // Quotations
+  getAllQuotations: async (filters = {}) => {
+    const response = await httpClient.get('/admin/quotations', { params: filters });
+    return response.data;
+  },
+
+  createQuotation: async (quotationData) => {
+    const response = await httpClient.post('/admin/quotations', quotationData);
+    return response.data;
+  },
+
+  updateQuotationStatus: async (quotationId, status) => {
+    const response = await httpClient.put(`/admin/quotations/${quotationId}/status`, null, {
+      params: { status },
+    });
+    return response.data;
+  },
+
+  downloadQuotationPdf: async (id) => {
+    const response = await httpClient.get(`/admin/quotations/${id}/pdf`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // ============== TECHNICIAN APIs ==============

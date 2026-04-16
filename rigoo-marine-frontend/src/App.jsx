@@ -42,6 +42,9 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import OrderManagement from './pages/admin/OrderManagement';
 import UserManagement from './pages/admin/UserManagement';
 import ServiceManagement from './pages/admin/ServiceManagement';
+import InvoiceManagement from './pages/admin/InvoiceManagement';
+import QuotationManagement from './pages/admin/QuotationManagement';
+import Settings from './pages/admin/Settings';
 
 // Technician Pages
 import TechnicianLayout from './pages/technician/TechnicianLayout';
@@ -103,6 +106,9 @@ function App() {
                 <Route path="orders" element={<OrderManagement />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="services" element={<ServiceManagement />} />
+                <Route path="invoices" element={<InvoiceManagement />} />
+                <Route path="quotations" element={<QuotationManagement />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               {/* Technician Routes (TECHNICIAN role only) */}
