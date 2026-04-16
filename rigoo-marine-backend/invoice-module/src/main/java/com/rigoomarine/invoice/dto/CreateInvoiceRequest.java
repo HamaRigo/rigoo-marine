@@ -28,19 +28,3 @@ public class CreateInvoiceRequest {
     private String terms;
     private String qrCode;
 }
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateInvoiceItemRequest {
-    @NotBlank(message = "Description is required")
-    private String description;
-
-    @NotNull(message = "Quantity is required")
-    private Integer quantity;
-
-    @NotNull(message = "Unit price is required")
-    private BigDecimal unitPrice;
-
-    private BigDecimal taxRate;
-}

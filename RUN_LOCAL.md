@@ -5,7 +5,7 @@
 Install these first:
 - Java 17+
 - Node.js 20+
-- Docker & Docker Compose
+- Docker & Docker Composec
 - PostgreSQL (or use Docker)
 - Kafka (or use Docker)
 

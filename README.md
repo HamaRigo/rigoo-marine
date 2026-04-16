@@ -20,6 +20,16 @@ A microservices-based platform for marine/boat services management.
                                           │    Kafka     │
                                           │   (9092)     │
                                           └──────────────┘
+                                                │
+                                          ┌──────────────┐
+                                          │    Redis     │
+                                          │   (6379)     │
+                                          └──────────────┘
+                                                │
+                                    ┌─────────────────────┐
+                                    │     ELK Stack       │
+                                    │  (9200, 5601, ...) │
+                                    └─────────────────────┘
 ```
 
 ## Microservices
@@ -27,14 +37,43 @@ A microservices-based platform for marine/boat services management.
 | Service | Port | Description |
 |---------|------|-------------|
 | Discovery Service | 8761 | Eureka service registry |
-| API Gateway | 8080 | Central API gateway |
-| Client Service | 8081 | Client/customer management |
+| API Gateway | 8080 | Central API gateway with rate limiting & security |
+| Client Service | 8081 | Client/customer management with Redis caching |
 | Vessel Service | 8082 | Vessel/boat management |
 | Service Service | 8083 | Service catalog |
 | Work Order Service | 8084 | Work order management |
 | Technician Service | 8085 | Technician management |
 | Invoice Service | 8086 | Invoice and payments |
 | Notification Service | 8087 | Email/push notifications |
+| **Redis** | 6379 | Caching and rate limiting |
+| **Elasticsearch** | 9200 | Log storage and search |
+| **Logstash** | 5044 | Log processing pipeline |
+| **Kibana** | 5601 | Log visualization dashboard |
+
+## Features
+
+### 🚀 **Caching Layer**
+- Redis-backed caching for improved performance
+- Cache annotations on service methods
+- Automatic cache eviction on data updates
+
+### 🛡️ **Security & Rate Limiting**
+- JWT-based authentication
+- Redis-backed rate limiting per user/IP
+- Comprehensive security headers (HSTS, CSP, XSS protection)
+- CORS configuration for frontend integration
+
+### 📊 **Centralized Logging**
+- ELK stack for log aggregation
+- Structured JSON logging with correlation IDs
+- Kibana dashboards for monitoring
+- Filebeat for container log shipping
+
+### 🔄 **API Gateway Enhancements**
+- Request/response transformation
+- Correlation ID tracking
+- Processing time monitoring
+- Request logging and tracing
 
 ## Quick Start
 
@@ -127,6 +166,8 @@ EUREKA_SERVER=http://localhost:8761/eureka/
 - Spring Cloud (Eureka, Gateway)
 - PostgreSQL
 - Kafka
+- Redis
+- ELK Stack (Elasticsearch, Logstash, Kibana)
 - Maven
 
 ### Frontend

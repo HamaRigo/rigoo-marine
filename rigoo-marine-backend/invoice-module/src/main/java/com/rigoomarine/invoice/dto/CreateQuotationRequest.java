@@ -24,19 +24,3 @@ public class CreateQuotationRequest {
     private String notes;
     private String terms;
 }
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateQuotationItemRequest {
-    @NotBlank(message = "Description is required")
-    private String description;
-
-    @NotNull(message = "Quantity is required")
-    private Integer quantity;
-
-    @NotNull(message = "Unit price is required")
-    private BigDecimal unitPrice;
-
-    private BigDecimal taxRate;
-}

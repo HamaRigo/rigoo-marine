@@ -7,9 +7,11 @@ import com.rigoomarine.invoice.entity.InvoiceItem;
 import com.rigoomarine.invoice.repository.InvoiceRepository;
 import com.rigoomarine.invoice.dto.InvoiceDTO;
 import com.rigoomarine.invoice.dto.CreateInvoiceRequest;
+import com.rigoomarine.invoice.dto.InvoiceItemDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -203,8 +205,7 @@ public class InvoiceService {
             logoCell.addElement(companyName);
 
             // Report header / tagline
-            Paragraph tagline = new Paragraph("Professional Marine Services", smallFont);
-            tagline.setStyle("font-weight: bold;");
+            Paragraph tagline = new Paragraph("Professional Marine Services", new Font(Font.HELVETICA, 9, Font.BOLD));
             logoCell.addElement(tagline);
 
             headerTable.addCell(logoCell);

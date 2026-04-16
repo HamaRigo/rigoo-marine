@@ -30,7 +30,7 @@ fi
 echo ""
 echo "Step 1: Building backend services..."
 cd rigoo-marine-backend
-mvn clean install -DskipTests
+mvn clean install -DskipTests -pl 'discovery-service,config-server,gateway-module,invoice-module,client-module'
 cd ..
 
 # Build Docker images
@@ -49,29 +49,9 @@ echo "  Building client-service..."
 docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/client-service:latest \
   -f rigoo-marine-backend/client-module/Dockerfile .
 
-echo "  Building vessel-service..."
-docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/vessel-service:latest \
-  -f rigoo-marine-backend/vessel-module/Dockerfile .
-
-echo "  Building service-service..."
-docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/service-service:latest \
-  -f rigoo-marine-backend/service-module/Dockerfile .
-
-echo "  Building work-order-service..."
-docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/work-order-service:latest \
-  -f rigoo-marine-backend/work-order-module/Dockerfile .
-
-echo "  Building technician-service..."
-docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/technician-service:latest \
-  -f rigoo-marine-backend/technician-module/Dockerfile .
-
 echo "  Building invoice-service..."
 docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/invoice-service:latest \
   -f rigoo-marine-backend/invoice-module/Dockerfile .
-
-echo "  Building notification-service..."
-docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/notification-service:latest \
-  -f rigoo-marine-backend/notification-module/Dockerfile .
 
 echo "  Building frontend..."
 docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/marine-frontend:latest \

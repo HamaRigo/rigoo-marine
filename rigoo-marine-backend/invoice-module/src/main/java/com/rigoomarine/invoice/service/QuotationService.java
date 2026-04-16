@@ -7,9 +7,11 @@ import com.rigoomarine.invoice.entity.QuotationItem;
 import com.rigoomarine.invoice.repository.QuotationRepository;
 import com.rigoomarine.invoice.dto.QuotationDTO;
 import com.rigoomarine.invoice.dto.CreateQuotationRequest;
+import com.rigoomarine.invoice.dto.QuotationItemDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -199,8 +201,7 @@ public class QuotationService {
             companyName.setSpacingAfter(5);
             logoCell.addElement(companyName);
 
-            Paragraph tagline = new Paragraph("Professional Marine Services", smallFont);
-            tagline.setStyle("font-weight: bold;");
+            Paragraph tagline = new Paragraph("Professional Marine Services", boldFont);
             logoCell.addElement(tagline);
 
             headerTable.addCell(logoCell);
