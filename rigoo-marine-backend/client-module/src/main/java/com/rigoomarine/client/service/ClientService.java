@@ -5,6 +5,8 @@ import com.rigoomarine.client.repository.ClientRepository;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @CacheEvict(value = "clients", allEntries = true)
     public ClientDTO createClient(CreateClientRequest request) {
         if (clientRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -39,6 +42,7 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "clients", key = "'all'")
     public List<ClientDTO> getAllClients() {
         return clientRepository.findAll().stream()
             .map(this::toDTO)
@@ -46,6 +50,7 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "clients", key = "#id")
     public ClientDTO getClientById(Long id) {
         return clientRepository.findById(id)
             .map(this::toDTO)
@@ -53,12 +58,14 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "clients", key = "#email")
     public ClientDTO getClientByEmail(String email) {
         return clientRepository.findByEmail(email)
             .map(this::toDTO)
             .orElseThrow(() -> new RuntimeException("Client not found"));
     }
 
+    @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClient(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Client not found"));
@@ -76,6 +83,7 @@ public class ClientService {
         return toDTO(updated);
     }
 
+    @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClientWithPassword(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Client not found"));
@@ -97,6 +105,7 @@ public class ClientService {
         return toDTO(updated);
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     public void deleteClient(Long id) {
         clientRepository.deleteById(id);
     }

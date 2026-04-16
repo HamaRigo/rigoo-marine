@@ -25,6 +25,23 @@ services:
     networks:
       - marine-network
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: marine-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - marine-network
+
   # Zookeeper (for Kafka)
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -82,6 +99,7 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:
   zookeeper-data:
   zookeeper-logs:
   kafka-data:
