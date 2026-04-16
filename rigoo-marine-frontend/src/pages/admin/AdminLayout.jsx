@@ -6,6 +6,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
 import PeopleIcon from '@mui/icons-material/People';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 
@@ -14,7 +17,9 @@ const navItems = [
   { name: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
   { name: 'Orders', path: '/admin/orders', icon: <BuildIcon /> },
   { name: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
-  { name: 'Services', path: '/admin/services', icon: <BuildIcon /> },
+  { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
+  { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
+  { name: 'Services', path: '/admin/services', icon: <EngineeringIcon /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];
 
