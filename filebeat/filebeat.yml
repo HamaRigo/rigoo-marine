@@ -1,0 +1,62 @@
+filebeat.inputs:
+- type: container
+  paths:
+    - '/var/lib/docker/containers/*/*.log'
+  processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - decode_json_fields:
+      fields: ["message"]
+      target: "json"
+      overwrite_keys: true
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "client-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "vessel-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "service-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "work-order-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "technician-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "invoice-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "notification-service"
+  - drop_event:
+      when:
+        not:
+          contains:
+            docker.container.name: "api-gateway"
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
