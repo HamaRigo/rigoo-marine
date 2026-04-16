@@ -2,11 +2,11 @@ package com.rigoomarine.invoice.service;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
-import com.rigoomarine.invoice.entity.Invoice;
-import com.rigoomarine.invoice.entity.InvoiceItem;
-import com.rigoomarine.invoice.repository.InvoiceRepository;
-import com.rigoomarine.invoice.dto.InvoiceDTO;
-import com.rigoomarine.invoice.dto.CreateInvoiceRequest;
+import com.rigoomarine.invoice.entity.Quotation;
+import com.rigoomarine.invoice.entity.QuotationItem;
+import com.rigoomarine.invoice.repository.QuotationRepository;
+import com.rigoomarine.invoice.dto.QuotationDTO;
+import com.rigoomarine.invoice.dto.CreateQuotationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,19 +20,18 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class InvoiceService {
+public class QuotationService {
 
-    private final InvoiceRepository invoiceRepository;
+    private final QuotationRepository quotationRepository;
 
-    public InvoiceDTO createInvoice(CreateInvoiceRequest request) {
-        Invoice invoice = Invoice.builder()
-            .invoiceNumber(generateInvoiceNumber())
-            .workOrderId(request.getWorkOrderId())
+    public QuotationDTO createQuotation(CreateQuotationRequest request) {
+        Quotation quotation = Quotation.builder()
+            .quotationNumber(generateQuotationNumber())
             .clientId(request.getClientId())
-            .status(request.getStatus() != null ? Invoice.InvoiceStatus.valueOf(request.getStatus()) : Invoice.InvoiceStatus.PENDING)
+            .status(request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : Quotation.QuotationStatus.DRAFT)
             .issueDate(request.getIssueDate())
-            .dueDate(request.getDueDate())
-            .items(request.getItems().stream().map(item -> InvoiceItem.builder()
+            .expiryDate(request.getExpiryDate())
+            .items(request.getItems().stream().map(item -> QuotationItem.builder()
                 .description(item.getDescription())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
@@ -40,16 +39,15 @@ public class InvoiceService {
                 .build()).collect(Collectors.toList()))
             .notes(request.getNotes())
             .terms(request.getTerms())
-            .qrCode(request.getQrCode())
             .build();
 
         // Calculate totals
-        BigDecimal subtotal = invoice.getItems().stream()
-            .map(InvoiceItem::getAmount)
+        BigDecimal subtotal = quotation.getItems().stream()
+            .map(QuotationItem::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRate = invoice.getItems().stream()
-            .map(InvoiceItem::getTaxRate)
+        BigDecimal taxRate = quotation.getItems().stream()
+            .map(QuotationItem::getTaxRate)
             .filter(r -> r != null)
             .max(BigDecimal::compareTo)
             .orElse(BigDecimal.ZERO);
@@ -57,96 +55,97 @@ public class InvoiceService {
         BigDecimal taxAmount = subtotal.multiply(taxRate.divide(new BigDecimal("100")));
         BigDecimal total = subtotal.add(taxAmount);
 
-        invoice.setSubtotal(subtotal);
-        invoice.setTaxRate(taxRate);
-        invoice.setTaxAmount(taxAmount);
-        invoice.setTotal(total);
+        quotation.setSubtotal(subtotal);
+        quotation.setTaxRate(taxRate);
+        quotation.setTaxAmount(taxAmount);
+        quotation.setTotal(total);
 
         // Set watermark based on status
-        if (invoice.getStatus() == Invoice.InvoiceStatus.DRAFT) {
-            invoice.setWatermark("DRAFT");
-        } else if (invoice.getStatus() == Invoice.InvoiceStatus.CANCELLED) {
-            invoice.setWatermark("CANCELLED");
+        if (quotation.getStatus() == Quotation.QuotationStatus.DRAFT) {
+            quotation.setWatermark("DRAFT");
+        } else if (quotation.getStatus() == Quotation.QuotationStatus.ACCEPTED) {
+            quotation.setWatermark("ACCEPTED");
+        } else if (quotation.getStatus() == Quotation.QuotationStatus.REJECTED) {
+            quotation.setWatermark("REJECTED");
         } else {
-            invoice.setWatermark("CONFIDENTIAL");
+            quotation.setWatermark("QUOTATION");
         }
 
-        Invoice saved = invoiceRepository.save(invoice);
+        Quotation saved = quotationRepository.save(quotation);
         return toDTO(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<InvoiceDTO> getInvoicesByClientId(Long clientId) {
-        return invoiceRepository.findByClientId(clientId).stream()
+    public List<QuotationDTO> getQuotationsByClientId(Long clientId) {
+        return quotationRepository.findByClientId(clientId).stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<InvoiceDTO> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
+    public List<QuotationDTO> getAllQuotations() {
+        return quotationRepository.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public InvoiceDTO getInvoiceById(Long id) {
-        return invoiceRepository.findById(id)
+    public QuotationDTO getQuotationById(Long id) {
+        return quotationRepository.findById(id)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new RuntimeException("Quotation not found"));
     }
 
     @Transactional(readOnly = true)
-    public InvoiceDTO getInvoiceByNumber(String invoiceNumber) {
-        return invoiceRepository.findByInvoiceNumber(invoiceNumber)
+    public QuotationDTO getQuotationByNumber(String quotationNumber) {
+        return quotationRepository.findByQuotationNumber(quotationNumber)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new RuntimeException("Quotation not found"));
     }
 
-    public InvoiceDTO updateInvoiceStatus(Long id, String status) {
-        Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+    public QuotationDTO updateQuotationStatus(Long id, String status) {
+        Quotation quotation = quotationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Quotation not found"));
 
-        Invoice.InvoiceStatus newStatus = Invoice.InvoiceStatus.valueOf(status);
-        invoice.setStatus(newStatus);
+        Quotation.QuotationStatus newStatus = Quotation.QuotationStatus.valueOf(status);
+        quotation.setStatus(newStatus);
 
-        if (newStatus == Invoice.InvoiceStatus.PAID) {
-            invoice.setPaidAt(LocalDateTime.now());
-        }
-
-        // Update watermark
-        if (newStatus == Invoice.InvoiceStatus.DRAFT) {
-            invoice.setWatermark("DRAFT");
-        } else if (newStatus == Invoice.InvoiceStatus.CANCELLED) {
-            invoice.setWatermark("CANCELLED");
+        if (newStatus == Quotation.QuotationStatus.ACCEPTED) {
+            quotation.setAcceptedAt(LocalDateTime.now());
+            quotation.setWatermark("ACCEPTED");
+        } else if (newStatus == Quotation.QuotationStatus.REJECTED) {
+            quotation.setWatermark("REJECTED");
+        } else if (newStatus == Quotation.QuotationStatus.DRAFT) {
+            quotation.setWatermark("DRAFT");
+        } else if (newStatus == Quotation.QuotationStatus.EXPIRED) {
+            quotation.setWatermark("EXPIRED");
         } else {
-            invoice.setWatermark("CONFIDENTIAL");
+            quotation.setWatermark("QUOTATION");
         }
 
-        Invoice updated = invoiceRepository.save(invoice);
+        Quotation updated = quotationRepository.save(quotation);
         return toDTO(updated);
     }
 
-    public void deleteInvoice(Long id) {
-        invoiceRepository.deleteById(id);
+    public void deleteQuotation(Long id) {
+        quotationRepository.deleteById(id);
     }
 
-    private String generateInvoiceNumber() {
+    private String generateQuotationNumber() {
         String year = String.valueOf(LocalDateTime.now().getYear());
-        long count = invoiceRepository.count() + 1;
-        return "INV-" + year + "-" + String.format("%03d", count);
+        long count = quotationRepository.count() + 1;
+        return "QUO-" + year + "-" + String.format("%03d", count);
     }
 
-    private InvoiceDTO toDTO(Invoice invoice) {
-        return InvoiceDTO.builder()
-            .id(invoice.getId())
-            .invoiceNumber(invoice.getInvoiceNumber())
-            .workOrderId(invoice.getWorkOrderId())
-            .clientId(invoice.getClientId())
-            .status(invoice.getStatus().name())
-            .issueDate(invoice.getIssueDate())
-            .dueDate(invoice.getDueDate())
-            .items(invoice.getItems().stream().map(item -> InvoiceItemDTO.builder()
+    private QuotationDTO toDTO(Quotation quotation) {
+        return QuotationDTO.builder()
+            .id(quotation.getId())
+            .quotationNumber(quotation.getQuotationNumber())
+            .clientId(quotation.getClientId())
+            .status(quotation.getStatus().name())
+            .issueDate(quotation.getIssueDate())
+            .expiryDate(quotation.getExpiryDate())
+            .items(quotation.getItems().stream().map(item -> QuotationItemDTO.builder()
                 .id(item.getId())
                 .description(item.getDescription())
                 .quantity(item.getQuantity())
@@ -154,23 +153,22 @@ public class InvoiceService {
                 .taxRate(item.getTaxRate())
                 .amount(item.getAmount())
                 .build()).collect(Collectors.toList()))
-            .subtotal(invoice.getSubtotal())
-            .taxRate(invoice.getTaxRate())
-            .taxAmount(invoice.getTaxAmount())
-            .total(invoice.getTotal())
-            .notes(invoice.getNotes())
-            .terms(invoice.getTerms())
-            .watermark(invoice.getWatermark())
-            .qrCode(invoice.getQrCode())
-            .paidAt(invoice.getPaidAt())
-            .createdAt(invoice.getCreatedAt())
+            .subtotal(quotation.getSubtotal())
+            .taxRate(quotation.getTaxRate())
+            .taxAmount(quotation.getTaxAmount())
+            .total(quotation.getTotal())
+            .notes(quotation.getNotes())
+            .terms(quotation.getTerms())
+            .watermark(quotation.getWatermark())
+            .acceptedAt(quotation.getAcceptedAt())
+            .createdAt(quotation.getCreatedAt())
             .build();
     }
 
     @Transactional(readOnly = true)
-    public byte[] generateInvoicePdf(Long id) {
-        Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+    public byte[] generateQuotationPdf(Long id) {
+        Quotation quotation = quotationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Quotation not found"));
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             Document document = new Document(PageSize.A4, 50, 50, 50, 50);
@@ -185,7 +183,7 @@ public class InvoiceService {
             Font smallFont = new Font(Font.HELVETICA, 9, Font.NORMAL);
             Font footerFont = new Font(Font.HELVETICA, 8, Font.NORMAL);
 
-            // ============== HEADER (Striped Layout Style) ==============
+            // ============== HEADER ==============
             PdfPTable headerTable = new PdfPTable(2);
             headerTable.setWidthPercentage(100);
             headerTable.setWidths(new int[]{1, 1});
@@ -197,12 +195,10 @@ public class InvoiceService {
             logoCell.setBorder(Rectangle.NO_BORDER);
             logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-            // Company name as logo placeholder
             Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
             companyName.setSpacingAfter(5);
             logoCell.addElement(companyName);
 
-            // Report header / tagline
             Paragraph tagline = new Paragraph("Professional Marine Services", smallFont);
             tagline.setStyle("font-weight: bold;");
             logoCell.addElement(tagline);
@@ -235,7 +231,7 @@ public class InvoiceService {
             separatorCell.setBackgroundColor(new Color(240, 240, 240));
             separatorCell.setBorder(Rectangle.NO_BORDER);
             separatorCell.setPadding(3);
-            separatorCell.addElement(new Paragraph("INVOICE", titleFont));
+            separatorCell.addElement(new Paragraph("QUOTATION", titleFont));
             separatorTable.addCell(separatorCell);
             document.add(separatorTable);
 
@@ -250,38 +246,36 @@ public class InvoiceService {
             billToCell.setBorder(Rectangle.NO_BORDER);
             billToCell.setPaddingBottom(10);
 
-            Paragraph billToTitle = new Paragraph("Bill To:", boldFont);
+            Paragraph billToTitle = new Paragraph("Quotation For:", boldFont);
             billToTitle.setSpacingAfter(5);
             billToCell.addElement(billToTitle);
 
-            // Client info (placeholder - would need client service integration)
             Paragraph clientInfo = new Paragraph();
-            clientInfo.add(new Chunk("Client ID: " + invoice.getClientId() + "\n", smallFont));
-            clientInfo.add(new Chunk("Work Order: #" + invoice.getWorkOrderId() + "\n", smallFont));
+            clientInfo.add(new Chunk("Client ID: " + quotation.getClientId() + "\n", smallFont));
             billToCell.addElement(clientInfo);
 
             addressLayout.addCell(billToCell);
 
-            // Invoice Info section
-            PdfPCell invoiceInfoCell = new PdfPCell();
-            invoiceInfoCell.setBorder(Rectangle.NO_BORDER);
-            invoiceInfoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            invoiceInfoCell.setPaddingBottom(10);
+            // Quotation Info section
+            PdfPCell quotationInfoCell = new PdfPCell();
+            quotationInfoCell.setBorder(Rectangle.NO_BORDER);
+            quotationInfoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            quotationInfoCell.setPaddingBottom(10);
 
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            Paragraph invoiceInfo = new Paragraph();
-            invoiceInfo.add(new Chunk("Invoice No: " + invoice.getInvoiceNumber() + "\n", smallFont));
-            invoiceInfo.add(new Chunk("Issue Date: " + invoice.getIssueDate().format(dateFormatter) + "\n", smallFont));
-            invoiceInfo.add(new Chunk("Due Date: " + invoice.getDueDate().format(dateFormatter) + "\n", smallFont));
-            if (invoice.getPaidAt() != null) {
-                invoiceInfo.add(new Chunk("Paid Date: " + invoice.getPaidAt().format(dateFormatter) + "\n", smallFont));
+            Paragraph quotationInfo = new Paragraph();
+            quotationInfo.add(new Chunk("Quotation No: " + quotation.getQuotationNumber() + "\n", smallFont));
+            quotationInfo.add(new Chunk("Issue Date: " + quotation.getIssueDate().format(dateFormatter) + "\n", smallFont));
+            quotationInfo.add(new Chunk("Valid Until: " + quotation.getExpiryDate().format(dateFormatter) + "\n", smallFont));
+            if (quotation.getAcceptedAt() != null) {
+                quotationInfo.add(new Chunk("Accepted: " + quotation.getAcceptedAt().format(dateFormatter) + "\n", smallFont));
             }
-            invoiceInfoCell.addElement(invoiceInfo);
+            quotationInfoCell.addElement(quotationInfo);
 
-            addressLayout.addCell(invoiceInfoCell);
+            addressLayout.addCell(quotationInfoCell);
             document.add(addressLayout);
 
-            // ============== INVOICE ITEMS TABLE ==============
+            // ============== QUOTATION ITEMS TABLE ==============
             PdfPTable itemsTable = new PdfPTable(5);
             itemsTable.setWidthPercentage(100);
             itemsTable.setWidths(new int[]{40, 15, 15, 15, 15});
@@ -300,7 +294,7 @@ public class InvoiceService {
 
             // Alternating row colors (striped effect)
             boolean evenRow = true;
-            for (InvoiceItem item : invoice.getItems()) {
+            for (QuotationItem item : quotation.getItems()) {
                 Color rowColor = evenRow ? Color.WHITE : new Color(250, 250, 250);
 
                 PdfPCell descCell = new PdfPCell(new Phrase(item.getDescription(), normalFont));
@@ -350,11 +344,11 @@ public class InvoiceService {
 
             // Subtotal
             totalsTable.addCell(createTotalsCell("Subtotal:", normalFont, Rectangle.NO_BORDER));
-            totalsTable.addCell(createTotalsCell("$" + invoice.getSubtotal().toString(), normalFont, Rectangle.NO_BORDER));
+            totalsTable.addCell(createTotalsCell("$" + quotation.getSubtotal().toString(), normalFont, Rectangle.NO_BORDER));
 
             // Tax
-            totalsTable.addCell(createTotalsCell("Tax (" + invoice.getTaxRate() + "%):", normalFont, Rectangle.NO_BORDER));
-            totalsTable.addCell(createTotalsCell("$" + invoice.getTaxAmount().toString(), normalFont, Rectangle.NO_BORDER));
+            totalsTable.addCell(createTotalsCell("Tax (" + quotation.getTaxRate() + "%):", normalFont, Rectangle.NO_BORDER));
+            totalsTable.addCell(createTotalsCell("$" + quotation.getTaxAmount().toString(), normalFont, Rectangle.NO_BORDER));
 
             // Total - with top border
             PdfPCell totalLabelCell = createTotalsCell("Total:", boldFont, Rectangle.NO_BORDER);
@@ -362,7 +356,7 @@ public class InvoiceService {
             totalLabelCell.setBorderWidthTop(2);
             totalsTable.addCell(totalLabelCell);
 
-            PdfPCell totalValueCell = createTotalsCell("$" + invoice.getTotal().toString(), boldFont, Rectangle.NO_BORDER);
+            PdfPCell totalValueCell = createTotalsCell("$" + quotation.getTotal().toString(), boldFont, Rectangle.NO_BORDER);
             totalValueCell.setBorder(Rectangle.TOP);
             totalValueCell.setBorderWidthTop(2);
             totalsTable.addCell(totalValueCell);
@@ -370,7 +364,7 @@ public class InvoiceService {
             document.add(totalsTable);
 
             // ============== NOTES AND TERMS ==============
-            if (invoice.getNotes() != null && !invoice.getNotes().isEmpty()) {
+            if (quotation.getNotes() != null && !quotation.getNotes().isEmpty()) {
                 PdfPTable notesTable = new PdfPTable(1);
                 notesTable.setWidthPercentage(100);
                 notesTable.setSpacingBefore(10);
@@ -379,12 +373,12 @@ public class InvoiceService {
                 notesCell.setBorder(Rectangle.NO_BORDER);
                 notesCell.setPadding(8);
                 notesCell.addElement(new Paragraph("Notes:", boldFont));
-                notesCell.addElement(new Paragraph(invoice.getNotes(), smallFont));
+                notesCell.addElement(new Paragraph(quotation.getNotes(), smallFont));
                 notesTable.addCell(notesCell);
                 document.add(notesTable);
             }
 
-            if (invoice.getTerms() != null && !invoice.getTerms().isEmpty()) {
+            if (quotation.getTerms() != null && !quotation.getTerms().isEmpty()) {
                 PdfPTable termsTable = new PdfPTable(1);
                 termsTable.setWidthPercentage(100);
                 termsTable.setSpacingBefore(10);
@@ -392,16 +386,14 @@ public class InvoiceService {
                 termsCell.setBorder(Rectangle.NO_BORDER);
                 termsCell.setPadding(8);
                 termsCell.addElement(new Paragraph("Terms & Conditions:", boldFont));
-                termsCell.addElement(new Paragraph(invoice.getTerms(), smallFont));
+                termsCell.addElement(new Paragraph(quotation.getTerms(), smallFont));
                 termsTable.addCell(termsCell);
                 document.add(termsTable);
             }
 
-            // ============== FOOTER (Striped Layout Style) ==============
-            // Add spacer before footer
+            // ============== FOOTER ==============
             document.add(new Paragraph("\n"));
 
-            // Footer with page numbers
             PdfPTable footerTable = new PdfPTable(1);
             footerTable.setWidthPercentage(100);
             footerTable.setTotalWidth(new float[]{450});
@@ -414,14 +406,9 @@ public class InvoiceService {
             footerCell.setPadding(5);
             footerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
 
-            // Report footer
-            if (invoice.getTerms() != null && !invoice.getTerms().isEmpty()) {
-                footerCell.addElement(new Paragraph("Thank you for your business!", footerFont));
-            } else {
-                footerCell.addElement(new Paragraph("Rigoo Marine AB | info@rigoomarine.com | +46 8 123 456", footerFont));
-            }
+            footerCell.addElement(new Paragraph("This quotation is valid for 14 days from the issue date.", footerFont));
+            footerCell.addElement(new Paragraph("Thank you for your interest in our services!", footerFont));
 
-            // Page numbers (for PDF type)
             Paragraph pageNumPara = new Paragraph("Page 1 / 1", footerFont);
             pageNumPara.setSpacingBefore(5);
             footerCell.addElement(pageNumPara);

@@ -5,6 +5,8 @@ import com.rigoomarine.invoice.dto.CreateInvoiceRequest;
 import com.rigoomarine.invoice.service.InvoiceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -53,5 +55,21 @@ public class InvoiceController {
     public ResponseEntity<Void> deleteInvoice(@PathVariable Long id) {
         invoiceService.deleteInvoice(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
+        byte[] pdfContent = invoiceService.generateInvoicePdf(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData(
+            "attachment",
+            "invoice-" + id + ".pdf"
+        );
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(pdfContent);
     }
 }

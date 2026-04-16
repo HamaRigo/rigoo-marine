@@ -3,8 +3,16 @@ package com.rigoomarine.client.controller;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.service.ClientService;
+import com.rigoomarine.invoice.dto.CreateQuotationRequest;
+import com.rigoomarine.invoice.dto.InvoiceDTO;
+import com.rigoomarine.invoice.dto.QuotationDTO;
+import com.rigoomarine.invoice.service.InvoiceService;
+import com.rigoomarine.invoice.service.QuotationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +28,8 @@ import java.util.Map;
 public class AdminController {
 
     private final ClientService clientService;
+    private final InvoiceService invoiceService;
+    private final QuotationService quotationService;
 
     // ============== Dashboard Stats ==============
 
@@ -175,5 +185,91 @@ public class AdminController {
         // TODO: Call service-service via Feign client in production
         log.info("Delete service {} - placeholder", id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ============== Invoice Management ==============
+
+    @GetMapping("/invoices")
+    public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
+        log.debug("Get all invoices for admin");
+        return ResponseEntity.ok(invoiceService.getAllInvoices());
+    }
+
+    @GetMapping("/invoices/{id}")
+    public ResponseEntity<InvoiceDTO> getInvoiceById(@PathVariable Long id) {
+        log.debug("Get invoice {} for admin", id);
+        return ResponseEntity.ok(invoiceService.getInvoiceById(id));
+    }
+
+    @PutMapping("/invoices/{id}/status")
+    public ResponseEntity<InvoiceDTO> updateInvoiceStatus(
+            @PathVariable Long id,
+            @RequestParam String status
+    ) {
+        log.info("Update invoice {} status to {}", id, status);
+        return ResponseEntity.ok(invoiceService.updateInvoiceStatus(id, status));
+    }
+
+    @GetMapping("/invoices/{id}/pdf")
+    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
+        log.debug("Generate PDF for invoice {}", id);
+        byte[] pdfContent = invoiceService.generateInvoicePdf(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData(
+            "attachment",
+            "invoice-" + id + ".pdf"
+        );
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(pdfContent);
+    }
+
+    // ============== Quotation Management ==============
+
+    @PostMapping("/quotations")
+    public ResponseEntity<QuotationDTO> createQuotation(@Valid @RequestBody CreateQuotationRequest request) {
+        log.info("Create new quotation for client {}", request.getClientId());
+        return ResponseEntity.ok(quotationService.createQuotation(request));
+    }
+
+    @GetMapping("/quotations")
+    public ResponseEntity<List<QuotationDTO>> getAllQuotations() {
+        log.debug("Get all quotations for admin");
+        return ResponseEntity.ok(quotationService.getAllQuotations());
+    }
+
+    @GetMapping("/quotations/{id}")
+    public ResponseEntity<QuotationDTO> getQuotationById(@PathVariable Long id) {
+        log.debug("Get quotation {} for admin", id);
+        return ResponseEntity.ok(quotationService.getQuotationById(id));
+    }
+
+    @PutMapping("/quotations/{id}/status")
+    public ResponseEntity<QuotationDTO> updateQuotationStatus(
+            @PathVariable Long id,
+            @RequestParam String status
+    ) {
+        log.info("Update quotation {} status to {}", id, status);
+        return ResponseEntity.ok(quotationService.updateQuotationStatus(id, status));
+    }
+
+    @GetMapping("/quotations/{id}/pdf")
+    public ResponseEntity<byte[]> getQuotationPdf(@PathVariable Long id) {
+        log.debug("Generate PDF for quotation {}", id);
+        byte[] pdfContent = quotationService.generateQuotationPdf(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData(
+            "attachment",
+            "quotation-" + id + ".pdf"
+        );
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(pdfContent);
     }
 }

@@ -1,0 +1,58 @@
+package com.rigoomarine.invoice.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class QuotationDTO {
+    private Long id;
+    private String quotationNumber;
+    private Long clientId;
+    private String status;
+    private LocalDateTime issueDate;
+    private LocalDateTime expiryDate;
+    private List<QuotationItemDTO> items;
+    private BigDecimal subtotal;
+    private BigDecimal taxRate;
+    private BigDecimal taxAmount;
+    private BigDecimal total;
+    private String notes;
+    private String terms;
+    private String watermark;
+    private LocalDateTime acceptedAt;
+    private LocalDateTime createdAt;
+
+    // Customer info for display
+    private CustomerInfo customer;
+    private CompanyInfo company;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CustomerInfo {
+        private String name;
+        private String address;
+        private String phone;
+        private String email;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CompanyInfo {
+        private String name;
+        private String logo;
+        private String address;
+        private String phone;
+        private String email;
+        private String taxId;
+        private String tagline;
+    }
+}
