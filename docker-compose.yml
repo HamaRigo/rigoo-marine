@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
   # Netflix Eureka - Service Discovery
   discovery-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/discovery-service:latest
+    build:
+      context: ./rigoo-marine-backend/discovery-service
     container_name: discovery-service
     ports:
       - "8761:8761"
@@ -18,7 +17,8 @@ services:
 
   # API Gateway
   api-gateway:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/api-gateway:latest
+    build:
+      context: ./rigoo-marine-backend/gateway-module
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -40,12 +40,15 @@ services:
     networks:
       - marine-network
 
-  # Client Service
+  # Client Service (internal, no exposed port)
   client-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/client-service:latest
+    build:
+      context: ./rigoo-marine-backend/client-module
     container_name: client-service
     depends_on:
       discovery-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -65,12 +68,15 @@ services:
     networks:
       - marine-network
 
-  # Vessel Service
+  # Vessel Service (internal, no exposed port)
   vessel-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/vessel-service:latest
+    build:
+      context: ./rigoo-marine-backend/vessel-module
     container_name: vessel-service
     depends_on:
       discovery-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
@@ -86,12 +92,15 @@ services:
     networks:
       - marine-network
 
-  # Service Service (Service Catalog)
+  # Service Service (internal, no exposed port)
   service-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/service-service:latest
+    build:
+      context: ./rigoo-marine-backend/service-module
     container_name: service-service
     depends_on:
       discovery-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
@@ -107,15 +116,18 @@ services:
     networks:
       - marine-network
 
-  # Work Order Service
+  # Work Order Service (internal, no exposed port)
   work-order-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/work-order-service:latest
+    build:
+      context: ./rigoo-marine-backend/work-order-module
     container_name: work-order-service
     depends_on:
       discovery-service:
         condition: service_healthy
       kafka:
         condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
@@ -131,12 +143,15 @@ services:
     networks:
       - marine-network
 
-  # Technician Service
+  # Technician Service (internal, no exposed port)
   technician-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/technician-service:latest
+    build:
+      context: ./rigoo-marine-backend/technician-module
     container_name: technician-service
     depends_on:
       discovery-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
@@ -152,12 +167,15 @@ services:
     networks:
       - marine-network
 
-  # Invoice Service
+  # Invoice Service (internal, no exposed port)
   invoice-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/invoice-service:latest
+    build:
+      context: ./rigoo-marine-backend/invoice-module
     container_name: invoice-service
     depends_on:
       discovery-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
@@ -173,9 +191,10 @@ services:
     networks:
       - marine-network
 
-  # Notification Service
+  # Notification Service (internal, no exposed port)
   notification-service:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/notification-service:latest
+    build:
+      context: ./rigoo-marine-backend/notification-module
     container_name: notification-service
     depends_on:
       discovery-service:
@@ -287,56 +306,57 @@ services:
     networks:
       - marine-network
 
-  # Logstash
-  logstash:
-    image: logstash:8.11.0
-    container_name: logstash
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-    ports:
-      - "5044:5044"
-      - "9600:9600"
-    networks:
-      - marine-network
+  # Logstash (commented out - enable if Elasticsearch is needed)
+  # logstash:
+  #   image: logstash:8.11.0
+  #   container_name: logstash
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+  #     - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+  #   ports:
+  #     - "5044:5044"
+  #     - "9600:9600"
+  #   networks:
+  #     - marine-network
 
-  # Kibana
-  kibana:
-    image: kibana:8.11.0
-    container_name: kibana
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - marine-network
+  # Kibana (commented out - enable if Elasticsearch is needed)
+  # kibana:
+  #   image: kibana:8.11.0
+  #   container_name: kibana
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - marine-network
 
-  # Filebeat
-  filebeat:
-    image: elastic/filebeat:8.11.0
-    container_name: filebeat
-    user: root
-    volumes:
-      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - marine-network
+  # Filebeat (commented out - enable if Elasticsearch is needed)
+  # filebeat:
+  #   image: elastic/filebeat:8.11.0
+  #   container_name: filebeat
+  #   user: root
+  #   volumes:
+  #     - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   networks:
+  #     - marine-network
 
   # Frontend (React)
   frontend:
-    image: ${DOCKERHUB_USERNAME:-rigoomarine}/marine-frontend:latest
+    build:
+      context: ./rigoo-marine-frontend
     container_name: marine-frontend
     ports:
       - "80:80"
