@@ -1,4 +1,6 @@
-import { Box, Container, Typography, Grid, Card, CardContent } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Container, Typography, Grid, Card, CardContent, CircularProgress, Alert } from '@mui/material';
+import { publicApi, adminApi } from '../../services/api';
 
 const team = [
   { name: 'John Smith', role: 'Founder & Master Technician', bio: '25+ years of marine engine experience' },
@@ -7,6 +9,43 @@ const team = [
 ];
 
 export default function About() {
+  const [contactInfo, setContactInfo] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const data = await adminApi.getAllContactInfo();
+        const info = {};
+        data.forEach((item) => {
+          if (item.active) {
+            info[item.keyName] = item.value;
+          }
+        });
+        setContactInfo(info);
+      } catch (error) {
+        console.error('Failed to fetch contact info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
+
+  const getContact = (key) => contactInfo[key] || {
+    'phone_primary': '+1 (555) 123-4567',
+    'email_general': 'info@rigoomarine.com',
+  }[key] || '';
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -128,7 +167,7 @@ export default function About() {
             Contact us today to discuss your marine service needs
           </Typography>
           <Typography variant="body1">
-            📧 info@rigoomarine.com | 📞 +1 (555) 123-4567
+            📧 {getContact('email_general') || 'info@rigoomarine.com'} | 📞 {getContact('phone_primary') || '+1 (555) 123-4567'}
           </Typography>
         </Container>
       </Box>

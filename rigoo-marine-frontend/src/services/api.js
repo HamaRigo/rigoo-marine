@@ -488,6 +488,73 @@ export const adminApi = {
     });
     return response.data;
   },
+
+  // Media Management
+  getAllMedia: async () => {
+    const response = await httpClient.get('/admin/media');
+    return response.data;
+  },
+
+  getMediaById: async (id) => {
+    const response = await httpClient.get(`/admin/media/${id}`);
+    return response.data;
+  },
+
+  getMediaByType: async (type) => {
+    const response = await httpClient.get(`/admin/media/type/${type}`);
+    return response.data;
+  },
+
+  getMediaByCategory: async (category) => {
+    const response = await httpClient.get(`/admin/media/category/${category}`);
+    return response.data;
+  },
+
+  createMedia: async (mediaData) => {
+    const response = await httpClient.post('/admin/media', mediaData);
+    return response.data;
+  },
+
+  updateMedia: async (id, mediaData) => {
+    const response = await httpClient.put(`/admin/media/${id}`, mediaData);
+    return response.data;
+  },
+
+  deleteMedia: async (id) => {
+    const response = await httpClient.delete(`/admin/media/${id}`);
+    return response.data;
+  },
+
+  // Contact Info Management
+  getAllContactInfo: async () => {
+    const response = await httpClient.get('/admin/contact-info');
+    return response.data;
+  },
+
+  getContactInfoByCategory: async (category) => {
+    const response = await httpClient.get(`/admin/contact-info/category/${category}`);
+    return response.data;
+  },
+
+  getContactInfoByKey: async (keyName) => {
+    const response = await httpClient.get(`/admin/contact-info/key/${keyName}`);
+    return response.data;
+  },
+
+  createContactInfo: async (contactInfoData) => {
+    const response = await httpClient.post('/admin/contact-info', contactInfoData);
+    return response.data;
+  },
+
+  updateContactInfo: async (id, contactInfoData) => {
+    const response = await httpClient.put(`/admin/contact-info/${id}`, contactInfoData);
+    return response.data;
+  },
+
+  deleteContactInfo: async (id) => {
+    const response = await httpClient.delete(`/admin/contact-info/${id}`);
+    return response.data;
+  },
 };
 
 // ============== TECHNICIAN APIs ==============

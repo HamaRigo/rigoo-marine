@@ -44,6 +44,8 @@ import UserManagement from './pages/admin/UserManagement';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import InvoiceManagement from './pages/admin/InvoiceManagement';
 import QuotationManagement from './pages/admin/QuotationManagement';
+import MediaManagement from './pages/admin/MediaManagement';
+import ContactInfoManagement from './pages/admin/ContactInfoManagement';
 import Settings from './pages/admin/Settings';
 
 // Technician Pages
@@ -108,6 +110,8 @@ function App() {
                 <Route path="services" element={<ServiceManagement />} />
                 <Route path="invoices" element={<InvoiceManagement />} />
                 <Route path="quotations" element={<QuotationManagement />} />
+                <Route path="media" element={<MediaManagement />} />
+                <Route path="contact-info" element={<ContactInfoManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

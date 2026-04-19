@@ -22,6 +22,8 @@ import {
   LocalShipping as VesselIcon,
   Assessment as ReportIcon,
   Refresh as RefreshIcon,
+  PhotoLibrary as MediaIcon,
+  ContactPhone as ContactInfoIcon,
 } from '@mui/icons-material';
 import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -54,6 +56,20 @@ const managementModules = [
     icon: QuoteIcon,
     color: '#9c27b0',
     description: 'Create and manage quotations'
+  },
+  {
+    title: 'Media Management',
+    path: '/admin/media',
+    icon: MediaIcon,
+    color: '#d32f2f',
+    description: 'Manage photos, videos, and media content'
+  },
+  {
+    title: 'Contact Info',
+    path: '/admin/contact-info',
+    icon: ContactInfoIcon,
+    color: '#009688',
+    description: 'Manage contact details for About page'
   },
   {
     title: 'Service Management',

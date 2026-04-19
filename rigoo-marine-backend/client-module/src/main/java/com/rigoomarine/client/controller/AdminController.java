@@ -2,7 +2,13 @@ package com.rigoomarine.client.controller;
 
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
+import com.rigoomarine.client.dto.CreateMediaRequest;
+import com.rigoomarine.client.dto.CreateContactInfoRequest;
+import com.rigoomarine.client.dto.MediaDTO;
+import com.rigoomarine.client.dto.ContactInfoDTO;
 import com.rigoomarine.client.service.ClientService;
+import com.rigoomarine.client.service.MediaService;
+import com.rigoomarine.client.service.ContactInfoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +29,8 @@ import java.util.Map;
 public class AdminController {
 
     private final ClientService clientService;
+    private final MediaService mediaService;
+    private final ContactInfoService contactInfoService;
 
     // ============== Dashboard Stats ==============
 
@@ -255,5 +263,95 @@ public class AdminController {
         log.debug("Generate PDF for quotation {} - placeholder (quotation-service not integrated)", id);
         // Return empty PDF for now
         return ResponseEntity.ok(new byte[0]);
+    }
+
+    // ============== Media Management ==============
+
+    @GetMapping("/media")
+    public ResponseEntity<List<MediaDTO>> getAllMedia() {
+        log.debug("Get all media for admin");
+        return ResponseEntity.ok(mediaService.getAllMedia());
+    }
+
+    @GetMapping("/media/{id}")
+    public ResponseEntity<MediaDTO> getMediaById(@PathVariable Long id) {
+        log.debug("Get media {}", id);
+        return ResponseEntity.ok(mediaService.getMediaById(id));
+    }
+
+    @GetMapping("/media/type/{type}")
+    public ResponseEntity<List<MediaDTO>> getMediaByType(@PathVariable String type) {
+        log.debug("Get media by type {}", type);
+        return ResponseEntity.ok(mediaService.getMediaByType(type));
+    }
+
+    @GetMapping("/media/category/{category}")
+    public ResponseEntity<List<MediaDTO>> getMediaByCategory(@PathVariable String category) {
+        log.debug("Get media by category {}", category);
+        return ResponseEntity.ok(mediaService.getMediaByCategory(category));
+    }
+
+    @PostMapping("/media")
+    public ResponseEntity<MediaDTO> createMedia(@Valid @RequestBody CreateMediaRequest request) {
+        log.info("Create new media: {}", request.getTitle());
+        return ResponseEntity.ok(mediaService.createMedia(request));
+    }
+
+    @PutMapping("/media/{id}")
+    public ResponseEntity<MediaDTO> updateMedia(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateMediaRequest request
+    ) {
+        log.info("Update media {}", id);
+        return ResponseEntity.ok(mediaService.updateMedia(id, request));
+    }
+
+    @DeleteMapping("/media/{id}")
+    public ResponseEntity<Void> deleteMedia(@PathVariable Long id) {
+        log.info("Delete media {}", id);
+        mediaService.deleteMedia(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============== Contact Info Management ==============
+
+    @GetMapping("/contact-info")
+    public ResponseEntity<List<ContactInfoDTO>> getAllContactInfo() {
+        log.debug("Get all contact info for admin");
+        return ResponseEntity.ok(contactInfoService.getAllContactInfo());
+    }
+
+    @GetMapping("/contact-info/category/{category}")
+    public ResponseEntity<List<ContactInfoDTO>> getContactInfoByCategory(@PathVariable String category) {
+        log.debug("Get contact info by category {}", category);
+        return ResponseEntity.ok(contactInfoService.getContactInfoByCategory(category));
+    }
+
+    @GetMapping("/contact-info/key/{keyName}")
+    public ResponseEntity<ContactInfoDTO> getContactInfoByKey(@PathVariable String keyName) {
+        log.debug("Get contact info by key {}", keyName);
+        return ResponseEntity.ok(contactInfoService.getContactInfoByKey(keyName));
+    }
+
+    @PostMapping("/contact-info")
+    public ResponseEntity<ContactInfoDTO> createContactInfo(@Valid @RequestBody CreateContactInfoRequest request) {
+        log.info("Create new contact info: {}", request.getKeyName());
+        return ResponseEntity.ok(contactInfoService.createContactInfo(request));
+    }
+
+    @PutMapping("/contact-info/{id}")
+    public ResponseEntity<ContactInfoDTO> updateContactInfo(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateContactInfoRequest request
+    ) {
+        log.info("Update contact info {}", id);
+        return ResponseEntity.ok(contactInfoService.updateContactInfo(id, request));
+    }
+
+    @DeleteMapping("/contact-info/{id}")
+    public ResponseEntity<Void> deleteContactInfo(@PathVariable Long id) {
+        log.info("Delete contact info {}", id);
+        contactInfoService.deleteContactInfo(id);
+        return ResponseEntity.noContent().build();
     }
 }
