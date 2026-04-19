@@ -108,7 +108,7 @@ services:
     networks:
       - marine-network
 
-  # PostgreSQL Database
+  # PostgreSQL Database (SECURED - internal network only, no external port)
   postgres:
     image: postgres:15-alpine
     container_name: postgres
@@ -118,16 +118,17 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./rigoo-marine-backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    ports:
-      - "5432:5432"
+      # Flyway handles migrations - no init script needed
+    # ports:  # REMOVED for security - DB not exposed externally
+    #   - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d rigoomarine"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Redis Cache
   redis:
