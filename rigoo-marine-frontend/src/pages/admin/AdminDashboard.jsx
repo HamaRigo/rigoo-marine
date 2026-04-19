@@ -24,6 +24,8 @@ import {
   Refresh as RefreshIcon,
   PhotoLibrary as MediaIcon,
   ContactPhone as ContactInfoIcon,
+  Image as ImageIcon,
+  Business as LogoIcon,
 } from '@mui/icons-material';
 import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -113,8 +115,12 @@ export default function AdminDashboard() {
     expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: '',
     terms: '',
+    termsArabic: '',
+    logoUrl: '',
+    insertedImages: [],
   });
   const [items, setItems] = useState([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -183,8 +189,12 @@ export default function AdminDashboard() {
       expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       notes: '',
       terms: '',
+      termsArabic: '',
+      logoUrl: '',
+      insertedImages: [],
     });
     setItems([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
+    setNewImageUrl('');
   };
 
   const handleDocumentTypeChange = (event, newType) => {
@@ -199,8 +209,12 @@ export default function AdminDashboard() {
         expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: '',
         terms: '',
+        termsArabic: '',
+        logoUrl: '',
+        insertedImages: [],
       });
       setItems([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
+      setNewImageUrl('');
     }
   };
 
@@ -241,6 +255,17 @@ export default function AdminDashboard() {
     } catch (err) {
       toast.error(err.response?.data?.message || `Failed to create ${documentType}`);
     }
+  };
+
+  const handleAddImage = () => {
+    if (newImageUrl && newImageUrl.trim()) {
+      setFormData({ ...formData, insertedImages: [...formData.insertedImages, newImageUrl.trim()] });
+      setNewImageUrl('');
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData({ ...formData, insertedImages: formData.insertedImages.filter((_, i) => i !== index) });
   };
 
   const getStatusColor = (status) => {
@@ -680,13 +705,65 @@ export default function AdminDashboard() {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Terms & Conditions"
+                label="Terms & Conditions (English)"
                 fullWidth
                 multiline
                 rows={2}
                 value={formData.terms}
                 onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                helperText="Qatari standard terms"
               />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="الشروط والأحكام (العربية)"
+                fullWidth
+                multiline
+                rows={2}
+                value={formData.termsArabic}
+                onChange={(e) => setFormData({ ...formData, termsArabic: e.target.value })}
+                dir="rtl"
+                helperText="الشروط القياسية القطرية"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Company Logo URL"
+                fullWidth
+                value={formData.logoUrl}
+                onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                placeholder="https://example.com/logo.png"
+                InputProps={{
+                  startAdornment: <LogoIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" gutterBottom>
+                Inserted Images (Work Photos, etc.)
+              </Typography>
+              {formData.insertedImages.map((url, index) => (
+                <Chip
+                  key={index}
+                  label={`Image ${index + 1}`}
+                  onDelete={() => handleRemoveImage(index)}
+                  sx={{ mr: 1, mb: 1 }}
+                  variant="outlined"
+                />
+              ))}
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <TextField
+                  size="small"
+                  placeholder="Image URL"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddImage()}
+                  sx={{ flex: 1 }}
+                />
+                <Button variant="outlined" startIcon={<ImageIcon />} onClick={handleAddImage}>
+                  Add
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>

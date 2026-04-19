@@ -23,4 +23,7 @@ public class CreateQuotationRequest {
 
     private String notes;
     private String terms;
+    private String termsArabic;
+    private String logoUrl;
+    private List<String> insertedImages;
 }

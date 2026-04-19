@@ -23,6 +23,9 @@ public class QuotationDTO {
     private BigDecimal total;
     private String notes;
     private String terms;
+    private String termsArabic;
+    private String logoUrl;
+    private List<String> insertedImages;
     private String watermark;
     private LocalDateTime acceptedAt;
     private LocalDateTime createdAt;

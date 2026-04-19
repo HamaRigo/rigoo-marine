@@ -41,6 +41,9 @@ public class QuotationService {
                 .build()).collect(Collectors.toList()))
             .notes(request.getNotes())
             .terms(request.getTerms())
+            .termsArabic(request.getTermsArabic())
+            .logoUrl(request.getLogoUrl())
+            .insertedImages(request.getInsertedImages() != null ? request.getInsertedImages() : new java.util.ArrayList<>())
             .build();
 
         // Calculate totals
@@ -161,6 +164,9 @@ public class QuotationService {
             .total(quotation.getTotal())
             .notes(quotation.getNotes())
             .terms(quotation.getTerms())
+            .termsArabic(quotation.getTermsArabic())
+            .logoUrl(quotation.getLogoUrl())
+            .insertedImages(quotation.getInsertedImages())
             .watermark(quotation.getWatermark())
             .acceptedAt(quotation.getAcceptedAt())
             .createdAt(quotation.getCreatedAt())
@@ -197,27 +203,42 @@ public class QuotationService {
             logoCell.setBorder(Rectangle.NO_BORDER);
             logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-            Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
-            companyName.setSpacingAfter(5);
-            logoCell.addElement(companyName);
+            // Add logo image if available
+            if (quotation.getLogoUrl() != null && !quotation.getLogoUrl().isEmpty()) {
+                try {
+                    Image logoImage = Image.getInstance(quotation.getLogoUrl());
+                    logoImage.scaleToFit(120, 60);
+                    logoCell.addElement(logoImage);
+                    logoCell.addElement(Chunk.NEWLINE);
+                } catch (Exception e) {
+                    // If image fails, use text logo
+                    Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
+                    companyName.setSpacingAfter(5);
+                    logoCell.addElement(companyName);
+                }
+            } else {
+                Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
+                companyName.setSpacingAfter(5);
+                logoCell.addElement(companyName);
+            }
 
+            // Report header / tagline
             Paragraph tagline = new Paragraph("Professional Marine Services", boldFont);
             logoCell.addElement(tagline);
 
             headerTable.addCell(logoCell);
 
-            // Right side - Company address block
+            // Right side - Company address block (Qatar format)
             PdfPCell addressCell = new PdfPCell();
             addressCell.setBorder(Rectangle.NO_BORDER);
             addressCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             addressCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
             Paragraph companyAddress = new Paragraph();
-            companyAddress.add(new Chunk("Rigoo Marine AB\n", boldFont));
-            companyAddress.add(new Chunk("123 Harbor Street\n"));
-            companyAddress.add(new Chunk("456 78 Stockholm\n"));
-            companyAddress.add(new Chunk("Sweden\n"));
-            companyAddress.add(new Chunk("VAT: SE123456789001\n", smallFont));
+            companyAddress.add(new Chunk("Rigoo Marine W.L.L.\n", boldFont));
+            companyAddress.add(new Chunk("P.O. Box 12345\n"));
+            companyAddress.add(new Chunk("Doha, Qatar\n"));
+            companyAddress.add(new Chunk("VAT: QR1234567890123\n", smallFont));
             companyAddress.add(new Chunk("info@rigoomarine.com\n", smallFont));
             addressCell.addElement(companyAddress);
 
@@ -364,7 +385,32 @@ public class QuotationService {
 
             document.add(totalsTable);
 
-            // ============== NOTES AND TERMS ==============
+            // ============== INSERTED IMAGES ==============
+            if (quotation.getInsertedImages() != null && !quotation.getInsertedImages().isEmpty()) {
+                PdfPTable imagesTable = new PdfPTable(2);
+                imagesTable.setWidthPercentage(100);
+                imagesTable.setWidths(new int[]{1, 1});
+                imagesTable.setSpacingBefore(15);
+                imagesTable.setSpacingAfter(15);
+
+                for (String imageUrl : quotation.getInsertedImages()) {
+                    try {
+                        Image img = Image.getInstance(imageUrl);
+                        img.scaleToFit(250, 180);
+                        img.setAlignment(Image.ALIGN_CENTER);
+                        PdfPCell imgCell = new PdfPCell();
+                        imgCell.setBorder(Rectangle.NO_BORDER);
+                        imgCell.setPadding(5);
+                        imgCell.addElement(img);
+                        imagesTable.addCell(imgCell);
+                    } catch (Exception e) {
+                        // Skip invalid images
+                    }
+                }
+                document.add(imagesTable);
+            }
+
+            // ============== NOTES AND TERMS (Qatari - English & Arabic) ==============
             if (quotation.getNotes() != null && !quotation.getNotes().isEmpty()) {
                 PdfPTable notesTable = new PdfPTable(1);
                 notesTable.setWidthPercentage(100);
@@ -379,17 +425,34 @@ public class QuotationService {
                 document.add(notesTable);
             }
 
+            // English Terms
             if (quotation.getTerms() != null && !quotation.getTerms().isEmpty()) {
                 PdfPTable termsTable = new PdfPTable(1);
                 termsTable.setWidthPercentage(100);
                 termsTable.setSpacingBefore(10);
                 PdfPCell termsCell = new PdfPCell();
+                termsCell.setBackgroundColor(new Color(250, 250, 250));
                 termsCell.setBorder(Rectangle.NO_BORDER);
                 termsCell.setPadding(8);
-                termsCell.addElement(new Paragraph("Terms & Conditions:", boldFont));
+                termsCell.addElement(new Paragraph("Terms & Conditions (English):", boldFont));
                 termsCell.addElement(new Paragraph(quotation.getTerms(), smallFont));
                 termsTable.addCell(termsCell);
                 document.add(termsTable);
+            }
+
+            // Arabic Terms (Qatari)
+            if (quotation.getTermsArabic() != null && !quotation.getTermsArabic().isEmpty()) {
+                PdfPTable termsArabicTable = new PdfPTable(1);
+                termsArabicTable.setWidthPercentage(100);
+                termsArabicTable.setSpacingBefore(10);
+                PdfPCell termsArabicCell = new PdfPCell();
+                termsArabicCell.setBackgroundColor(new Color(250, 250, 250));
+                termsArabicCell.setBorder(Rectangle.NO_BORDER);
+                termsArabicCell.setPadding(8);
+                termsArabicCell.addElement(new Paragraph("الشروط والأحكام (العربية):", boldFont));
+                termsArabicCell.addElement(new Paragraph(quotation.getTermsArabic(), smallFont));
+                termsArabicTable.addCell(termsArabicCell);
+                document.add(termsArabicTable);
             }
 
             // ============== FOOTER ==============

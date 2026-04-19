@@ -26,5 +26,8 @@ public class CreateInvoiceRequest {
 
     private String notes;
     private String terms;
+    private String termsArabic;
+    private String logoUrl;
+    private List<String> insertedImages;
     private String qrCode;
 }

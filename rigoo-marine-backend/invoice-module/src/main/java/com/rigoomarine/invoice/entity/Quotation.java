@@ -58,6 +58,18 @@ public class Quotation {
     @Column(columnDefinition = "TEXT")
     private String terms;
 
+    @Column(columnDefinition = "TEXT")
+    private String termsArabic;
+
+    @Column(columnDefinition = "TEXT")
+    private String logoUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "quotation_inserted_images", joinColumns = @JoinColumn(name = "quotation_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private java.util.List<String> insertedImages = new java.util.ArrayList<>();
+
     private String watermark;
 
     @Column(name = "accepted_at")
@@ -84,6 +96,12 @@ public class Quotation {
         }
         if (watermark == null) {
             watermark = "QUOTATION";
+        }
+        if (terms == null) {
+            terms = "This quotation is valid for 14 days. Prices are subject to change after expiry date.";
+        }
+        if (termsArabic == null) {
+            termsArabic = "هذا العرض صالح لمدة 14 يوماً. الأسعار قابلة للتغيير بعد تاريخ الانتهاء.";
         }
     }
 

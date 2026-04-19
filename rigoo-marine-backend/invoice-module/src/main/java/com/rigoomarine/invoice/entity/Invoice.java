@@ -61,6 +61,18 @@ public class Invoice {
     @Column(columnDefinition = "TEXT")
     private String terms;
 
+    @Column(columnDefinition = "TEXT")
+    private String termsArabic;
+
+    @Column(columnDefinition = "TEXT")
+    private String logoUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "invoice_inserted_images", joinColumns = @JoinColumn(name = "invoice_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private java.util.List<String> insertedImages = new java.util.ArrayList<>();
+
     private String watermark;
 
     private String qrCode;
@@ -89,6 +101,12 @@ public class Invoice {
         }
         if (watermark == null) {
             watermark = "CONFIDENTIAL";
+        }
+        if (terms == null) {
+            terms = "Payment is due within 30 days. Late payments may incur additional charges.";
+        }
+        if (termsArabic == null) {
+            termsArabic = "الدفع مستحق خلال 30 يوماً. قد تتحمل المدفوعات المتأخرة رسوماً إضافية.";
         }
     }
 
