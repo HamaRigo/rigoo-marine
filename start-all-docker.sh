@@ -41,6 +41,10 @@ echo "  Building discovery-service..."
 docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/discovery-service:latest \
   -f rigoo-marine-backend/discovery-service/Dockerfile .
 
+echo "  Building config-server..."
+docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/config-server:latest \
+  -f rigoo-marine-backend/config-server/Dockerfile .
+
 echo "  Building api-gateway..."
 docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/api-gateway:latest \
   -f rigoo-marine-backend/gateway-module/Dockerfile .
@@ -60,7 +64,7 @@ docker build -t ${DOCKERHUB_USERNAME:-rigoomarine}/marine-frontend:latest \
 # Start all services
 echo ""
 echo "Step 3: Starting all services with Docker Compose..."
-docker compose up -d
+docker compose -f docker-compose.partial.yml up -d
 
 echo ""
 echo "========================================="
