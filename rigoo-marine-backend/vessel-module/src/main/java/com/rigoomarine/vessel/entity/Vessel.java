@@ -31,6 +31,7 @@ public class Vessel {
 
     private String model;
 
+    @Column(name = "build_year")
     private String year;
 
     private String length;

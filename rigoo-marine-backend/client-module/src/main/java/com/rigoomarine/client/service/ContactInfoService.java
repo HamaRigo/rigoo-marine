@@ -29,7 +29,7 @@ public class ContactInfoService {
 
     @Transactional(readOnly = true)
     public List<ContactInfoDTO> getContactInfoByCategory(String category) {
-        return contactInfoRepository.findByActiveTrueOrderByDisplayOrder(category).stream()
+        return contactInfoRepository.findByCategoryAndActiveTrueOrderByDisplayOrder(category).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

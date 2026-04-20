@@ -42,10 +42,7 @@ class VesselControllerIntegrationTest {
         CreateVesselRequest request = CreateVesselRequest.builder()
                 .name("Test Vessel")
                 .type("Yacht")
-                .length(25.5)
-                .beam(8.0)
-                .draft(2.5)
-                .buildYear(2020)
+                .length("25.5")
                 .clientId(1L)
                 .build();
 
@@ -63,7 +60,7 @@ class VesselControllerIntegrationTest {
         Vessel vessel1 = Vessel.builder()
                 .name("Vessel 1")
                 .type("Yacht")
-                .length(20.0)
+                .length("20.0")
                 .clientId(1L)
                 .build();
         vesselRepository.save(vessel1);
@@ -71,7 +68,7 @@ class VesselControllerIntegrationTest {
         Vessel vessel2 = Vessel.builder()
                 .name("Vessel 2")
                 .type("Catamaran")
-                .length(30.0)
+                .length("30.0")
                 .clientId(1L)
                 .build();
         vesselRepository.save(vessel2);
@@ -87,7 +84,7 @@ class VesselControllerIntegrationTest {
         Vessel vessel = Vessel.builder()
                 .name("Get Vessel")
                 .type("Yacht")
-                .length(25.0)
+                .length("25.0")
                 .clientId(1L)
                 .build();
         Vessel saved = vesselRepository.save(vessel);
@@ -108,7 +105,7 @@ class VesselControllerIntegrationTest {
         Vessel vessel = Vessel.builder()
                 .name("Update Vessel")
                 .type("Yacht")
-                .length(25.0)
+                .length("25.0")
                 .clientId(1L)
                 .build();
         Vessel saved = vesselRepository.save(vessel);
@@ -116,10 +113,7 @@ class VesselControllerIntegrationTest {
         CreateVesselRequest updateRequest = CreateVesselRequest.builder()
                 .name("Updated Vessel")
                 .type("Catamaran")
-                .length(30.0)
-                .beam(10.0)
-                .draft(3.0)
-                .buildYear(2022)
+                .length("30.0")
                 .clientId(1L)
                 .build();
 
@@ -129,7 +123,7 @@ class VesselControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Vessel"))
                 .andExpect(jsonPath("$.type").value("Catamaran"))
-                .andExpect(jsonPath("$.length").value(30.0));
+                .andExpect(jsonPath("$.length").value("30.0"));
     }
 
     @Test
@@ -137,7 +131,7 @@ class VesselControllerIntegrationTest {
         Vessel vessel = Vessel.builder()
                 .name("Delete Vessel")
                 .type("Yacht")
-                .length(25.0)
+                .length("25.0")
                 .clientId(1L)
                 .build();
         Vessel saved = vesselRepository.save(vessel);

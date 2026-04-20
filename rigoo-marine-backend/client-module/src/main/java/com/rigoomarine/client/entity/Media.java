@@ -34,6 +34,10 @@ public class Media {
     @Column(name = "uploaded_by")
     private Long uploadedBy;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
