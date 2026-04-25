@@ -16,6 +16,10 @@ public class QuotationItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quotation_id", nullable = false, insertable = false, updatable = false)
+    private Quotation quotation;
+
     @Column(nullable = false)
     private Long quotationId;
 

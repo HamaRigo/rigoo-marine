@@ -79,7 +79,7 @@ public class JwtTokenProvider {
         }
     }
 
-    Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         try {
             return Jwts.parser()
                     .verifyWith(secretKey)

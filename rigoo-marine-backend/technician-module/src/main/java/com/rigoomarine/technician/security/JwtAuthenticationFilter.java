@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getEmailFromToken(token);
-            io.jsonwebtoken.Claims claims = jwtTokenProvider.getClaims(token);
+            io.jsonwebtoken.Claims claims = jwtTokenProvider.parseClaims(token);
             List<String> roles = claims.get("roles", List.class);
 
             if (roles == null) {
@@ -68,8 +68,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // Helper method to get claims - needed for filter
-    public io.jsonwebtoken.Claims getClaims(String token) {
-        return jwtTokenProvider.parseClaims(token);
-    }
 }

@@ -16,6 +16,10 @@ public class InvoiceItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id", nullable = false, insertable = false, updatable = false)
+    private Invoice invoice;
+
     @Column(nullable = false)
     private Long invoiceId;
 
