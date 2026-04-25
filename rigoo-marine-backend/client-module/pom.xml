@@ -91,6 +91,15 @@
             <artifactId>invoice-module</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <!-- Retry for transient failures -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
