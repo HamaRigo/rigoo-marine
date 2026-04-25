@@ -608,15 +608,15 @@ export const fileApi = {
   /**
    * Upload file (vessel image, document, etc.)
    * @param {File} file
-   * @param {string} folder - 'vessels' | 'orders' | 'invoices'
-   * @returns {Promise<{url: string}>}
+   * @param {string} category - Category for the file
+   * @returns {Promise<{url: string, title: string, type: string}>}
    */
-  upload: async (file, folder = 'general') => {
+  upload: async (file, category = 'general') => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', folder);
+    if (category) formData.append('category', category);
 
-    const response = await httpClient.post('/files/upload', formData, {
+    const response = await httpClient.post('/api/clients/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -630,7 +630,7 @@ export const fileApi = {
    * @returns {Promise<{message: string}>}
    */
   delete: async (fileId) => {
-    const response = await httpClient.delete(`/files/${fileId}`);
+    const response = await httpClient.delete(`/api/clients/media/${fileId}`);
     return response.data;
   },
 };

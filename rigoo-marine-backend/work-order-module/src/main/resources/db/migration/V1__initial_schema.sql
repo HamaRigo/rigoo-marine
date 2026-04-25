@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS media (
     description TEXT,
     category VARCHAR(100),
     uploaded_by BIGINT,
+    active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -108,6 +109,9 @@ CREATE TABLE IF NOT EXISTS work_orders (
     assigned_technician_id BIGINT,
     notes TEXT,
     service_ids TEXT,
+    issue_category VARCHAR(50),
+    severity VARCHAR(20),
+    symptoms TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
@@ -116,6 +120,15 @@ CREATE TABLE IF NOT EXISTS work_orders (
 CREATE INDEX IF NOT EXISTS idx_work_orders_client_id ON work_orders(client_id);
 CREATE INDEX IF NOT EXISTS idx_work_orders_status ON work_orders(status);
 CREATE INDEX IF NOT EXISTS idx_work_orders_technician ON work_orders(assigned_technician_id);
+
+-- Junction table for work order media attachments
+CREATE TABLE IF NOT EXISTS work_order_media (
+    work_order_id BIGINT NOT NULL,
+    media_id BIGINT NOT NULL,
+    PRIMARY KEY (work_order_id, media_id),
+    FOREIGN KEY (work_order_id) REFERENCES work_orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
+);
 
 -- ============================================
 -- TECHNICIAN SERVICE TABLES

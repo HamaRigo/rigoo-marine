@@ -1,14 +1,35 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Container, Typography, Card, CardContent, TextField, Button, Grid, Chip, Stepper, Step, StepLabel, Alert, Paper, MenuItem, CircularProgress } from '@mui/material';
+import { Box, Container, Typography, Card, CardContent, TextField, Button, Grid, Chip, Stepper, Step, StepLabel, Alert, Paper, MenuItem, CircularProgress, IconButton, List, ListItem, ListItemText, Input } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { publicApi, workOrderApi, vesselApi } from '../../services/api';
+import { publicApi, workOrderApi, vesselApi, fileApi } from '../../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import toast from 'react-hot-toast';
 
 const steps = ['Select Services', 'Vessel Information', 'Describe Issue', 'Review & Submit'];
+
+const ISSUE_CATEGORIES = [
+  'Engine',
+  'Electrical',
+  'Hull',
+  'Propulsion',
+  'Fuel System',
+  'Cooling System',
+  'Navigation',
+  'Safety Equipment',
+  'Other'
+];
+
+const SEVERITY_LEVELS = [
+  { value: 'LOW', label: 'Low - Minor issue, can wait' },
+  { value: 'MEDIUM', label: 'Medium - Needs attention soon' },
+  { value: 'HIGH', label: 'High - Urgent, affects operation' },
+  { value: 'CRITICAL', label: 'Critical - Vessel out of service' }
+];
 
 export default function WorkOrderFlow() {
   const { user, isAuthenticated } = useAuth();
@@ -22,7 +43,12 @@ export default function WorkOrderFlow() {
     issueDescription: '',
     preferredDate: '',
     notes: '',
+    issueCategory: '',
+    severity: 'MEDIUM',
+    symptoms: '',
   });
+  const [uploadedMedia, setUploadedMedia] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   // Fetch services from API
@@ -38,6 +64,18 @@ export default function WorkOrderFlow() {
     queryFn: () => vesselApi.getMyVessels(clientId),
     enabled: isAuthenticated && !!clientId,
     staleTime: 5 * 60 * 1000,
+  });
+
+  // File upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: (file) => fileApi.upload(file, 'work-order'),
+    onSuccess: (data) => {
+      setUploadedMedia((prev) => [...prev, data]);
+      toast.success('File uploaded successfully!');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to upload file');
+    },
   });
 
   // Create work order mutation
@@ -82,7 +120,7 @@ export default function WorkOrderFlow() {
   };
 
   const handleSubmit = () => {
-    // Backend CreateWorkOrderRequest: clientId, vesselId, description, priority, preferredDate, serviceIds, notes
+    // Backend CreateWorkOrderRequest includes: clientId, vesselId, description, priority, preferredDate, serviceIds, notes, issueCategory, severity, symptoms, mediaUrls
     const workOrderData = {
       clientId,
       vesselId: parseInt(formData.vesselId, 10),
@@ -91,6 +129,10 @@ export default function WorkOrderFlow() {
       preferredDate: formData.preferredDate || null,
       serviceIds: selectedServiceIds,
       notes: formData.notes || null,
+      issueCategory: formData.issueCategory || null,
+      severity: formData.severity || 'MEDIUM',
+      symptoms: formData.symptoms || null,
+      mediaUrls: uploadedMedia.map(m => m.url),
     };
 
     createOrderMutation.mutate(workOrderData);
@@ -102,6 +144,30 @@ export default function WorkOrderFlow() {
 
   const handleRegisterRedirect = () => {
     navigate('/register', { state: { from: { pathname: '/dashboard/new-order' } } });
+  };
+
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/quicktime'];
+
+    files.forEach((file) => {
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Please upload images or videos only.`);
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(`File too large: ${file.name}. Max size is 50MB.`);
+        return;
+      }
+      uploadMutation.mutate(file);
+    });
+
+    // Reset input
+    event.target.value = '';
+  };
+
+  const handleRemoveMedia = (index) => {
+    setUploadedMedia((prev) => prev.filter((_, i) => i !== index));
   };
 
   const renderStepContent = (step) => {
@@ -207,6 +273,50 @@ export default function WorkOrderFlow() {
             <Typography color="text.secondary" paragraph>
               Provide details about what service you need
             </Typography>
+
+            {/* Diagnostic Fields */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Issue Category"
+                  value={formData.issueCategory}
+                  onChange={(e) => setFormData({ ...formData, issueCategory: e.target.value })}
+                  helperText="Select the system affected"
+                >
+                  {ISSUE_CATEGORIES.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Severity Level"
+                  value={formData.severity}
+                  onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                  helperText="How urgent is this issue?"
+                >
+                  {SEVERITY_LEVELS.map((level) => (
+                    <MenuItem key={level.value} value={level.value}>{level.label}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+
+            <TextField
+              fullWidth
+              label="Symptoms Checklist"
+              multiline
+              rows={2}
+              value={formData.symptoms}
+              onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
+              placeholder="List any symptoms (e.g., strange noises, leaks, warning lights...)"
+              sx={{ mb: 2 }}
+            />
+
             <TextField
               fullWidth
               label="Issue Description"
@@ -218,6 +328,7 @@ export default function WorkOrderFlow() {
               required
               sx={{ mb: 2 }}
             />
+
             <TextField
               fullWidth
               label="Preferred Service Date"
@@ -227,6 +338,7 @@ export default function WorkOrderFlow() {
               InputLabelProps={{ shrink: true }}
               sx={{ mb: 2 }}
             />
+
             <TextField
               fullWidth
               label="Additional Notes (Optional)"
@@ -235,7 +347,55 @@ export default function WorkOrderFlow() {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Any additional information..."
+              sx={{ mb: 2 }}
             />
+
+            {/* File Upload Section */}
+            <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Attach Photos or Videos
+              </Typography>
+              <Typography color="text.secondary" variant="body2" paragraph>
+                Upload images or videos to help illustrate the issue (max 50MB per file)
+              </Typography>
+
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<AttachFileIcon />}
+                disabled={isUploading || uploadMutation.isPending}
+                sx={{ mb: 2 }}
+              >
+                {isUploading || uploadMutation.isPending ? 'Uploading...' : 'Select Files'}
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  hidden
+                  onChange={handleFileUpload}
+                />
+              </Button>
+
+              {uploadedMedia.length > 0 && (
+                <List dense>
+                  {uploadedMedia.map((media, index) => (
+                    <ListItem
+                      key={media.id}
+                      secondaryAction={
+                        <IconButton edge="end" onClick={() => handleRemoveMedia(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText
+                        primary={media.title}
+                        secondary={`${media.type} - ${media.url}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Paper>
           </Box>
         );
 
@@ -260,6 +420,33 @@ export default function WorkOrderFlow() {
                   {vesselsData?.find((v) => v.id === parseInt(formData.vesselId, 10))?.name || 'N/A'}
                 </Typography>
 
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2">Issue Category</Typography>
+                    <Typography paragraph>{formData.issueCategory || 'Not specified'}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2">Severity</Typography>
+                    <Typography paragraph>
+                      <Chip
+                        label={formData.severity || 'MEDIUM'}
+                        color={
+                          formData.severity === 'CRITICAL' ? 'error' :
+                          formData.severity === 'HIGH' ? 'warning' : 'info'
+                        }
+                        size="small"
+                      />
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                {formData.symptoms && (
+                  <>
+                    <Typography variant="subtitle2" gutterBottom>Symptoms</Typography>
+                    <Typography paragraph>{formData.symptoms}</Typography>
+                  </>
+                )}
+
                 <Typography variant="subtitle2" gutterBottom>Issue Description</Typography>
                 <Typography paragraph>{formData.issueDescription}</Typography>
 
@@ -267,6 +454,29 @@ export default function WorkOrderFlow() {
                   <>
                     <Typography variant="subtitle2" gutterBottom>Preferred Date</Typography>
                     <Typography paragraph>{formData.preferredDate}</Typography>
+                  </>
+                )}
+
+                {formData.notes && (
+                  <>
+                    <Typography variant="subtitle2" gutterBottom>Additional Notes</Typography>
+                    <Typography paragraph>{formData.notes}</Typography>
+                  </>
+                )}
+
+                {uploadedMedia.length > 0 && (
+                  <>
+                    <Typography variant="subtitle2" gutterBottom>Attachments ({uploadedMedia.length})</Typography>
+                    <List dense>
+                      {uploadedMedia.map((media) => (
+                        <ListItem key={media.id}>
+                          <ListItemText
+                            primary={media.title}
+                            secondary={`${media.type}`}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
                   </>
                 )}
               </CardContent>

@@ -23,4 +23,12 @@ public class CreateWorkOrderRequest {
     private LocalDateTime preferredDate;
     private Set<Long> serviceIds;
     private String notes;
+
+    // Diagnostic fields
+    private String issueCategory;
+    private String severity;
+    private String symptoms;
+
+    // Media URLs (already uploaded)
+    private Set<String> mediaUrls;
 }

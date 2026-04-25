@@ -22,4 +22,12 @@ public class WorkOrderDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime completedAt;
+
+    // Diagnostic fields
+    private String issueCategory;
+    private String severity;
+    private String symptoms;
+
+    // Media URLs
+    private Set<String> mediaUrls;
 }

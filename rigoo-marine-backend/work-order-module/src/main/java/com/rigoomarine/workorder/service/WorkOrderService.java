@@ -20,6 +20,15 @@ public class WorkOrderService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public WorkOrderDTO createWorkOrder(CreateWorkOrderRequest request) {
+        // Convert mediaUrls set to JSON string for storage
+        String mediaUrlsJson = null;
+        if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
+            mediaUrlsJson = java.util.stream.Collectors.joining(",", "[", "]")
+                .apply(request.getMediaUrls().stream()
+                    .map(url -> "\"" + url + "\"")
+                    .collect(java.util.ArrayList::new, java.util.ArrayList::add, java.util.ArrayList::addAll));
+        }
+
         WorkOrder workOrder = WorkOrder.builder()
             .clientId(request.getClientId())
             .vesselId(request.getVesselId())
@@ -29,6 +38,10 @@ public class WorkOrderService {
             .status(WorkOrder.WorkOrderStatus.PENDING)
             .serviceIds(request.getServiceIds() != null ? request.getServiceIds() : java.util.Set.of())
             .notes(request.getNotes())
+            .issueCategory(request.getIssueCategory())
+            .severity(request.getSeverity())
+            .symptoms(request.getSymptoms())
+            .mediaUrls(mediaUrlsJson)
             .build();
 
         WorkOrder saved = workOrderRepository.save(workOrder);
@@ -106,6 +119,18 @@ public class WorkOrderService {
     }
 
     private WorkOrderDTO toDTO(WorkOrder workOrder) {
+        // Parse mediaUrls JSON string back to Set
+        java.util.Set<String> mediaUrls = java.util.Set.of();
+        if (workOrder.getMediaUrls() != null && workOrder.getMediaUrls().startsWith("[")) {
+            String json = workOrder.getMediaUrls();
+            // Simple parsing: extract strings between quotes
+            mediaUrls = java.util.regex.Pattern.compile("\"([^\"]+)\"")
+                .matcher(json)
+                .results()
+                .map(m -> m.group(1))
+                .collect(java.util.stream.Collectors.toSet());
+        }
+
         return WorkOrderDTO.builder()
             .id(workOrder.getId())
             .clientId(workOrder.getClientId())
@@ -120,6 +145,10 @@ public class WorkOrderService {
             .createdAt(workOrder.getCreatedAt())
             .updatedAt(workOrder.getUpdatedAt())
             .completedAt(workOrder.getCompletedAt())
+            .issueCategory(workOrder.getIssueCategory())
+            .severity(workOrder.getSeverity())
+            .symptoms(workOrder.getSymptoms())
+            .mediaUrls(mediaUrls)
             .build();
     }
 

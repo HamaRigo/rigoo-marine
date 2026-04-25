@@ -57,6 +57,15 @@ public class WorkOrder {
     @Builder.Default
     private Set<Long> serviceIds = new HashSet<>();
 
+    // Store media URLs as JSON string (media is in separate client-service)
+    @Column(columnDefinition = "TEXT")
+    private String mediaUrls;
+
+    // Diagnostic fields
+    private String issueCategory;
+    private String severity;
+    private String symptoms;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
