@@ -26,6 +26,14 @@ spring:
           uri: lb://client-service
           predicates:
             - Path=/api/auth/**
+        - id: admin-service
+          uri: lb://client-service
+          predicates:
+            - Path=/admin/**
+        - id: technician-dashboard
+          uri: lb://technician-service
+          predicates:
+            - Path=/technician/**
         - id: client-service
           uri: lb://client-service
           predicates:
