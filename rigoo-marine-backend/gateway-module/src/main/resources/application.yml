@@ -16,6 +16,16 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: auth-passthrough
+          uri: lb://client-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+        - id: auth-service
+          uri: lb://client-service
+          predicates:
+            - Path=/api/auth/**
         - id: client-service
           uri: lb://client-service
           predicates:
