@@ -1,7 +1,6 @@
 # Development Docker Compose
-# Use this to run infrastructure locally while developing services on your machine
-
-version: '3.8'
+# Use this to run infrastructure locally while developing services on your machine.
+# Schema is owned by Flyway in the backend modules — no init script.
 
 services:
   # PostgreSQL Database
@@ -14,7 +13,6 @@ services:
       - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./rigoo-marine-backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
