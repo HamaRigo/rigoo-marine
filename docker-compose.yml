@@ -29,6 +29,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     healthcheck:
@@ -36,7 +37,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -54,6 +55,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
@@ -64,7 +66,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -80,6 +82,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
@@ -88,7 +91,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -104,6 +107,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
@@ -112,7 +116,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -130,6 +134,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
@@ -139,7 +144,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -155,15 +160,16 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -179,15 +185,16 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -199,17 +206,23 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
       kafka:
         condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 240s
     networks:
       - marine-network
 
@@ -286,26 +299,26 @@ services:
     networks:
       - marine-network
 
-  # Elasticsearch
-  elasticsearch:
-    image: elasticsearch:8.11.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - marine-network
+  # Elasticsearch (commented out — disabled by default to conserve memory on dev hosts)
+  # elasticsearch:
+  #   image: elasticsearch:8.11.0
+  #   container_name: elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   volumes:
+  #     - elasticsearch-data:/usr/share/elasticsearch/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - marine-network
 
   # Logstash (commented out - enable if Elasticsearch is needed)
   # logstash:

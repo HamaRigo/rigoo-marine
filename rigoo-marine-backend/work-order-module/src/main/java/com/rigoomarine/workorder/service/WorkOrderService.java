@@ -23,10 +23,9 @@ public class WorkOrderService {
         // Convert mediaUrls set to JSON string for storage
         String mediaUrlsJson = null;
         if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
-            mediaUrlsJson = java.util.stream.Collectors.joining(",", "[", "]")
-                .apply(request.getMediaUrls().stream()
-                    .map(url -> "\"" + url + "\"")
-                    .collect(java.util.ArrayList::new, java.util.ArrayList::add, java.util.ArrayList::addAll));
+            mediaUrlsJson = request.getMediaUrls().stream()
+                .map(url -> "\"" + url + "\"")
+                .collect(Collectors.joining(",", "[", "]"));
         }
 
         WorkOrder workOrder = WorkOrder.builder()

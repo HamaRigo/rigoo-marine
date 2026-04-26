@@ -20,9 +20,6 @@ public class QuotationItem {
     @JoinColumn(name = "quotation_id", nullable = false, insertable = false, updatable = false)
     private Quotation quotation;
 
-    @Column(nullable = false)
-    private Long quotationId;
-
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 

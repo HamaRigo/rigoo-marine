@@ -20,9 +20,6 @@ public class InvoiceItem {
     @JoinColumn(name = "invoice_id", nullable = false, insertable = false, updatable = false)
     private Invoice invoice;
 
-    @Column(nullable = false)
-    private Long invoiceId;
-
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 

@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS media (
     description TEXT,
     category VARCHAR(100),
     uploaded_by BIGINT,
-    active BOOLEAN DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS vessels (
     type VARCHAR(100) NOT NULL,
     brand VARCHAR(100),
     model VARCHAR(100),
-    year INTEGER,
-    length DECIMAL(10,2),
+    build_year VARCHAR(20),
+    length VARCHAR(50),
     engine_type VARCHAR(100),
     hull_material VARCHAR(50),
     registration_number VARCHAR(100),
@@ -74,24 +74,23 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT,
     category VARCHAR(100) NOT NULL,
     price DECIMAL(10,2),
-    duration_minutes INTEGER,
-    available BOOLEAN DEFAULT TRUE,
+    active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert default services
-INSERT INTO services (name, description, category, price, duration_minutes, available) VALUES
-('Engine Diagnostics', 'Complete engine computer diagnostics and troubleshooting', 'Engine', 150.00, 60, TRUE),
-('Oil Change', 'Full engine oil change with premium marine oil', 'Maintenance', 250.00, 90, TRUE),
-('Propeller Repair', 'Propeller inspection, repair and balancing', 'Propulsion', 350.00, 180, TRUE),
-('Hull Cleaning', 'Professional hull cleaning and inspection', 'Hull', 200.00, 120, TRUE),
-('Electrical System Check', 'Complete electrical system inspection', 'Electrical', 175.00, 90, TRUE),
-('Winterization', 'Complete winterization service', 'Seasonal', 500.00, 240, TRUE),
-('De-winterization', 'Spring commissioning and de-winterization', 'Seasonal', 450.00, 180, TRUE),
-('Bottom Paint', 'Anti-fouling bottom paint application', 'Hull', 600.00, 300, TRUE),
-('Transmission Service', 'Transmission fluid change and inspection', 'Transmission', 400.00, 120, TRUE),
-('Generator Service', 'On-board generator maintenance and service', 'Generator', 300.00, 90, TRUE)
+INSERT INTO services (name, description, category, price, active) VALUES
+('Engine Diagnostics', 'Complete engine computer diagnostics and troubleshooting', 'Engine', 150.00, TRUE),
+('Oil Change', 'Full engine oil change with premium marine oil', 'Maintenance', 250.00, TRUE),
+('Propeller Repair', 'Propeller inspection, repair and balancing', 'Propulsion', 350.00, TRUE),
+('Hull Cleaning', 'Professional hull cleaning and inspection', 'Hull', 200.00, TRUE),
+('Electrical System Check', 'Complete electrical system inspection', 'Electrical', 175.00, TRUE),
+('Winterization', 'Complete winterization service', 'Seasonal', 500.00, TRUE),
+('De-winterization', 'Spring commissioning and de-winterization', 'Seasonal', 450.00, TRUE),
+('Bottom Paint', 'Anti-fouling bottom paint application', 'Hull', 600.00, TRUE),
+('Transmission Service', 'Transmission fluid change and inspection', 'Transmission', 400.00, TRUE),
+('Generator Service', 'On-board generator maintenance and service', 'Generator', 300.00, TRUE)
 ON CONFLICT DO NOTHING;
 
 -- ============================================
@@ -108,7 +107,7 @@ CREATE TABLE IF NOT EXISTS work_orders (
     preferred_date TIMESTAMP,
     assigned_technician_id BIGINT,
     notes TEXT,
-    service_ids TEXT,
+    media_urls TEXT,
     issue_category VARCHAR(50),
     severity VARCHAR(20),
     symptoms TEXT,
@@ -121,14 +120,13 @@ CREATE INDEX IF NOT EXISTS idx_work_orders_client_id ON work_orders(client_id);
 CREATE INDEX IF NOT EXISTS idx_work_orders_status ON work_orders(status);
 CREATE INDEX IF NOT EXISTS idx_work_orders_technician ON work_orders(assigned_technician_id);
 
--- Junction table for work order media attachments
-CREATE TABLE IF NOT EXISTS work_order_media (
+-- Element collection table for WorkOrder.serviceIds
+CREATE TABLE IF NOT EXISTS work_order_services (
     work_order_id BIGINT NOT NULL,
-    media_id BIGINT NOT NULL,
-    PRIMARY KEY (work_order_id, media_id),
-    FOREIGN KEY (work_order_id) REFERENCES work_orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
+    service_id BIGINT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_work_order_services_wo ON work_order_services(work_order_id);
 
 -- ============================================
 -- TECHNICIAN SERVICE TABLES
@@ -136,12 +134,13 @@ CREATE TABLE IF NOT EXISTS work_order_media (
 
 CREATE TABLE IF NOT EXISTS technicians (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    specialization VARCHAR(100),
-    certifications TEXT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(50),
+    specialization TEXT,
+    certification VARCHAR(255),
+    available BOOLEAN DEFAULT TRUE,
     experience_years INTEGER,
-    status VARCHAR(50) DEFAULT 'AVAILABLE',
-    rating DECIMAL(3,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -180,13 +179,13 @@ CREATE TABLE IF NOT EXISTS invoices (
     issue_date TIMESTAMP NOT NULL,
     due_date TIMESTAMP NOT NULL,
     subtotal DECIMAL(10,2),
-    tax_rate DECIMAL(5,2),
+    tax_rate DECIMAL(10,2),
     tax_amount DECIMAL(10,2),
     total DECIMAL(10,2) NOT NULL,
     notes TEXT,
     terms TEXT,
     terms_arabic TEXT,
-    logo_url VARCHAR(500),
+    logo_url TEXT,
     watermark VARCHAR(100),
     qr_code VARCHAR(500),
     paid_at TIMESTAMP,
@@ -197,7 +196,7 @@ CREATE TABLE IF NOT EXISTS invoices (
 CREATE TABLE IF NOT EXISTS invoice_items (
     id BIGSERIAL PRIMARY KEY,
     invoice_id BIGINT NOT NULL,
-    description VARCHAR(500),
+    description TEXT NOT NULL,
     quantity INTEGER NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
     tax_rate DECIMAL(5,2) DEFAULT 0,
@@ -211,6 +210,7 @@ CREATE TABLE IF NOT EXISTS invoice_inserted_images (
 
 CREATE INDEX IF NOT EXISTS idx_invoices_work_order ON invoices(work_order_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_client ON invoices(client_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice ON invoice_items(invoice_id);
 
 -- ============================================
 -- QUOTATION SERVICE TABLES
@@ -224,13 +224,13 @@ CREATE TABLE IF NOT EXISTS quotations (
     issue_date TIMESTAMP NOT NULL,
     expiry_date TIMESTAMP NOT NULL,
     subtotal DECIMAL(10,2),
-    tax_rate DECIMAL(5,2),
+    tax_rate DECIMAL(10,2),
     tax_amount DECIMAL(10,2),
     total DECIMAL(10,2) NOT NULL,
     notes TEXT,
     terms TEXT,
     terms_arabic TEXT,
-    logo_url VARCHAR(500),
+    logo_url TEXT,
     watermark VARCHAR(100),
     accepted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -240,7 +240,7 @@ CREATE TABLE IF NOT EXISTS quotations (
 CREATE TABLE IF NOT EXISTS quotation_items (
     id BIGSERIAL PRIMARY KEY,
     quotation_id BIGINT NOT NULL,
-    description VARCHAR(500),
+    description TEXT NOT NULL,
     quantity INTEGER NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
     tax_rate DECIMAL(5,2) DEFAULT 0,
@@ -260,17 +260,18 @@ CREATE INDEX IF NOT EXISTS idx_quotations_client ON quotations(client_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    client_id BIGINT NOT NULL,
     type VARCHAR(50) NOT NULL,
-    title VARCHAR(255),
-    message TEXT,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    channel VARCHAR(50),
     read BOOLEAN DEFAULT FALSE,
-    reference_id BIGINT,
-    reference_type VARCHAR(50),
+    sent_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_client ON notifications(client_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 
 CREATE TABLE IF NOT EXISTS email_templates (

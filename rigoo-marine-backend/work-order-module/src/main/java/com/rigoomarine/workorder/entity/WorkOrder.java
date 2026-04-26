@@ -48,12 +48,12 @@ public class WorkOrder {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @ManyToMany
-    @JoinTable(
+    @ElementCollection
+    @CollectionTable(
         name = "work_order_services",
-        joinColumns = @JoinColumn(name = "work_order_id"),
-        inverseJoinColumns = @JoinColumn(name = "service_id")
+        joinColumns = @JoinColumn(name = "work_order_id")
     )
+    @Column(name = "service_id")
     @Builder.Default
     private Set<Long> serviceIds = new HashSet<>();
 
