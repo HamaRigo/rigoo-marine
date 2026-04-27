@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Box, Container, Paper, Typography, TextField, Button, Link as MuiLink, Alert, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Container, Paper, Typography, TextField, Button, Link as MuiLink, Alert, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { authApi } from '../../services/api';
+import { defaultPathForRole } from '../../utils/routes';
 
 const userTypes = [
   { value: 'CLIENT', label: 'Boat Owner / Client' },
@@ -20,11 +20,10 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [duplicateEmailOpen, setDuplicateEmailOpen] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,12 +42,17 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const { confirmPassword, ...registerData } = formData;
-      const response = await authApi.register(registerData);
-      register(response.user, response.token);
-      navigate(from, { replace: true });
+      const { confirmPassword, userType, ...rest } = formData;
+      const newUser = await register({ ...rest, role: userType });
+      const target = location.state?.from?.pathname || defaultPathForRole(newUser?.role);
+      navigate(target, { replace: true });
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      const backendMessage = err.response?.data?.message || err.response?.data?.error;
+      if (err.response?.status === 400 && /already exists/i.test(backendMessage || '')) {
+        setDuplicateEmailOpen(true);
+      } else {
+        setError(backendMessage || err.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -166,6 +170,31 @@ export default function Register() {
           </Typography>
         </Paper>
       </Container>
+
+      <Dialog
+        open={duplicateEmailOpen}
+        onClose={() => setDuplicateEmailOpen(false)}
+        aria-labelledby="duplicate-email-dialog-title"
+      >
+        <DialogTitle id="duplicate-email-dialog-title">Email already registered</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            An account with <strong>{formData.email}</strong> already exists. Sign in instead, or use a different email to register.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDuplicateEmailOpen(false)}>Use different email</Button>
+          <Button
+            component={Link}
+            to="/login"
+            state={{ email: formData.email }}
+            variant="contained"
+            autoFocus
+          >
+            Go to login
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

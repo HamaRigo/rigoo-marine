@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Box, Container, Paper, Typography, TextField, Button, Link as MuiLink, Alert } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { authApi } from '../../services/api';
+import { defaultPathForRole } from '../../utils/routes';
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -12,19 +12,17 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const response = await authApi.login(formData.email, formData.password);
-      login(response.user, response.token);
-      navigate(from, { replace: true });
+      const userData = await login(formData.email, formData.password);
+      const target = location.state?.from?.pathname || defaultPathForRole(userData?.role);
+      navigate(target, { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

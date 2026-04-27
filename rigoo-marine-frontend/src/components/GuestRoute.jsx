@@ -1,13 +1,14 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
+import { defaultPathForRole } from '../utils/routes';
 
 /**
  * Route wrapper for guest-only pages (login, register)
- * Redirects authenticated users to dashboard
+ * Redirects authenticated users to the landing page appropriate for their role.
  */
 export default function GuestRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -18,7 +19,7 @@ export default function GuestRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={defaultPathForRole(user?.role)} replace />;
   }
 
   return children;

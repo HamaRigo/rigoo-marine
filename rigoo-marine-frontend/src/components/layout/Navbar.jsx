@@ -11,16 +11,11 @@ const navLinks = [
   { name: 'About', path: '/about' },
 ];
 
-const authenticatedLinks = [
-  { name: 'Dashboard', path: '/dashboard' },
-  { name: 'My Orders', path: '/dashboard/orders' },
-  { name: 'My Vessels', path: '/dashboard/vessels' },
-];
-
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = user?.role === 'ADMIN';
 
   const handleLogout = () => {
     logout();
@@ -39,13 +34,13 @@ export default function Navbar() {
         ))}
         {isAuthenticated ? (
           <>
-            {authenticatedLinks.map((link) => (
-              <ListItem key={link.name} disablePadding>
-                <ListItemButton component={Link} to={link.path}>
-                  <ListItemText primary={link.name} />
+            {isAdmin && (
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/admin">
+                  <ListItemText primary="Dashboard" />
                 </ListItemButton>
               </ListItem>
-            ))}
+            )}
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>
                 <ListItemText primary="Logout" />
@@ -106,9 +101,11 @@ export default function Navbar() {
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
               {isAuthenticated ? (
                 <>
-                  <Button component={Link} to="/dashboard" sx={{ color: 'white' }}>
-                    Dashboard
-                  </Button>
+                  {isAdmin && (
+                    <Button component={Link} to="/admin" sx={{ color: 'white' }}>
+                      Dashboard
+                    </Button>
+                  )}
                   <Button onClick={handleLogout} sx={{ color: 'white' }}>
                     Logout
                   </Button>

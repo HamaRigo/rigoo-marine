@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import EngineRepairIcon from '@mui/icons-material/Build';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import StarIcon from '@mui/icons-material/Star';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
   return (
     <Box>
       {/* Hero Section */}
@@ -33,15 +35,17 @@ export default function Home() {
             >
               Browse Services
             </Button>
-            <Button
-              component={Link}
-              to="/register"
-              variant="outlined"
-              size="large"
-              sx={{ color: 'white', borderColor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
-            >
-              Get Started
-            </Button>
+            {!isAuthenticated && (
+              <Button
+                component={Link}
+                to="/register"
+                variant="outlined"
+                size="large"
+                sx={{ color: 'white', borderColor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
+              >
+                Get Started
+              </Button>
+            )}
           </Box>
         </Container>
       </Box>
@@ -169,6 +173,7 @@ export default function Home() {
       </Box>
 
       {/* CTA Section */}
+      {!isAuthenticated && (
       <Box sx={{ bgcolor: 'primary.dark', color: 'white', py: 6, textAlign: 'center' }}>
         <Container maxWidth="md">
           <Typography variant="h4" gutterBottom>
@@ -188,6 +193,7 @@ export default function Home() {
           </Button>
         </Container>
       </Box>
+      )}
     </Box>
   );
 }
