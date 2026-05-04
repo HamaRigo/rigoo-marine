@@ -49,7 +49,8 @@ echo "Kafka UI:   http://localhost:8090"
 echo ""
 echo "Now start each Spring service in its own terminal (mvn spring-boot:run):"
 for m in discovery-service gateway-module client-module vessel-module service-module \
-         work-order-module technician-module invoice-module notification-module; do
+         work-order-module technician-module invoice-module notification-module \
+         marketplace-module; do
     echo "  cd rigoo-marine-backend/$m && mvn spring-boot:run"
 done
 echo ""
