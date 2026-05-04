@@ -102,3 +102,8 @@ logs/
 *.pid
 *.seed
 *.pid.lock
+
+# Local-only planning notes
+MOBILE_PLAN.md
+PLAN.md
+PAUSE_TASKS.md
