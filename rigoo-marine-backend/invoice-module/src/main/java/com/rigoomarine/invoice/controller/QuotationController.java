@@ -5,9 +5,14 @@ import com.rigoomarine.invoice.dto.CreateQuotationRequest;
 import com.rigoomarine.invoice.service.QuotationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -18,6 +23,7 @@ public class QuotationController {
 
     private final QuotationService quotationService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<QuotationDTO> createQuotation(@Valid @RequestBody CreateQuotationRequest request) {
         return ResponseEntity.ok(quotationService.createQuotation(request));
@@ -28,7 +34,26 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.getQuotationsByClientId(clientId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
+    public ResponseEntity<Page<QuotationDTO>> searchQuotations(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "issueDate,desc") String sort
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        String[] parts = sort.split(",", 2);
+        Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(dir, parts[0]));
+        return ResponseEntity.ok(quotationService.searchPaged(q, status, clientId, pageable));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
     public ResponseEntity<List<QuotationDTO>> getAllQuotations() {
         return ResponseEntity.ok(quotationService.getAllQuotations());
     }
@@ -43,6 +68,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.getQuotationByNumber(quotationNumber));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/status")
     public ResponseEntity<QuotationDTO> updateQuotationStatus(
         @PathVariable Long id,
@@ -51,6 +77,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.updateQuotationStatus(id, status));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQuotation(@PathVariable Long id) {
         quotationService.deleteQuotation(id);

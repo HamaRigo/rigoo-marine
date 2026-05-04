@@ -8,10 +8,15 @@ import com.rigoomarine.invoice.repository.QuotationRepository;
 import com.rigoomarine.invoice.dto.QuotationDTO;
 import com.rigoomarine.invoice.dto.CreateQuotationRequest;
 import com.rigoomarine.invoice.dto.QuotationItemDTO;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -92,6 +97,28 @@ public class QuotationService {
         return quotationRepository.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<QuotationDTO> searchPaged(String q, String status, Long clientId, Pageable pageable) {
+        Specification<Quotation> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (q != null && !q.isBlank()) {
+                String like = "%" + q.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("quotationNumber")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like)
+                ));
+            }
+            if (status != null && !status.isBlank()) {
+                predicates.add(cb.equal(root.get("status"), Quotation.QuotationStatus.valueOf(status)));
+            }
+            if (clientId != null) {
+                predicates.add(cb.equal(root.get("clientId"), clientId));
+            }
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return quotationRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)

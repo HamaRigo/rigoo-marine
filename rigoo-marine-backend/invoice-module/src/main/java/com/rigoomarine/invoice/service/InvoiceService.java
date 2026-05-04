@@ -8,10 +8,15 @@ import com.rigoomarine.invoice.repository.InvoiceRepository;
 import com.rigoomarine.invoice.dto.InvoiceDTO;
 import com.rigoomarine.invoice.dto.CreateInvoiceRequest;
 import com.rigoomarine.invoice.dto.InvoiceItemDTO;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -92,6 +97,28 @@ public class InvoiceService {
         return invoiceRepository.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InvoiceDTO> searchPaged(String q, String status, Long clientId, Pageable pageable) {
+        Specification<Invoice> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (q != null && !q.isBlank()) {
+                String like = "%" + q.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("invoiceNumber")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like)
+                ));
+            }
+            if (status != null && !status.isBlank()) {
+                predicates.add(cb.equal(root.get("status"), Invoice.InvoiceStatus.valueOf(status)));
+            }
+            if (clientId != null) {
+                predicates.add(cb.equal(root.get("clientId"), clientId));
+            }
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return invoiceRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
