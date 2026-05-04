@@ -1,0 +1,13 @@
+{
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "switchTo": "تغيير اللغة"
+  },
+  "actions": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "submit": "إرسال",
+    "loading": "جارٍ التحميل..."
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "filters": {
+    "search": "بحث",
+    "searchPlaceholder": "اكتب للبحث…",
+    "status": "الحالة",
+    "role": "الدور",
+    "category": "الفئة",
+    "verified": "مُؤكَّد",
+    "all": "الكل",
+    "active": "النشِط فقط",
+    "inactive": "غير النشِط فقط"
+  },
+  "pagination": {
+    "rowsPerPage": "عدد الصفوف",
+    "of": "من",
+    "empty": "لا توجد نتائج.",
+    "loading": "جارٍ التحميل…",
+    "error": "تعذّر التحميل."
+  },
+  "users": {
+    "title": "إدارة المستخدمين",
+    "columns": {
+      "id": "المعرّف",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "role": "الدور",
+      "verified": "مُؤكَّد",
+      "createdAt": "تاريخ الإنشاء"
+    },
+    "yes": "نعم",
+    "no": "لا",
+    "actions": "الإجراءات",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "promote": "تغيير الدور"
+  },
+  "orders": {
+    "title": "إدارة الطلبات",
+    "columns": {
+      "id": "رقم الطلب",
+      "client": "العميل",
+      "vessel": "المركب",
+      "category": "الفئة",
+      "status": "الحالة",
+      "submittedBy": "مُقدِّم الطلب",
+      "createdAt": "تاريخ الإنشاء"
+    },
+    "actions": "الإجراءات",
+    "manage": "إدارة",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "approveSuccess": "تمت الموافقة على طلب الخدمة.",
+    "rejectSuccess": "تم رفض طلب الخدمة.",
+    "actionFailed": "تعذّر تحديث الطلب. يرجى المحاولة مرة أخرى.",
+    "rejectDialog": {
+      "title": "رفض طلب الخدمة رقم {{id}}",
+      "body": "اختياريًا اشرح للعميل سبب الرفض. سيُحفظ السبب مع طلب العمل ويظهر له.",
+      "reasonLabel": "السبب (اختياري)",
+      "reasonPlaceholder": "مثال: المركب خارج منطقة الخدمة، يرجى التواصل معنا مباشرة.",
+      "cancel": "إلغاء",
+      "confirm": "تأكيد الرفض"
+    }
+  },
+  "services": {
+    "title": "كتالوج الخدمات",
+    "columns": {
+      "id": "المعرّف",
+      "name": "الاسم",
+      "category": "الفئة",
+      "price": "السعر",
+      "active": "نشِط"
+    },
+    "actions": "الإجراءات",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "invoices": {
+    "title": "الفواتير",
+    "columns": {
+      "number": "الرقم",
+      "client": "العميل",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "الاستحقاق",
+      "total": "الإجمالي",
+      "status": "الحالة"
+    },
+    "actions": "الإجراءات",
+    "view": "عرض",
+    "downloadPdf": "PDF"
+  },
+  "quotations": {
+    "title": "عروض الأسعار",
+    "columns": {
+      "number": "الرقم",
+      "client": "العميل",
+      "issueDate": "تاريخ الإصدار",
+      "expiryDate": "تاريخ الانتهاء",
+      "total": "الإجمالي",
+      "status": "الحالة"
+    },
+    "actions": "الإجراءات",
+    "view": "عرض",
+    "downloadPdf": "PDF"
+  }
+}

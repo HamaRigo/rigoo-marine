@@ -1,0 +1,49 @@
+{
+  "hero": {
+    "title": "Professional Marine Services",
+    "subtitle": "Expert repair, maintenance, and restoration for all types of vessels",
+    "browseServices": "Browse Services",
+    "getStarted": "Get Started"
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Comprehensive solutions for all your marine needs",
+    "viewAll": "View All Services",
+    "mechanical": {
+      "title": "Mechanical Services",
+      "description": "Engine repair, maintenance, and diagnostics for all major brands"
+    },
+    "structural": {
+      "title": "Structural Services",
+      "description": "Hull repair, fiberglass work, and structural modifications"
+    },
+    "finishing": {
+      "title": "Finishing Services",
+      "description": "Gel coat restoration, painting, and interior refinishing"
+    }
+  },
+  "whyChoose": {
+    "title": "Why Choose Rigoo Marine",
+    "experienced": {
+      "title": "Experienced Technicians",
+      "description": "Certified professionals with years of marine industry experience"
+    },
+    "quality": {
+      "title": "Quality Parts",
+      "description": "We use only OEM and high-quality aftermarket parts"
+    },
+    "fast": {
+      "title": "Fast Turnaround",
+      "description": "Quick service without compromising on quality"
+    },
+    "transparent": {
+      "title": "Transparent Pricing",
+      "description": "No hidden fees - clear quotes before any work begins"
+    }
+  },
+  "cta": {
+    "title": "Ready to Get Started?",
+    "subtitle": "Create an account and request service for your vessel today",
+    "button": "Create Account"
+  }
+}

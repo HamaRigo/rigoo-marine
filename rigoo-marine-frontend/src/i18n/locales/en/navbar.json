@@ -1,0 +1,16 @@
+{
+  "brand": "Rigoo Marine",
+  "links": {
+    "home": "Home",
+    "services": "Services",
+    "marketplace": "Marketplace",
+    "gallery": "Gallery",
+    "about": "About"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  }
+}

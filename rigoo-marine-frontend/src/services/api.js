@@ -9,13 +9,15 @@ import httpClient from './httpClient';
 // ============== AUTH APIs ==============
 export const authApi = {
   /**
-   * Login user
-   * @param {string} email
+   * Login by phone (preferred) or email + password.
+   * @param {string} identifier  phone (E.164 or local) or email
    * @param {string} password
    * @returns {Promise<{user: object, token: string, refreshToken?: string, expiresAt?: string}>}
    */
-  login: async (email, password) => {
-    const response = await httpClient.post('/auth/login', { email, password });
+  login: async (identifier, password) => {
+    const looksLikeEmail = typeof identifier === 'string' && identifier.includes('@');
+    const body = looksLikeEmail ? { email: identifier, password } : { phone: identifier, password };
+    const response = await httpClient.post('/auth/login', body);
     return response.data;
   },
 
@@ -61,11 +63,19 @@ export const authApi = {
   },
 
   /**
-   * Resend verification email
+   * Resend verification email (auth required)
    * @returns {Promise<{message: string}>}
    */
   resendVerification: async () => {
     const response = await httpClient.post('/auth/resend-verification');
+    return response.data;
+  },
+
+  /**
+   * Reset password with token (Task #6)
+   */
+  resetPasswordWithToken: async (token, newPassword) => {
+    const response = await httpClient.post('/auth/reset-password', { token, newPassword });
     return response.data;
   },
 
@@ -130,44 +140,6 @@ export const publicApi = {
     const response = await httpClient.get(`/api/services/${id}`);
     return response.data;
   },
-
-  /**
-   * Get gallery images
-   * @returns {Promise<Array>}
-   */
-  getGallery: async () => {
-    const response = await httpClient.get('/gallery');
-    return response.data;
-  },
-
-  /**
-   * Get company information
-   * @returns {Promise<object>}
-   */
-  getCompanyInfo: async () => {
-    const response = await httpClient.get('/company-info');
-    return response.data;
-  },
-
-  /**
-   * Submit contact form
-   * @param {object} contactData - { name, email, phone, message }
-   * @returns {Promise<{message: string}>}
-   */
-  submitContact: async (contactData) => {
-    const response = await httpClient.post('/contact', contactData);
-    return response.data;
-  },
-
-  /**
-   * Submit quote request
-   * @param {object} quoteData - { name, email, phone, service, message }
-   * @returns {Promise<{message: string}>}
-   */
-  submitQuoteRequest: async (quoteData) => {
-    const response = await httpClient.post('/quote-request', quoteData);
-    return response.data;
-  },
 };
 
 // ============== WORK ORDER APIs ==============
@@ -179,6 +151,34 @@ export const workOrderApi = {
    */
   create: async (workOrderData) => {
     const response = await httpClient.post('/api/work-orders', workOrderData);
+    return response.data;
+  },
+
+  /**
+   * Submit a service request (Task #5).
+   * Status starts at PENDING_APPROVAL until an admin approves.
+   * @param {object} payload - {
+   *   clientId, vesselId, submittedByRole ('CLIENT'|'TECHNICIAN'),
+   *   description, locationText, latitude?, longitude?, phone?,
+   *   issueCategory (enum), issueCategoryOther?, mediaUrls?
+   * }
+   */
+  submitServiceRequest: async (payload) => {
+    const response = await httpClient.post('/api/work-orders/service-request', payload);
+    return response.data;
+  },
+
+  approve: async (id, approverId) => {
+    const response = await httpClient.put(`/api/work-orders/${id}/approve`, null, {
+      params: { approverId },
+    });
+    return response.data;
+  },
+
+  reject: async (id, approverId, reason) => {
+    const response = await httpClient.put(`/api/work-orders/${id}/reject`, null, {
+      params: { approverId, reason },
+    });
     return response.data;
   },
 
@@ -262,6 +262,15 @@ export const vesselApi = {
     const response = await httpClient.get('/api/vessels/my', {
       params: { clientId },
     });
+    return response.data;
+  },
+
+  /**
+   * List all vessels (technician picker for service requests).
+   * @returns {Promise<Array>}
+   */
+  getAll: async () => {
+    const response = await httpClient.get('/api/vessels');
     return response.data;
   },
 
@@ -388,26 +397,33 @@ export const adminApi = {
     return response.data;
   },
 
-  // Orders
-  getAllOrders: async (filters = {}) => {
-    const response = await httpClient.get('/admin/orders', { params: filters });
-    return response.data;
+  // Orders — call work-order-service directly via gateway (admin endpoints removed Apr 2026)
+  searchOrders: async (params = {}) => {
+    const response = await httpClient.get('/api/work-orders', { params });
+    return response.data; // Page<WorkOrderDTO>
   },
 
   getOrderById: async (id) => {
-    const response = await httpClient.get(`/admin/orders/${id}`);
+    const response = await httpClient.get(`/api/work-orders/${id}`);
     return response.data;
   },
 
   assignTechnician: async (orderId, technicianId) => {
-    const response = await httpClient.post(`/admin/orders/${orderId}/assign`, { technicianId });
+    const response = await httpClient.put(`/api/work-orders/${orderId}/assign`, null, {
+      params: { technicianId },
+    });
     return response.data;
   },
 
   // Users
-  getAllUsers: async (filters = {}) => {
-    const response = await httpClient.get('/admin/users', { params: filters });
-    return response.data;
+  searchUsers: async (params = {}) => {
+    const response = await httpClient.get('/admin/users', { params });
+    return response.data; // Page<ClientDTO>
+  },
+
+  getAllUsers: async () => {
+    const response = await httpClient.get('/admin/users/all');
+    return response.data; // List<ClientDTO> (used by AdminDashboard stats)
   },
 
   updateUserRole: async (userId, role) => {
@@ -425,65 +441,65 @@ export const adminApi = {
     return response.data;
   },
 
-  // Services
-  getAllServices: async () => {
-    const response = await httpClient.get('/admin/services');
-    return response.data;
+  // Services — direct via gateway
+  searchServices: async (params = {}) => {
+    const response = await httpClient.get('/api/services', { params });
+    return response.data; // Page<ServiceDTO>
   },
 
   createService: async (serviceData) => {
-    const response = await httpClient.post('/admin/services', serviceData);
+    const response = await httpClient.post('/api/services', serviceData);
     return response.data;
   },
 
   updateService: async (id, serviceData) => {
-    const response = await httpClient.put(`/admin/services/${id}`, serviceData);
+    const response = await httpClient.put(`/api/services/${id}`, serviceData);
     return response.data;
   },
 
   deleteService: async (id) => {
-    const response = await httpClient.delete(`/admin/services/${id}`);
+    const response = await httpClient.delete(`/api/services/${id}`);
     return response.data;
   },
 
-  // Invoices
-  getAllInvoices: async (filters = {}) => {
-    const response = await httpClient.get('/admin/invoices', { params: filters });
-    return response.data;
+  // Invoices — direct via gateway
+  searchInvoices: async (params = {}) => {
+    const response = await httpClient.get('/api/invoices', { params });
+    return response.data; // Page<InvoiceDTO>
   },
 
   createInvoice: async (invoiceData) => {
-    const response = await httpClient.post('/admin/invoices', invoiceData);
+    const response = await httpClient.post('/api/invoices', invoiceData);
     return response.data;
   },
 
   updateInvoiceStatus: async (invoiceId, status) => {
-    const response = await httpClient.put(`/admin/invoices/${invoiceId}/status`, null, {
+    const response = await httpClient.put(`/api/invoices/${invoiceId}/status`, null, {
       params: { status },
     });
     return response.data;
   },
 
-  // Quotations
-  getAllQuotations: async (filters = {}) => {
-    const response = await httpClient.get('/admin/quotations', { params: filters });
-    return response.data;
+  // Quotations — direct via gateway
+  searchQuotations: async (params = {}) => {
+    const response = await httpClient.get('/api/quotations', { params });
+    return response.data; // Page<QuotationDTO>
   },
 
   createQuotation: async (quotationData) => {
-    const response = await httpClient.post('/admin/quotations', quotationData);
+    const response = await httpClient.post('/api/quotations', quotationData);
     return response.data;
   },
 
   updateQuotationStatus: async (quotationId, status) => {
-    const response = await httpClient.put(`/admin/quotations/${quotationId}/status`, null, {
+    const response = await httpClient.put(`/api/quotations/${quotationId}/status`, null, {
       params: { status },
     });
     return response.data;
   },
 
   downloadQuotationPdf: async (id) => {
-    const response = await httpClient.get(`/admin/quotations/${id}/pdf`, {
+    const response = await httpClient.get(`/api/quotations/${id}/pdf`, {
       responseType: 'blob',
     });
     return response.data;
@@ -553,6 +569,73 @@ export const adminApi = {
 
   deleteContactInfo: async (id) => {
     const response = await httpClient.delete(`/admin/contact-info/${id}`);
+    return response.data;
+  },
+};
+
+// ============== MARKETPLACE APIs ==============
+export const marketplaceApi = {
+  /**
+   * Public paged listing search.
+   * @param {object} params - mode (BUY|RENT), q, boatType, lengthMin/Max, yearMin/Max,
+   *   priceMin/Max, location, page, size, sort, adminStatus
+   */
+  searchListings: async (params = {}) => {
+    const response = await httpClient.get('/api/listings', { params });
+    return response.data; // Spring Page<BoatListingDTO>
+  },
+
+  /** Public detail by id. */
+  getListingById: async (id) => {
+    const response = await httpClient.get(`/api/listings/${id}`);
+    return response.data;
+  },
+
+  /** Public detail by SEO slug — preferred from the gallery. */
+  getListingBySlug: async (slug) => {
+    const response = await httpClient.get(`/api/listings/by-slug/${slug}`);
+    return response.data;
+  },
+
+  /** Admin create. */
+  createListing: async (dto) => {
+    const response = await httpClient.post('/api/listings', dto);
+    return response.data;
+  },
+
+  /** Admin update. */
+  updateListing: async (id, dto) => {
+    const response = await httpClient.put(`/api/listings/${id}`, dto);
+    return response.data;
+  },
+
+  /** Admin delete. */
+  deleteListing: async (id) => {
+    const response = await httpClient.delete(`/api/listings/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Public inquiry submit. listingId is required for BUY/RENT/INSPECTION,
+   * optional for GENERAL (homepage Contact us).
+   */
+  createInquiry: async (payload) => {
+    const response = await httpClient.post('/api/listings/inquiries', payload);
+    return response.data;
+  },
+
+  /** Admin inquiry inbox. */
+  searchInquiries: async (params = {}) => {
+    const response = await httpClient.get('/api/listings/inquiries', { params });
+    return response.data; // Spring Page<BoatInquiryDTO>
+  },
+
+  /** Admin inquiry status update. */
+  updateInquiryStatus: async (id, status, adminNotes) => {
+    const response = await httpClient.put(`/api/listings/inquiries/${id}/status`, {
+      status,
+      adminNotes: adminNotes ?? '',
+    });
     return response.data;
   },
 };
@@ -643,6 +726,7 @@ export default {
   invoice: invoiceApi,
   dashboard: dashboardApi,
   admin: adminApi,
+  marketplace: marketplaceApi,
   technician: technicianApi,
   file: fileApi,
 };

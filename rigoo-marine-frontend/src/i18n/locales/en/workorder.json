@@ -1,0 +1,71 @@
+{
+  "serviceRequest": {
+    "title": "Submit a Service Request",
+    "subtitle": "Tell us about the issue and we'll route it to the right team. Your request needs admin approval before a technician is assigned.",
+    "vessel": {
+      "label": "Vessel",
+      "placeholder": "Select a vessel",
+      "noVessels": "No registered vessels yet.",
+      "addFirst": "Add a vessel",
+      "techHint": "As a technician, you can submit on behalf of any registered vessel."
+    },
+    "phone": {
+      "label": "Contact phone",
+      "helper": "Pre-filled from your profile — edit if you want to be reached on a different number."
+    },
+    "location": {
+      "label": "Location",
+      "placeholder": "Marina name, dock number, or address",
+      "useGps": "Use my GPS",
+      "gpsLoading": "Locating…",
+      "gpsCaptured": "GPS captured ({{lat}}, {{lng}})",
+      "gpsClear": "Clear GPS",
+      "gpsUnsupported": "GPS not available in this browser.",
+      "gpsDenied": "GPS permission denied."
+    },
+    "category": {
+      "label": "Issue category",
+      "placeholder": "Select a category",
+      "options": {
+        "ENGINE": "Engine",
+        "ELECTRICAL": "Electrical",
+        "HULL": "Hull",
+        "PROPULSION": "Propulsion",
+        "NAVIGATION": "Navigation",
+        "PLUMBING": "Plumbing",
+        "SAFETY": "Safety",
+        "MAINTENANCE": "Maintenance",
+        "OTHER": "Other (specify)"
+      },
+      "otherLabel": "Describe the category",
+      "otherPlaceholder": "e.g. Refrigeration, Sail rigging…"
+    },
+    "description": {
+      "label": "Describe the issue",
+      "placeholder": "What's wrong, when did it start, anything you've already tried…"
+    },
+    "media": {
+      "label": "Photos / video (optional)",
+      "addFiles": "Add files",
+      "constraints": "Up to 5 files. Max 10 MB each. Images or MP4.",
+      "tooMany": "You can attach at most 5 files.",
+      "tooLarge": "{{name}} is over 10 MB.",
+      "wrongType": "{{name}} is not an image or MP4.",
+      "uploading": "Uploading…",
+      "remove": "Remove"
+    },
+    "submit": "Submit request",
+    "submitting": "Submitting…",
+    "cancel": "Cancel",
+    "success": "Service request submitted. An admin will review it shortly.",
+    "errors": {
+      "loadVessels": "Could not load vessels.",
+      "noVessel": "Please pick a vessel.",
+      "noLocation": "Please add a location.",
+      "noCategory": "Please pick a category.",
+      "noDescription": "Please describe the issue.",
+      "rateLimit": "Too many requests. Please wait a moment and try again.",
+      "submitFailed": "Could not submit your request. Please try again."
+    }
+  }
+}

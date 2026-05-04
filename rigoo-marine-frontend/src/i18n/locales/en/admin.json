@@ -1,0 +1,106 @@
+{
+  "filters": {
+    "search": "Search",
+    "searchPlaceholder": "Type to search…",
+    "status": "Status",
+    "role": "Role",
+    "category": "Category",
+    "verified": "Verified",
+    "all": "All",
+    "active": "Active only",
+    "inactive": "Inactive only"
+  },
+  "pagination": {
+    "rowsPerPage": "Rows per page",
+    "of": "of",
+    "empty": "No results.",
+    "loading": "Loading…",
+    "error": "Failed to load."
+  },
+  "users": {
+    "title": "User Management",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "verified": "Verified",
+      "createdAt": "Created"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "promote": "Change role"
+  },
+  "orders": {
+    "title": "Order Management",
+    "columns": {
+      "id": "Order #",
+      "client": "Client",
+      "vessel": "Vessel",
+      "category": "Category",
+      "status": "Status",
+      "submittedBy": "Submitted by",
+      "createdAt": "Created"
+    },
+    "actions": "Actions",
+    "manage": "Manage",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveSuccess": "Service request approved.",
+    "rejectSuccess": "Service request rejected.",
+    "actionFailed": "Could not update the request. Please try again.",
+    "rejectDialog": {
+      "title": "Reject service request #{{id}}",
+      "body": "Optionally tell the client why. The reason is saved on the work order and shown to them.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "e.g. Vessel is out of service area, please contact us directly.",
+      "cancel": "Cancel",
+      "confirm": "Reject request"
+    }
+  },
+  "services": {
+    "title": "Service Catalog",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "category": "Category",
+      "price": "Price",
+      "active": "Active"
+    },
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "columns": {
+      "number": "Number",
+      "client": "Client",
+      "issueDate": "Issued",
+      "dueDate": "Due",
+      "total": "Total",
+      "status": "Status"
+    },
+    "actions": "Actions",
+    "view": "View",
+    "downloadPdf": "PDF"
+  },
+  "quotations": {
+    "title": "Quotations",
+    "columns": {
+      "number": "Number",
+      "client": "Client",
+      "issueDate": "Issued",
+      "expiryDate": "Expires",
+      "total": "Total",
+      "status": "Status"
+    },
+    "actions": "Actions",
+    "view": "View",
+    "downloadPdf": "PDF"
+  }
+}
