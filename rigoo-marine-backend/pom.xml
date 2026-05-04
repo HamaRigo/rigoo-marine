@@ -23,6 +23,7 @@
         <module>technician-module</module>
         <module>invoice-module</module>
         <module>notification-module</module>
+        <module>marketplace-module</module>
     </modules>
 
     <parent>
