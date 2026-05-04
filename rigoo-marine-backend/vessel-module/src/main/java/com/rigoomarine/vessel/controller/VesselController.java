@@ -6,6 +6,7 @@ import com.rigoomarine.vessel.service.VesselService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -24,6 +25,12 @@ public class VesselController {
     @GetMapping("/my")
     public ResponseEntity<List<VesselDTO>> getVesselsByClient(@RequestParam Long clientId) {
         return ResponseEntity.ok(vesselService.getVesselsByClientId(clientId));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    @GetMapping
+    public ResponseEntity<List<VesselDTO>> getAllVessels() {
+        return ResponseEntity.ok(vesselService.getAllVessels());
     }
 
     @GetMapping("/{id}")

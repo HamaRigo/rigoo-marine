@@ -1,5 +1,7 @@
 package com.rigoomarine.client.controller;
 
+import com.rigoomarine.client.auth.AuthService;
+import com.rigoomarine.client.auth.PhoneNumberService;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.security.JwtTokenProvider;
@@ -30,16 +32,26 @@ public class AuthenticationController {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final AuthService authService;
+    private final PhoneNumberService phoneNumberService;
 
     /**
      * Register a new user
      */
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody CreateClientRequest request) {
+    public ResponseEntity<Map<String, Object>> register(
+            @Valid @RequestBody CreateClientRequest request,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
         log.info("Registering new user with email: {}", request.getEmail());
 
         ClientDTO client = clientService.createClient(request);
-        String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole());
+        authService.issueVerificationToken(client.getEmail(), preferredLocale(acceptLanguage));
+
+        String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole(),
+                client.getPasswordChangedAt() != null
+                    ? client.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    : null);
 
         Map<String, Object> response = new HashMap<>();
         response.put("user", client);
@@ -49,8 +61,15 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
+    private String preferredLocale(String acceptLanguage) {
+        if (acceptLanguage == null) return "en";
+        String first = acceptLanguage.split(",")[0].trim().toLowerCase();
+        return first.startsWith("ar") ? "ar" : "en";
+    }
+
     /**
-     * Login with email and password
+     * Login by phone (preferred) or email + password.
+     * Body accepts either {phone, password} or {email, password}.
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(
@@ -58,19 +77,36 @@ public class AuthenticationController {
             @RequestParam(required = false) String role
     ) {
         String email = credentials.get("email");
+        String phone = credentials.get("phone");
         String password = credentials.get("password");
 
-        log.info("Login attempt for email: {}", email);
+        // Resolve to email (the AuthenticationManager + UserDetails are still email-keyed).
+        String resolvedEmail = email;
+        if ((resolvedEmail == null || resolvedEmail.isBlank()) && phone != null && !phone.isBlank()) {
+            try {
+                String normalized = phoneNumberService.normalize(phone);
+                resolvedEmail = clientService.findEmailByPhone(normalized).orElse(null);
+            } catch (IllegalArgumentException ex) {
+                log.warn("Invalid phone format on login: {}", phone);
+                return ResponseEntity.status(401).body(Map.of("error", "Invalid phone or password"));
+            }
+        }
+
+        log.info("Login attempt (email-resolved): {}", resolvedEmail);
+        if (resolvedEmail == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        }
 
         try {
-            // Authenticate user
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
+                    new UsernamePasswordAuthenticationToken(resolvedEmail, password)
             );
 
-            // Load client to get role and generate token
-            ClientDTO client = clientService.getClientByEmail(email);
-            String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole());
+            ClientDTO client = clientService.getClientByEmail(resolvedEmail);
+            String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole(),
+                client.getPasswordChangedAt() != null
+                    ? client.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    : null);
 
             Map<String, Object> response = new HashMap<>();
             response.put("user", client);
@@ -80,9 +116,9 @@ public class AuthenticationController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            log.warn("Bad credentials for email: {}", email);
+            log.warn("Bad credentials for: {}", resolvedEmail);
             return ResponseEntity.status(401)
-                    .body(Map.of("error", "Invalid email or password"));
+                    .body(Map.of("error", "Invalid credentials"));
         } catch (Exception e) {
             log.error("Login failed for email: {}: {}", email, e.getMessage());
             return ResponseEntity.status(401)
@@ -193,26 +229,24 @@ public class AuthenticationController {
     }
 
     /**
-     * Request password reset - sends reset email
-     * TODO: Implement email sending with ResetTokenRepository
+     * Request password reset - issues a 15-min token and emails it.
+     * Generic success regardless of email existence (prevents user enumeration).
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(
-            @RequestBody Map<String, String> request
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         String email = request.get("email");
         log.info("Password reset requested for email: {}", email);
-
-        // TODO: Generate reset token and send email
-        // For now, return success to prevent email enumeration
+        authService.requestPasswordReset(email, preferredLocale(acceptLanguage));
         return ResponseEntity.ok(Map.of(
                 "message", "If an account exists with that email, a password reset link has been sent"
         ));
     }
 
     /**
-     * Reset password with token
-     * TODO: Implement with ResetTokenRepository
+     * Reset password with token issued by /forgot-password.
      */
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
@@ -220,10 +254,37 @@ public class AuthenticationController {
     ) {
         String token = request.get("token");
         String newPassword = request.get("newPassword");
-
-        log.info("Password reset with token attempted");
-
-        // TODO: Validate token and update password
+        boolean ok = authService.resetPassword(token, newPassword);
+        if (!ok) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Reset link is invalid, expired, or already used"));
+        }
         return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+    }
+
+    /**
+     * Verify email address with the token from the verification email.
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> request) {
+        boolean ok = authService.verifyEmail(request.get("token"));
+        if (!ok) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Verification link is invalid or expired"));
+        }
+        return ResponseEntity.ok(Map.of("message", "Email verified"));
+    }
+
+    /**
+     * Re-issue a verification email for the currently authenticated user.
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+            @AuthenticationPrincipal User userDetails,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
+        authService.issueVerificationToken(userDetails.getUsername(), preferredLocale(acceptLanguage));
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 }

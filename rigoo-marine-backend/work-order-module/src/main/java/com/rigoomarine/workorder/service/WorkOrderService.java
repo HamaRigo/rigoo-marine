@@ -4,10 +4,16 @@ import com.rigoomarine.workorder.entity.WorkOrder;
 import com.rigoomarine.workorder.repository.WorkOrderRepository;
 import com.rigoomarine.workorder.dto.WorkOrderDTO;
 import com.rigoomarine.workorder.dto.CreateWorkOrderRequest;
+import com.rigoomarine.workorder.dto.ServiceRequestRequest;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +57,68 @@ public class WorkOrderService {
         return toDTO(saved);
     }
 
+    public WorkOrderDTO submitServiceRequest(ServiceRequestRequest request) {
+        String mediaUrlsJson = null;
+        if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
+            mediaUrlsJson = request.getMediaUrls().stream()
+                .map(url -> "\"" + url + "\"")
+                .collect(Collectors.joining(",", "[", "]"));
+        }
+
+        String issueCategoryOther = request.getIssueCategory() == com.rigoomarine.workorder.entity.IssueCategory.OTHER
+            ? request.getIssueCategoryOther()
+            : null;
+
+        WorkOrder workOrder = WorkOrder.builder()
+            .clientId(request.getClientId())
+            .vesselId(request.getVesselId())
+            .description(request.getDescription())
+            .priority("NORMAL")
+            .status(WorkOrder.WorkOrderStatus.PENDING_APPROVAL)
+            .serviceIds(java.util.Set.of())
+            .locationText(request.getLocationText())
+            .latitude(request.getLatitude())
+            .longitude(request.getLongitude())
+            .phone(request.getPhone())
+            .submittedByRole(request.getSubmittedByRole())
+            .issueCategory(request.getIssueCategory().name())
+            .issueCategoryOther(issueCategoryOther)
+            .mediaUrls(mediaUrlsJson)
+            .build();
+
+        WorkOrder saved = workOrderRepository.save(workOrder);
+        sendNotificationEvent(saved, "SERVICE_REQUEST_SUBMITTED");
+        return toDTO(saved);
+    }
+
+    public WorkOrderDTO approveServiceRequest(Long id, Long approverId) {
+        WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Work order not found"));
+        if (workOrder.getStatus() != WorkOrder.WorkOrderStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only PENDING_APPROVAL work orders can be approved");
+        }
+        workOrder.setStatus(WorkOrder.WorkOrderStatus.PENDING);
+        workOrder.setApprovedAt(java.time.LocalDateTime.now());
+        workOrder.setApprovedBy(approverId);
+        WorkOrder saved = workOrderRepository.save(workOrder);
+        sendNotificationEvent(saved, "SERVICE_REQUEST_APPROVED");
+        return toDTO(saved);
+    }
+
+    public WorkOrderDTO rejectServiceRequest(Long id, Long approverId, String reason) {
+        WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Work order not found"));
+        if (workOrder.getStatus() != WorkOrder.WorkOrderStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only PENDING_APPROVAL work orders can be rejected");
+        }
+        workOrder.setStatus(WorkOrder.WorkOrderStatus.CANCELLED);
+        workOrder.setRejectionReason(reason);
+        workOrder.setApprovedBy(approverId);
+        WorkOrder saved = workOrderRepository.save(workOrder);
+        sendNotificationEvent(saved, "SERVICE_REQUEST_REJECTED");
+        return toDTO(saved);
+    }
+
     @Transactional(readOnly = true)
     public List<WorkOrderDTO> getWorkOrdersByClientId(Long clientId) {
         return workOrderRepository.findByClientId(clientId).stream()
@@ -63,6 +131,46 @@ public class WorkOrderService {
         return workOrderRepository.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Filterable + paginated list for admin / technician views.
+     * @param q        free-text matched against description / notes / location_text (case-insensitive)
+     * @param status   exact match on status (e.g. PENDING_APPROVAL)
+     * @param submittedByRole exact match on submitter role
+     * @param technicianId    exact match on assigned technician
+     */
+    @Transactional(readOnly = true)
+    public Page<WorkOrderDTO> searchPaged(
+            String q,
+            String status,
+            String submittedByRole,
+            Long technicianId,
+            Pageable pageable
+    ) {
+        Specification<WorkOrder> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (q != null && !q.isBlank()) {
+                String like = "%" + q.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("description")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("locationText"), "")), like)
+                ));
+            }
+            if (status != null && !status.isBlank()) {
+                predicates.add(cb.equal(root.get("status"), WorkOrder.WorkOrderStatus.valueOf(status)));
+            }
+            if (submittedByRole != null && !submittedByRole.isBlank()) {
+                predicates.add(cb.equal(root.get("submittedByRole"),
+                        com.rigoomarine.workorder.entity.SubmittedByRole.valueOf(submittedByRole)));
+            }
+            if (technicianId != null) {
+                predicates.add(cb.equal(root.get("assignedTechnicianId"), technicianId));
+            }
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return workOrderRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
@@ -145,9 +253,18 @@ public class WorkOrderService {
             .updatedAt(workOrder.getUpdatedAt())
             .completedAt(workOrder.getCompletedAt())
             .issueCategory(workOrder.getIssueCategory())
+            .issueCategoryOther(workOrder.getIssueCategoryOther())
             .severity(workOrder.getSeverity())
             .symptoms(workOrder.getSymptoms())
             .mediaUrls(mediaUrls)
+            .locationText(workOrder.getLocationText())
+            .latitude(workOrder.getLatitude())
+            .longitude(workOrder.getLongitude())
+            .phone(workOrder.getPhone())
+            .submittedByRole(workOrder.getSubmittedByRole() != null ? workOrder.getSubmittedByRole().name() : null)
+            .rejectionReason(workOrder.getRejectionReason())
+            .approvedAt(workOrder.getApprovedAt())
+            .approvedBy(workOrder.getApprovedBy())
             .build();
     }
 

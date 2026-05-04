@@ -3,9 +3,14 @@ package com.rigoomarine.service.service;
 import com.rigoomarine.service.entity.ServiceEntity;
 import com.rigoomarine.service.repository.ServiceRepository;
 import com.rigoomarine.service.dto.ServiceDTO;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +38,28 @@ public class ServiceService {
         return serviceRepository.findByActiveTrue().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ServiceDTO> searchPaged(String q, String category, Boolean active, Pageable pageable) {
+        Specification<ServiceEntity> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (q != null && !q.isBlank()) {
+                String like = "%" + q.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("description"), "")), like)
+                ));
+            }
+            if (category != null && !category.isBlank()) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (active != null) {
+                predicates.add(cb.equal(root.get("active"), active));
+            }
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return serviceRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)

@@ -12,8 +12,10 @@ import com.rigoomarine.client.service.ContactInfoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,6 +68,23 @@ public class AdminController {
     // ============== User Management ==============
 
     @GetMapping("/users")
+    public ResponseEntity<Page<ClientDTO>> searchUsers(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Boolean verified,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        String[] parts = sort.split(",", 2);
+        Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(dir, parts[0]));
+        return ResponseEntity.ok(clientService.searchPaged(q, role, verified, pageable));
+    }
+
+    @GetMapping("/users/all")
     public ResponseEntity<List<ClientDTO>> getAllUsers() {
         return ResponseEntity.ok(clientService.getAllClients());
     }
@@ -119,151 +138,9 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    // ============== Order Management ==============
-    // These endpoints are placeholders until work-order-service integration via Feign
-
-    @GetMapping("/orders")
-    public ResponseEntity<List<Map<String, Object>>> getAllOrders() {
-        // TODO: Call work-order-service via Feign client in production
-        log.debug("Get all orders - returning empty list (work-order-service not integrated)");
-        return ResponseEntity.ok(List.of());
-    }
-
-    @GetMapping("/orders/{id}")
-    public ResponseEntity<Map<String, Object>> getOrderById(@PathVariable Long id) {
-        // TODO: Call work-order-service via Feign client in production
-        log.debug("Get order {} - returning empty object (work-order-service not integrated)", id);
-        return ResponseEntity.ok(new HashMap<>());
-    }
-
-    @PostMapping("/orders/{id}/assign")
-    public ResponseEntity<Map<String, Object>> assignTechnician(
-            @PathVariable Long id,
-            @RequestBody Map<String, Long> assignment
-    ) {
-        // TODO: Call work-order-service via Feign client in production
-        Long technicianId = assignment.get("technicianId");
-        log.info("Assign technician {} to order {} - placeholder", technicianId, id);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Technician " + technicianId + " assigned to order " + id);
-        response.put("orderId", id);
-        response.put("technicianId", technicianId);
-        return ResponseEntity.ok(response);
-    }
-
-    // ============== Service Management ==============
-    // These endpoints are placeholders until service-service integration via Feign
-
-    @GetMapping("/services")
-    public ResponseEntity<List<Map<String, Object>>> getAllServices() {
-        // TODO: Call service-service via Feign client in production
-        log.debug("Get all services - returning empty list (service-service not integrated)");
-        return ResponseEntity.ok(List.of());
-    }
-
-    @PostMapping("/services")
-    public ResponseEntity<Map<String, Object>> createService(
-            @RequestBody Map<String, Object> serviceData
-    ) {
-        // TODO: Call service-service via Feign client in production
-        log.info("Create service - placeholder");
-        return ResponseEntity.ok(serviceData);
-    }
-
-    @PutMapping("/services/{id}")
-    public ResponseEntity<Map<String, Object>> updateService(
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> serviceData
-    ) {
-        // TODO: Call service-service via Feign client in production
-        log.info("Update service {} - placeholder", id);
-        return ResponseEntity.ok(serviceData);
-    }
-
-    @DeleteMapping("/services/{id}")
-    public ResponseEntity<Void> deleteService(@PathVariable Long id) {
-        // TODO: Call service-service via Feign client in production
-        log.info("Delete service {} - placeholder", id);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ============== Invoice Management ==============
-
-    @GetMapping("/invoices")
-    public ResponseEntity<List<Map<String, Object>>> getAllInvoices() {
-        log.debug("Get all invoices for admin - placeholder (invoice-service not integrated)");
-        return ResponseEntity.ok(List.of());
-    }
-
-    @GetMapping("/invoices/{id}")
-    public ResponseEntity<Map<String, Object>> getInvoiceById(@PathVariable Long id) {
-        log.debug("Get invoice {} for admin - placeholder (invoice-service not integrated)", id);
-        return ResponseEntity.ok(new HashMap<>());
-    }
-
-    @PutMapping("/invoices/{id}/status")
-    public ResponseEntity<Map<String, Object>> updateInvoiceStatus(
-            @PathVariable Long id,
-            @RequestParam String status
-    ) {
-        log.info("Update invoice {} status to {} - placeholder (invoice-service not integrated)", id, status);
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Invoice " + id + " status updated to " + status);
-        response.put("invoiceId", id);
-        response.put("status", status);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/invoices/{id}/pdf")
-    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
-        log.debug("Generate PDF for invoice {} - placeholder (invoice-service not integrated)", id);
-        // Return empty PDF for now
-        return ResponseEntity.ok(new byte[0]);
-    }
-
-    // ============== Quotation Management ==============
-
-    @PostMapping("/quotations")
-    public ResponseEntity<Map<String, Object>> createQuotation(@RequestBody Map<String, Object> request) {
-        log.info("Create new quotation - placeholder (quotation-service not integrated)");
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Quotation created successfully");
-        response.put("quotationId", 1L);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/quotations")
-    public ResponseEntity<List<Map<String, Object>>> getAllQuotations() {
-        log.debug("Get all quotations for admin - placeholder (quotation-service not integrated)");
-        return ResponseEntity.ok(List.of());
-    }
-
-    @GetMapping("/quotations/{id}")
-    public ResponseEntity<Map<String, Object>> getQuotationById(@PathVariable Long id) {
-        log.debug("Get quotation {} for admin - placeholder (quotation-service not integrated)", id);
-        return ResponseEntity.ok(new HashMap<>());
-    }
-
-    @PutMapping("/quotations/{id}/status")
-    public ResponseEntity<Map<String, Object>> updateQuotationStatus(
-            @PathVariable Long id,
-            @RequestParam String status
-    ) {
-        log.info("Update quotation {} status to {} - placeholder (quotation-service not integrated)", id, status);
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Quotation " + id + " status updated to " + status);
-        response.put("quotationId", id);
-        response.put("status", status);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/quotations/{id}/pdf")
-    public ResponseEntity<byte[]> getQuotationPdf(@PathVariable Long id) {
-        log.debug("Generate PDF for quotation {} - placeholder (quotation-service not integrated)", id);
-        // Return empty PDF for now
-        return ResponseEntity.ok(new byte[0]);
-    }
+    // Note: previous /admin/orders, /admin/services, /admin/invoices, /admin/quotations endpoints
+    // were placeholders that returned empty lists. They've been removed — the frontend now calls
+    // the underlying microservices directly via the gateway (/api/work-orders, /api/services, etc.).
 
     // ============== Media Management ==============
 

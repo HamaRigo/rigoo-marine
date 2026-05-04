@@ -1,5 +1,6 @@
-package com.rigoomarine.client.security;
+package com.rigoomarine.workorder.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,10 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractTokenFromRequest(request);
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            io.jsonwebtoken.Claims claims = jwtTokenProvider.getClaims(token);
+            Claims claims = jwtTokenProvider.getClaims(token);
 
-            // Task #6: invalidate tokens issued before the user changed their password.
-            // pwdIat (epoch millis) is embedded by JwtTokenProvider on issue.
+            // Reject tokens issued before the user changed their password.
+            // pwdIat (epoch millis) is embedded by client-module on token issue.
             Long pwdIat = claims.get("pwdIat", Long.class);
             Date iat = claims.getIssuedAt();
             if (pwdIat != null && iat != null && iat.getTime() < pwdIat) {
@@ -45,10 +46,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String email = claims.getSubject();
+            @SuppressWarnings("unchecked")
             List<String> roles = claims.get("roles", List.class);
-            if (roles == null) {
-                roles = List.of("ROLE_CLIENT");
-            }
+            if (roles == null) roles = List.of("ROLE_CLIENT");
 
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
@@ -57,11 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
-
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
@@ -70,11 +66,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-
         return null;
     }
 }

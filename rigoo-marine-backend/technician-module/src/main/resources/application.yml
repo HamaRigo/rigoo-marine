@@ -14,6 +14,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+    table: flyway_schema_history_technician
   jpa:
     hibernate:
       ddl-auto: validate

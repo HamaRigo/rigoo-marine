@@ -22,7 +22,7 @@ public class Client {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String phone;
 
     @Column(nullable = false)
@@ -42,10 +42,25 @@ public class Client {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Task #6: email verification + password reset
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified;
+
+    @Column(name = "email_verification_token_hash", length = 64)
+    private String emailVerificationTokenHash;
+
+    @Column(name = "email_verification_expires_at")
+    private LocalDateTime emailVerificationExpiresAt;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (emailVerified == null) emailVerified = Boolean.FALSE;
+        if (passwordChangedAt == null) passwordChangedAt = createdAt;
     }
 
     @PreUpdate

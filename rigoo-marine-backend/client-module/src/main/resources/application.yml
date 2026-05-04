@@ -32,6 +32,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+    table: flyway_schema_history_client
   jpa:
     hibernate:
       ddl-auto: validate
@@ -55,6 +56,17 @@ spring:
       database: 0
       ssl:
         enabled: ${REDIS_SSL_ENABLED:false}
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.example.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 db:
   pool:
@@ -82,3 +94,19 @@ logging:
 jwt:
   secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
   expiration: 86400000
+
+app:
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:5173}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@rigoomarine.qa}
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  health:
+    # Mail HealthIndicator probes SMTP at startup; disabled until real SMTP is provisioned
+    # so /actuator/health doesn't go DOWN and break Docker healthchecks.
+    mail:
+      enabled: false

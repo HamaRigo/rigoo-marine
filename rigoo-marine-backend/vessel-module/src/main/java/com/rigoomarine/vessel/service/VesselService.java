@@ -43,6 +43,13 @@ public class VesselService {
     }
 
     @Transactional(readOnly = true)
+    public List<VesselDTO> getAllVessels() {
+        return vesselRepository.findAll().stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public VesselDTO getVesselById(Long id) {
         return vesselRepository.findById(id)
             .map(this::toDTO)

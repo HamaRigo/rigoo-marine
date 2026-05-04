@@ -25,9 +25,20 @@ public class WorkOrderDTO {
 
     // Diagnostic fields
     private String issueCategory;
+    private String issueCategoryOther;
     private String severity;
     private String symptoms;
 
     // Media URLs
     private Set<String> mediaUrls;
+
+    // Service-request fields
+    private String locationText;
+    private java.math.BigDecimal latitude;
+    private java.math.BigDecimal longitude;
+    private String phone;
+    private String submittedByRole;
+    private String rejectionReason;
+    private LocalDateTime approvedAt;
+    private Long approvedBy;
 }

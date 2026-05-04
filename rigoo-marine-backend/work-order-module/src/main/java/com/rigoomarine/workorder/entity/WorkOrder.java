@@ -63,8 +63,38 @@ public class WorkOrder {
 
     // Diagnostic fields
     private String issueCategory;
+
+    @Column(name = "issue_category_other")
+    private String issueCategoryOther;
+
     private String severity;
     private String symptoms;
+
+    // Service-request fields (Task #5)
+    @Column(name = "location_text", length = 500)
+    private String locationText;
+
+    @Column(precision = 9, scale = 6)
+    private java.math.BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private java.math.BigDecimal longitude;
+
+    @Column(length = 50)
+    private String phone;
+
+    @Column(name = "submitted_by_role", length = 20)
+    @Enumerated(EnumType.STRING)
+    private SubmittedByRole submittedByRole;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "approved_by")
+    private Long approvedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -78,6 +108,7 @@ public class WorkOrder {
     }
 
     public enum WorkOrderStatus {
+        PENDING_APPROVAL,
         PENDING,
         IN_PROGRESS,
         WAITING_PARTS,
