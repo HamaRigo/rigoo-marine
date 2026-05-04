@@ -16,6 +16,42 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: auth-login-ratelimit
+          uri: lb://client-service
+          predicates:
+            - Path=/auth/login
+            - Method=POST
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@ipKeyResolver}"
+        - id: auth-forgot-password-ratelimit
+          uri: lb://client-service
+          predicates:
+            - Path=/auth/forgot-password
+            - Method=POST
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 3
+                key-resolver: "#{@ipKeyResolver}"
+        - id: auth-reset-password-ratelimit
+          uri: lb://client-service
+          predicates:
+            - Path=/auth/reset-password
+            - Method=POST
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@ipKeyResolver}"
         - id: auth-passthrough
           uri: lb://client-service
           predicates:
@@ -64,6 +100,17 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@ipKeyResolver}"
+        - id: service-request-ratelimit
+          uri: lb://work-order-service
+          predicates:
+            - Path=/api/work-orders/service-request
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 3
+                key-resolver: "#{@userKeyResolver}"
         - id: work-order-service
           uri: lb://work-order-service
           predicates:
@@ -94,6 +141,19 @@ spring:
                 redis-rate-limiter.replenishRate: 5
                 redis-rate-limiter.burstCapacity: 10
                 key-resolver: "#{@userKeyResolver}"
+        # Stripe webhooks — public, signature-authenticated. Generous IP-keyed limit
+        # to absorb event bursts without dropping (Stripe retries on 5xx anyway).
+        - id: payments-stripe-webhook
+          uri: lb://invoice-service
+          predicates:
+            - Path=/api/payments/webhooks/stripe
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
         - id: notification-service
           uri: lb://notification-service
           predicates:
@@ -104,6 +164,29 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
+        # Marketplace — strict rate limit on the public inquiry POST (anti-spam),
+        # normal IP-keyed limit on the public catalog (browse + detail).
+        - id: marketplace-inquiry-create-ratelimit
+          uri: lb://marketplace-service
+          predicates:
+            - Path=/api/listings/inquiries
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 3
+                key-resolver: "#{@ipKeyResolver}"
+        - id: marketplace-service
+          uri: lb://marketplace-service
+          predicates:
+            - Path=/api/listings/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
 
 eureka:
   client:
