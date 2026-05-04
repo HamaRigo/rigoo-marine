@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from './theme';
+import DirectionProvider from './i18n/DirectionProvider';
 import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
@@ -20,11 +19,15 @@ import Home from './pages/public/Home';
 import Services from './pages/public/Services';
 import Gallery from './pages/public/Gallery';
 import About from './pages/public/About';
+import BoatGallery from './pages/public/marketplace/BoatGallery';
+import BoatDetail from './pages/public/marketplace/BoatDetail';
 
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import VerifyEmail from './pages/auth/VerifyEmail';
 
 // Dashboard Pages
 import DashboardHome from './pages/dashboard/DashboardHome';
@@ -35,6 +38,7 @@ import Profile from './pages/dashboard/Profile';
 
 // Work Order Flow
 import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
+import ServiceRequest from './pages/workorder/ServiceRequest';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -47,6 +51,9 @@ import QuotationManagement from './pages/admin/QuotationManagement';
 import MediaManagement from './pages/admin/MediaManagement';
 import ContactInfoManagement from './pages/admin/ContactInfoManagement';
 import Settings from './pages/admin/Settings';
+import BoatListingManagement from './pages/admin/BoatListingManagement';
+import BoatListingForm from './pages/admin/BoatListingForm';
+import BoatInquiryManagement from './pages/admin/BoatInquiryManagement';
 
 // Technician Pages
 import TechnicianLayout from './pages/technician/TechnicianLayout';
@@ -60,7 +67,7 @@ import NotFound from './pages/error/NotFound';
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider theme={theme}>
+      <DirectionProvider>
         <CssBaseline />
         <AuthProvider>
           <BrowserRouter>
@@ -70,14 +77,30 @@ function App() {
               <Route path="/services" element={<MainLayout><Services /></MainLayout>} />
               <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
               <Route path="/about" element={<MainLayout><About /></MainLayout>} />
+              <Route path="/boats" element={<MainLayout><BoatGallery /></MainLayout>} />
+              <Route path="/boats/:slug" element={<MainLayout><BoatDetail /></MainLayout>} />
 
               {/* Auth Routes - Guest only (redirect if authenticated) */}
               <Route path="/login" element={<GuestRoute><MainLayout><Login /></MainLayout></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><MainLayout><Register /></MainLayout></GuestRoute>} />
               <Route path="/forgot-password" element={<GuestRoute><MainLayout><ForgotPassword /></MainLayout></GuestRoute>} />
+              <Route path="/reset-password" element={<MainLayout><ResetPassword /></MainLayout>} />
+              <Route path="/verify-email" element={<MainLayout><VerifyEmail /></MainLayout>} />
 
               {/* Work Order Flow (triggers auth prompt) */}
               <Route path="/dashboard/new-order" element={<WorkOrderFlow />} />
+
+              {/* Service Request Form (CLIENT or TECHNICIAN) */}
+              <Route
+                path="/service-request"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ServiceRequest />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Protected Dashboard Routes (CLIENT role) */}
               <Route
@@ -112,6 +135,10 @@ function App() {
                 <Route path="quotations" element={<QuotationManagement />} />
                 <Route path="media" element={<MediaManagement />} />
                 <Route path="contact-info" element={<ContactInfoManagement />} />
+                <Route path="boats" element={<BoatListingManagement />} />
+                <Route path="boats/new" element={<BoatListingForm />} />
+                <Route path="boats/:id/edit" element={<BoatListingForm />} />
+                <Route path="inquiries" element={<BoatInquiryManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
@@ -135,7 +162,7 @@ function App() {
             </Routes>
           </BrowserRouter>
         </AuthProvider>
-      </ThemeProvider>
+      </DirectionProvider>
     </ErrorBoundary>
   );
 }
