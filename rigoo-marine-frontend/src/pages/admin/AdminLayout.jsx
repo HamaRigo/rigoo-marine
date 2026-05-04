@@ -9,6 +9,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import EngineeringIcon from '@mui/icons-material/Engineering';
+import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
+import MarkChatUnreadIcon from '@mui/icons-material/MarkChatUnread';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 
@@ -20,6 +22,8 @@ const navItems = [
   { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
   { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
   { name: 'Services', path: '/admin/services', icon: <EngineeringIcon /> },
+  { name: 'Boats', path: '/admin/boats', icon: <DirectionsBoatIcon /> },
+  { name: 'Inquiries', path: '/admin/inquiries', icon: <MarkChatUnreadIcon /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];
 
