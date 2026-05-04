@@ -9,6 +9,7 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
+import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
 const navItems = [
@@ -103,6 +104,7 @@ export default function DashboardLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}>
         <Container maxWidth="lg">
+          <UnverifiedEmailBanner />
           <Outlet />
         </Container>
       </Box>

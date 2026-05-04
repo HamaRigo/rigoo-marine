@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Box, Container, Paper, Typography, TextField, Button, Alert, Link as MuiLink } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { authApi } from '../../services/api';
 
 export default function ForgotPassword() {
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -13,14 +15,15 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      // TODO: Replace with actual API call
-      // await authApi.forgotPassword(email);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
+      await authApi.forgotPassword(email);
       setSuccess(true);
     } catch (err) {
-      setError(err.message || 'Failed to send reset email. Please try again.');
+      if (err.response?.status === 429) {
+        setError(t('forgotPassword.rateLimit'));
+      } else {
+        setError(err.response?.data?.error || err.message || t('forgotPassword.errorFallback'));
+      }
     } finally {
       setLoading(false);
     }
@@ -31,22 +34,12 @@ export default function ForgotPassword() {
       <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: 6 }}>
         <Container maxWidth="sm">
           <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>
-              Check Your Email
-            </Typography>
-            <Typography color="text.secondary" paragraph>
-              We've sent a password reset link to <strong>{email}</strong>
-            </Typography>
+            <Typography variant="h5" gutterBottom>{t('forgotPassword.successTitle')}</Typography>
             <Typography color="text.secondary" sx={{ mb: 3 }}>
-              Didn't receive the email? Check your spam folder or try again.
+              <Trans i18nKey="forgotPassword.successBody" t={t} values={{ email }} components={{ strong: <strong /> }} />
             </Typography>
-            <Button
-              component={Link}
-              to="/login"
-              variant="contained"
-              fullWidth
-            >
-              Back to Login
+            <Button component={Link} to="/login" variant="contained" fullWidth>
+              {t('forgotPassword.successBack')}
             </Button>
           </Paper>
         </Container>
@@ -59,22 +52,18 @@ export default function ForgotPassword() {
       <Container maxWidth="sm">
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
-            Forgot Password
+            {t('forgotPassword.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            Enter your email address and we'll send you a link to reset your password
+            {t('forgotPassword.subtitle')}
           </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email"
+              label={t('forgotPassword.email')}
               name="email"
               type="email"
               value={email}
@@ -83,7 +72,6 @@ export default function ForgotPassword() {
               required
               autoComplete="email"
             />
-
             <Button
               type="submit"
               fullWidth
@@ -92,14 +80,14 @@ export default function ForgotPassword() {
               disabled={loading || !email}
               sx={{ mt: 3 }}
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading ? t('forgotPassword.submitting') : t('forgotPassword.submit')}
             </Button>
           </form>
 
           <Typography align="center" sx={{ mt: 3 }}>
-            Remember your password?{' '}
+            {t('forgotPassword.rememberPassword')}{' '}
             <MuiLink component={Link} to="/login" underline="hover">
-              Sign In
+              {t('forgotPassword.loginCta')}
             </MuiLink>
           </Typography>
         </Paper>

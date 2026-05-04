@@ -1,155 +1,157 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  Box, Typography, Card, CardContent, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, Button, TextField,
-  MenuItem, Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Typography, Chip, Button, Stack, Dialog, DialogTitle, DialogContent,
+  DialogContentText, DialogActions, TextField,
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import { useTranslation } from 'react-i18next';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import { adminApi, workOrderApi } from '../../services/api';
+import FilterableTable from '../../components/admin/FilterableTable';
 
-const statusOptions = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const STATUSES = [
+  'PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS',
+  'WAITING_PARTS', 'COMPLETED', 'CANCELLED',
+];
+const ROLES = ['CLIENT', 'TECHNICIAN'];
+
+const STATUS_COLORS = {
+  PENDING_APPROVAL: 'default',
+  PENDING: 'warning',
+  IN_PROGRESS: 'info',
+  WAITING_PARTS: 'warning',
+  COMPLETED: 'success',
+  CANCELLED: 'error',
+};
 
 export default function OrderManagement() {
-  const [orders, setOrders] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { t } = useTranslation('admin');
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [rejecting, setRejecting] = useState(null); // {id} or null
+  const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    // TODO: Replace with API call
-    // fetch('/api/admin/orders')
-    setOrders([
-      { id: 1, customer: 'John Doe', service: 'Engine Diagnostic', status: 'PENDING', date: '2026-03-27', technician: null },
-      { id: 2, customer: 'Jane Smith', service: 'Bottom Paint', status: 'IN_PROGRESS', date: '2026-03-26', technician: 'Mike Davis' },
-      { id: 3, customer: 'Bob Wilson', service: 'Hull Repair', status: 'COMPLETED', date: '2026-03-25', technician: 'Sarah Johnson' },
-    ]);
-    setLoading(false);
-  }, []);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
 
-  const filteredOrders = filterStatus === 'ALL'
-    ? orders
-    : orders.filter(o => o.status === filterStatus);
+  const approveMutation = useMutation({
+    mutationFn: ({ id }) => workOrderApi.approve(id, user.id),
+    onSuccess: () => { toast.success(t('orders.approveSuccess')); refresh(); },
+    onError: () => toast.error(t('orders.actionFailed')),
+  });
 
-  const handleStatusUpdate = async (orderId, newStatus) => {
-    // TODO: Call API to update status
-    // PATCH /api/orders/:id/status
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    setSelectedOrder(null);
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }) => workOrderApi.reject(id, user.id, reason || undefined),
+    onSuccess: () => {
+      toast.success(t('orders.rejectSuccess'));
+      setRejecting(null);
+      setReason('');
+      refresh();
+    },
+    onError: () => toast.error(t('orders.actionFailed')),
+  });
+
+  const columns = [
+    { id: 'id', label: t('orders.columns.id'), render: (r) => `#${r.id}` },
+    { id: 'clientId', label: t('orders.columns.client') },
+    { id: 'vesselId', label: t('orders.columns.vessel') },
+    { id: 'issueCategory', label: t('orders.columns.category'),
+      render: (r) => r.issueCategory || '—' },
+    { id: 'submittedByRole', label: t('orders.columns.submittedBy'),
+      render: (r) => r.submittedByRole || '—' },
+    { id: 'createdAt', label: t('orders.columns.createdAt'),
+      render: (r) => r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—' },
+    { id: 'status', label: t('orders.columns.status'),
+      render: (r) => (
+        <Chip
+          size="small"
+          label={r.status?.replace(/_/g, ' ')}
+          color={STATUS_COLORS[r.status] || 'default'}
+        />
+      ) },
+  ];
+
+  const renderActions = (row) => {
+    if (row.status === 'PENDING_APPROVAL') {
+      return (
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button
+            size="small"
+            variant="contained"
+            color="success"
+            startIcon={<CheckIcon />}
+            onClick={() => approveMutation.mutate({ id: row.id })}
+            disabled={approveMutation.isPending}
+          >
+            {t('orders.approve')}
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            color="error"
+            startIcon={<CloseIcon />}
+            onClick={() => { setRejecting({ id: row.id }); setReason(''); }}
+          >
+            {t('orders.reject')}
+          </Button>
+        </Stack>
+      );
+    }
+    return (
+      <Button size="small" variant="outlined" href={`/admin/orders/${row.id}`}>
+        {t('orders.manage')}
+      </Button>
+    );
   };
-
-  const statusColors = {
-    PENDING: 'warning',
-    IN_PROGRESS: 'info',
-    COMPLETED: 'success',
-    CANCELLED: 'error',
-  };
-
-  if (loading) {
-    return <Typography>Loading orders...</Typography>;
-  }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">Order Management</Typography>
-        <TextField
-          select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          size="small"
-          sx={{ minWidth: 150 }}
-        >
-          <MenuItem value="ALL">All Status</MenuItem>
-          {statusOptions.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status.replace('_', ' ')}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Box>
+      <Typography variant="h4" sx={{ mb: 3 }}>{t('orders.title')}</Typography>
+      <FilterableTable
+        queryKey={['admin', 'orders']}
+        fetchPage={adminApi.searchOrders}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultFilters={{ status: 'PENDING_APPROVAL' }}
+        filters={[
+          { id: 'status', label: t('filters.status'),
+            options: STATUSES.map((s) => ({ value: s, label: s.replace(/_/g, ' ') })) },
+          { id: 'submittedByRole', label: t('filters.role'),
+            options: ROLES.map((r) => ({ value: r, label: r })) },
+        ]}
+        renderActions={renderActions}
+      />
 
-      <Card>
-        <CardContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order #</TableCell>
-                  <TableCell>Customer</TableCell>
-                  <TableCell>Service</TableCell>
-                  <TableCell>Technician</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>#{order.id}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell>{order.service}</TableCell>
-                    <TableCell>{order.technician || '-'}</TableCell>
-                    <TableCell>{order.date}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={order.status.replace('_', ' ')}
-                        color={statusColors[order.status]}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => setSelectedOrder(order)}
-                      >
-                        Manage
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-
-      {/* Manage Order Dialog */}
-      <Dialog open={!!selectedOrder} onClose={() => setSelectedOrder(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Manage Order #{selectedOrder?.id}</DialogTitle>
+      <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('orders.rejectDialog.title', { id: rejecting?.id })}</DialogTitle>
         <DialogContent>
-          {selectedOrder && (
-            <Box sx={{ pt: 2 }}>
-              <Typography variant="body1" paragraph>
-                <strong>Customer:</strong> {selectedOrder.customer}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                <strong>Service:</strong> {selectedOrder.service}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                <strong>Current Status:</strong> {selectedOrder.status}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                <strong>Technician:</strong> {selectedOrder.technician || 'Unassigned'}
-              </Typography>
-
-              <Typography variant="subtitle2" sx={{ mt: 3 }}>Update Status</Typography>
-              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                {statusOptions.map((status) => (
-                  <Button
-                    key={status}
-                    size="small"
-                    variant={selectedOrder.status === status ? 'contained' : 'outlined'}
-                    onClick={() => handleStatusUpdate(selectedOrder.id, status)}
-                  >
-                    {status.replace('_', ' ')}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          )}
+          <DialogContentText sx={{ mb: 2 }}>{t('orders.rejectDialog.body')}</DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            minRows={3}
+            label={t('orders.rejectDialog.reasonLabel')}
+            placeholder={t('orders.rejectDialog.reasonPlaceholder')}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            inputProps={{ maxLength: 1000 }}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedOrder(null)}>Close</Button>
+          <Button onClick={() => setRejecting(null)} disabled={rejectMutation.isPending}>
+            {t('orders.rejectDialog.cancel')}
+          </Button>
+          <Button
+            onClick={() => rejectMutation.mutate({ id: rejecting.id, reason: reason.trim() })}
+            color="error"
+            variant="contained"
+            disabled={rejectMutation.isPending}
+          >
+            {t('orders.rejectDialog.confirm')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

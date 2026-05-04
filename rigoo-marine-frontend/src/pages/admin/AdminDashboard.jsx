@@ -130,10 +130,11 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       // Fetch stats from API
-      const [usersData, invoicesData] = await Promise.all([
+      const [usersData, invoicesPage] = await Promise.all([
         adminApi.getAllUsers().catch(() => []),
-        adminApi.getAllInvoices().catch(() => []),
+        adminApi.searchInvoices({ size: 100 }).catch(() => ({ content: [] })),
       ]);
+      const invoicesData = invoicesPage?.content || [];
 
       // Calculate stats
       const totalUsers = usersData.length;

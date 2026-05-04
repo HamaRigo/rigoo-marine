@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Grid, Card, CardContent, Chip, List, ListItem, ListItemText, ListItemSecondaryAction, Button } from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AddIcon from '@mui/icons-material/Add';
 
 export default function TechnicianDashboard() {
   const [stats, setStats] = useState({
@@ -43,7 +45,17 @@ export default function TechnicianDashboard() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Technician Dashboard</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">Technician Dashboard</Typography>
+        <Button
+          component={RouterLink}
+          to="/service-request"
+          variant="contained"
+          startIcon={<AddIcon />}
+        >
+          New Service Request
+        </Button>
+      </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

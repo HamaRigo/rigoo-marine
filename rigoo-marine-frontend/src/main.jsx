@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import App from './App.jsx';
 import { setupInterceptors } from './services/interceptors';
+import './i18n';
 import './index.css';
 
 // Initialize HTTP interceptors for auth handling

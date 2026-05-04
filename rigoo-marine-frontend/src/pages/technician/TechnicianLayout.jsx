@@ -7,6 +7,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
 import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
+import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
 const navItems = [
@@ -97,6 +98,7 @@ export default function TechnicianLayout() {
       </Box>
 
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}>
+        <UnverifiedEmailBanner />
         <Outlet />
       </Box>
     </Box>

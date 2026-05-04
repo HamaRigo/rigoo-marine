@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-const theme = createTheme({
+const baseOptions = {
   palette: {
     primary: {
       main: '#006994', // Marine blue
@@ -19,24 +19,12 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-    },
-    h2: {
-      fontWeight: 700,
-    },
-    h3: {
-      fontWeight: 600,
-    },
-    h4: {
-      fontWeight: 600,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 600,
-    },
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 600 },
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
   },
   shape: {
     borderRadius: 8,
@@ -58,6 +46,9 @@ const theme = createTheme({
       },
     },
   },
-});
+};
 
-export default theme;
+export const buildTheme = (direction = 'ltr') =>
+  createTheme({ ...baseOptions, direction });
+
+export default buildTheme();

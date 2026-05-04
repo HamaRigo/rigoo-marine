@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Box, Container, Paper, Typography, TextField, Button, Link as MuiLink, Alert } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { defaultPathForRole } from '../../utils/routes';
 
 export default function Login() {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('auth');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,11 +20,15 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const userData = await login(formData.email, formData.password);
+      const userData = await login(formData.identifier.trim(), formData.password);
       const target = location.state?.from?.pathname || defaultPathForRole(userData?.role);
       navigate(target, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Login failed. Please try again.');
+      if (err.response?.status === 429) {
+        setError(t('login.tooManyAttempts'));
+      } else {
+        setError(err.response?.data?.error || err.message || t('login.errorFallback'));
+      }
     } finally {
       setLoading(false);
     }
@@ -37,10 +43,10 @@ export default function Login() {
       <Container maxWidth="sm">
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
-            Welcome Back
+            {t('login.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            Sign in to access your dashboard
+            {t('login.subtitle')}
           </Typography>
 
           {error && (
@@ -52,18 +58,21 @@ export default function Login() {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
+              label={t('login.identifier')}
+              helperText={t('login.identifierHelper')}
+              name="identifier"
+              type="text"
+              inputMode="text"
+              value={formData.identifier}
               onChange={handleChange}
               margin="normal"
               required
-              autoComplete="email"
+              autoComplete="username"
+              dir="ltr"
             />
             <TextField
               fullWidth
-              label="Password"
+              label={t('login.password')}
               name="password"
               type="password"
               value={formData.password}
@@ -75,7 +84,7 @@ export default function Login() {
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
               <MuiLink component={Link} to="/forgot-password" underline="hover">
-                Forgot password?
+                {t('login.forgotPassword')}
               </MuiLink>
             </Box>
 
@@ -86,14 +95,14 @@ export default function Login() {
               size="large"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('login.submitting') : t('login.submit')}
             </Button>
           </form>
 
           <Typography align="center" sx={{ mt: 3 }}>
-            Don't have an account?{' '}
+            {t('login.noAccount')}{' '}
             <MuiLink component={Link} to="/register" underline="hover">
-              Register
+              {t('login.registerCta')}
             </MuiLink>
           </Typography>
         </Paper>

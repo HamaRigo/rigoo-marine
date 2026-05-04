@@ -60,7 +60,7 @@ export default function DashboardHome() {
         <Typography variant="h4">Dashboard</Typography>
         <Button
           component={Link}
-          to="/dashboard/new-order"
+          to="/service-request"
           variant="contained"
           startIcon={<AddIcon />}
           sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
@@ -155,12 +155,12 @@ export default function DashboardHome() {
             <Grid item xs={12} sm={6} md={3}>
               <Button
                 component={Link}
-                to="/dashboard/new-order"
+                to="/service-request"
                 variant="outlined"
                 fullWidth
                 startIcon={<AddIcon />}
               >
-                New Order
+                New Service Request
               </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>

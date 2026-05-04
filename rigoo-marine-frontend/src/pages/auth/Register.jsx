@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { Box, Container, Paper, Typography, TextField, Button, Link as MuiLink, Alert, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { defaultPathForRole } from '../../utils/routes';
-
-const userTypes = [
-  { value: 'CLIENT', label: 'Boat Owner / Client' },
-  { value: 'TECHNICIAN', label: 'Technician' },
-];
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -24,18 +20,24 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('auth');
+
+  const userTypes = [
+    { value: 'CLIENT', label: t('register.roles.client') },
+    { value: 'TECHNICIAN', label: t('register.roles.technician') },
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.errors.passwordMismatch'));
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('register.errors.passwordTooShort'));
       return;
     }
 
@@ -51,7 +53,7 @@ export default function Register() {
       if (err.response?.status === 400 && /already exists/i.test(backendMessage || '')) {
         setDuplicateEmailOpen(true);
       } else {
-        setError(backendMessage || err.message || 'Registration failed. Please try again.');
+        setError(backendMessage || err.message || t('register.errors.fallback'));
       }
     } finally {
       setLoading(false);
@@ -67,10 +69,10 @@ export default function Register() {
       <Container maxWidth="sm">
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
-            Create Account
+            {t('register.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            Join Rigoo Marine to manage your vessel services
+            {t('register.subtitle')}
           </Typography>
 
           {error && (
@@ -82,7 +84,7 @@ export default function Register() {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Full Name"
+              label={t('register.fullName')}
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -92,7 +94,23 @@ export default function Register() {
             />
             <TextField
               fullWidth
-              label="Email"
+              label={t('register.phone')}
+              helperText={t('register.phoneHelper')}
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="tel"
+              dir="ltr"
+              placeholder="+97412345678"
+            />
+            <TextField
+              fullWidth
+              label={t('register.email')}
+              helperText={t('register.emailHelper')}
               name="email"
               type="email"
               value={formData.email}
@@ -101,23 +119,12 @@ export default function Register() {
               required
               autoComplete="email"
             />
-            <TextField
-              fullWidth
-              label="Phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleChange}
-              margin="normal"
-              required
-              autoComplete="tel"
-            />
             <FormControl fullWidth margin="normal">
-              <InputLabel>Account Type</InputLabel>
+              <InputLabel>{t('register.accountType')}</InputLabel>
               <Select
                 name="userType"
                 value={formData.userType}
-                label="Account Type"
+                label={t('register.accountType')}
                 onChange={handleChange}
               >
                 {userTypes.map((type) => (
@@ -129,7 +136,7 @@ export default function Register() {
             </FormControl>
             <TextField
               fullWidth
-              label="Password"
+              label={t('register.password')}
               name="password"
               type="password"
               value={formData.password}
@@ -140,7 +147,7 @@ export default function Register() {
             />
             <TextField
               fullWidth
-              label="Confirm Password"
+              label={t('register.confirmPassword')}
               name="confirmPassword"
               type="password"
               value={formData.confirmPassword}
@@ -158,14 +165,14 @@ export default function Register() {
               disabled={loading}
               sx={{ mt: 3 }}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? t('register.submitting') : t('register.submit')}
             </Button>
           </form>
 
           <Typography align="center" sx={{ mt: 3 }}>
-            Already have an account?{' '}
+            {t('register.haveAccount')}{' '}
             <MuiLink component={Link} to="/login" underline="hover">
-              Sign In
+              {t('register.loginCta')}
             </MuiLink>
           </Typography>
         </Paper>
@@ -176,14 +183,19 @@ export default function Register() {
         onClose={() => setDuplicateEmailOpen(false)}
         aria-labelledby="duplicate-email-dialog-title"
       >
-        <DialogTitle id="duplicate-email-dialog-title">Email already registered</DialogTitle>
+        <DialogTitle id="duplicate-email-dialog-title">{t('register.duplicateDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            An account with <strong>{formData.email}</strong> already exists. Sign in instead, or use a different email to register.
+            <Trans
+              i18nKey="register.duplicateDialog.message"
+              t={t}
+              values={{ email: formData.email }}
+              components={{ strong: <strong /> }}
+            />
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDuplicateEmailOpen(false)}>Use different email</Button>
+          <Button onClick={() => setDuplicateEmailOpen(false)}>{t('register.duplicateDialog.useOther')}</Button>
           <Button
             component={Link}
             to="/login"
@@ -191,7 +203,7 @@ export default function Register() {
             variant="contained"
             autoFocus
           >
-            Go to login
+            {t('register.duplicateDialog.goLogin')}
           </Button>
         </DialogActions>
       </Dialog>

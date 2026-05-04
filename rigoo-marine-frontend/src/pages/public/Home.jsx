@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EngineRepairIcon from '@mui/icons-material/Build';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import StarIcon from '@mui/icons-material/Star';
@@ -7,6 +8,16 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation('home');
+
+  const services = [
+    { key: 'mechanical', icon: EngineRepairIcon },
+    { key: 'structural', icon: DirectionsBoatIcon },
+    { key: 'finishing', icon: StarIcon },
+  ];
+
+  const reasons = ['experienced', 'quality', 'fast', 'transparent'];
+
   return (
     <Box>
       {/* Hero Section */}
@@ -20,10 +31,10 @@ export default function Home() {
       >
         <Container maxWidth="md">
           <Typography variant="h2" gutterBottom sx={{ fontWeight: 700 }}>
-            Professional Marine Services
+            {t('hero.title')}
           </Typography>
           <Typography variant="h5" paragraph sx={{ mb: 4, opacity: 0.9 }}>
-            Expert repair, maintenance, and restoration for all types of vessels
+            {t('hero.subtitle')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
@@ -33,7 +44,7 @@ export default function Home() {
               size="large"
               sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
             >
-              Browse Services
+              {t('hero.browseServices')}
             </Button>
             {!isAuthenticated && (
               <Button
@@ -43,7 +54,7 @@ export default function Home() {
                 size="large"
                 sx={{ color: 'white', borderColor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
               >
-                Get Started
+                {t('hero.getStarted')}
               </Button>
             )}
           </Box>
@@ -53,74 +64,38 @@ export default function Home() {
       {/* Services Preview */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Typography variant="h3" textAlign="center" gutterBottom>
-          Our Services
+          {t('services.title')}
         </Typography>
         <Typography variant="h6" color="text.secondary" textAlign="center" sx={{ mb: 6 }}>
-          Comprehensive solutions for all your marine needs
+          {t('services.subtitle')}
         </Typography>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-          {/* Mechanical Services */}
-          <Box
-            sx={{
-              p: 3,
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 2,
-              textAlign: 'center',
-            }}
-          >
-            <EngineRepairIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Mechanical Services
-            </Typography>
-            <Typography color="text.secondary">
-              Engine repair, maintenance, and diagnostics for all major brands
-            </Typography>
-          </Box>
-
-          {/* Structural Services */}
-          <Box
-            sx={{
-              p: 3,
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 2,
-              textAlign: 'center',
-            }}
-          >
-            <DirectionsBoatIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Structural Services
-            </Typography>
-            <Typography color="text.secondary">
-              Hull repair, fiberglass work, and structural modifications
-            </Typography>
-          </Box>
-
-          {/* Finishing Services */}
-          <Box
-            sx={{
-              p: 3,
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 2,
-              textAlign: 'center',
-            }}
-          >
-            <StarIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Finishing Services
-            </Typography>
-            <Typography color="text.secondary">
-              Gel coat restoration, painting, and interior refinishing
-            </Typography>
-          </Box>
+          {services.map(({ key, icon: Icon }) => (
+            <Box
+              key={key}
+              sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 2,
+                textAlign: 'center',
+              }}
+            >
+              <Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                {t(`services.${key}.title`)}
+              </Typography>
+              <Typography color="text.secondary">
+                {t(`services.${key}.description`)}
+              </Typography>
+            </Box>
+          ))}
         </Box>
 
         <Box textAlign="center" sx={{ mt: 4 }}>
           <Button component={Link} to="/services" variant="contained" size="large">
-            View All Services
+            {t('services.viewAll')}
           </Button>
         </Box>
       </Container>
@@ -129,45 +104,20 @@ export default function Home() {
       <Box sx={{ bgcolor: 'background.default', py: 8 }}>
         <Container maxWidth="lg">
           <Typography variant="h3" textAlign="center" gutterBottom>
-            Why Choose Rigoo Marine
+            {t('whyChoose.title')}
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 4, mt: 4 }}>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>✓</Typography>
-              <Box>
-                <Typography variant="h6" gutterBottom>Experienced Technicians</Typography>
-                <Typography color="text.secondary">
-                  Certified professionals with years of marine industry experience
-                </Typography>
+            {reasons.map((key) => (
+              <Box key={key} sx={{ display: 'flex', gap: 2 }}>
+                <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>✓</Typography>
+                <Box>
+                  <Typography variant="h6" gutterBottom>{t(`whyChoose.${key}.title`)}</Typography>
+                  <Typography color="text.secondary">
+                    {t(`whyChoose.${key}.description`)}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>✓</Typography>
-              <Box>
-                <Typography variant="h6" gutterBottom>Quality Parts</Typography>
-                <Typography color="text.secondary">
-                  We use only OEM and high-quality aftermarket parts
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>✓</Typography>
-              <Box>
-                <Typography variant="h6" gutterBottom>Fast Turnaround</Typography>
-                <Typography color="text.secondary">
-                  Quick service without compromising on quality
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>✓</Typography>
-              <Box>
-                <Typography variant="h6" gutterBottom>Transparent Pricing</Typography>
-                <Typography color="text.secondary">
-                  No hidden fees - clear quotes before any work begins
-                </Typography>
-              </Box>
-            </Box>
+            ))}
           </Box>
         </Container>
       </Box>
@@ -177,10 +127,10 @@ export default function Home() {
       <Box sx={{ bgcolor: 'primary.dark', color: 'white', py: 6, textAlign: 'center' }}>
         <Container maxWidth="md">
           <Typography variant="h4" gutterBottom>
-            Ready to Get Started?
+            {t('cta.title')}
           </Typography>
           <Typography variant="h6" paragraph sx={{ mb: 3, opacity: 0.9 }}>
-            Create an account and request service for your vessel today
+            {t('cta.subtitle')}
           </Typography>
           <Button
             component={Link}
@@ -189,7 +139,7 @@ export default function Home() {
             size="large"
             sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
           >
-            Create Account
+            {t('cta.button')}
           </Button>
         </Container>
       </Box>
