@@ -107,3 +107,11 @@ logs/
 MOBILE_PLAN.md
 PLAN.md
 PAUSE_TASKS.md
+
+# Claude Code project state
+.claude/
+
+# Local-only activity scripts
+.activity-fill.sh
+.activity-push.sh
+ACTIVITY.md
