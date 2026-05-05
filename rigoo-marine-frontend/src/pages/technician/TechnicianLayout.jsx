@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, Container, Fade } from '@mui/material';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -27,27 +27,54 @@ export default function TechnicianLayout() {
 
   const drawer = (
     <Box>
-      <Toolbar sx={{ bgcolor: 'primary.main', color: 'white' }}>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+      <Toolbar
+        sx={{
+          background: 'linear-gradient(135deg, #006994 0%, #004263 100%)',
+          color: 'white',
+        }}
+      >
+        <Typography variant="h6" sx={{ flexGrow: 1, display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+          <Box component="span" sx={{ animation: 'rmFloat 4.5s ease-in-out infinite', display: 'inline-block' }}>⚓</Box>
           Technician Portal
         </Typography>
       </Toolbar>
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item.name} disablePadding>
-            <ListItemButton
-              component={Link}
-              to={item.path}
-              selected={location.pathname === item.path}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.name} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-        <ListItem disablePadding>
+      <List sx={{ px: 1, py: 1 }}>
+        {navItems.map((item) => {
+          const selected = location.pathname === item.path;
+          return (
+            <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                selected={selected}
+                onClick={() => setMobileOpen(false)}
+                sx={{
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: 8,
+                    bottom: 8,
+                    width: 3,
+                    borderRadius: 2,
+                    bgcolor: 'secondary.main',
+                    transform: selected ? 'scaleY(1)' : 'scaleY(0)',
+                    transition: 'transform 240ms cubic-bezier(0.34,1.56,0.64,1)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36, color: selected ? 'primary.main' : 'inherit' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.name} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+        <ListItem disablePadding sx={{ mt: 1 }}>
           <ListItemButton onClick={logout}>
-            <ListItemIcon><LogoutIcon /></ListItemIcon>
+            <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
           </ListItemButton>
         </ListItem>
@@ -56,8 +83,17 @@ export default function TechnicianLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <AppBar position="fixed" sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` } }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          background: 'linear-gradient(135deg, #006994 0%, #004263 100%)',
+          boxShadow: '0 4px 20px rgba(0,40,60,0.18)',
+        }}
+      >
         <Toolbar>
           <IconButton
             edge="start"
@@ -78,6 +114,8 @@ export default function TechnicianLayout() {
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          transitionDuration={{ enter: 320, exit: 240 }}
           sx={{
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
@@ -89,7 +127,11 @@ export default function TechnicianLayout() {
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              borderRight: '1px solid rgba(0,0,0,0.06)',
+            },
           }}
           open
         >
@@ -97,9 +139,24 @@ export default function TechnicianLayout() {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}>
-        <UnverifiedEmailBanner />
-        <Outlet />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 1.5, sm: 2.5, md: 3 },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          mt: { xs: 7, sm: 8 },
+          minWidth: 0,
+        }}
+      >
+        <Container maxWidth="lg" disableGutters sx={{ px: { xs: 0.5, sm: 1 } }}>
+          <UnverifiedEmailBanner />
+          <Fade in key={location.pathname} timeout={320}>
+            <Box>
+              <Outlet />
+            </Box>
+          </Fade>
+        </Container>
       </Box>
     </Box>
   );

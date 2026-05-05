@@ -44,3 +44,8 @@ stripe:
   secret-key: ${STRIPE_SECRET_KEY:}
   # `whsec_…` from a Stripe CLI session (`stripe listen`) or a registered endpoint.
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+# Shared secret for inter-service callback authentication (invoice → shop).
+# Both modules must agree on this value. Override in production via INTERNAL_API_TOKEN.
+shop:
+  internal-api-token: ${INTERNAL_API_TOKEN:rigoo-internal-token-change-in-production}

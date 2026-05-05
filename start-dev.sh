@@ -50,7 +50,7 @@ echo ""
 echo "Now start each Spring service in its own terminal (mvn spring-boot:run):"
 for m in discovery-service gateway-module client-module vessel-module service-module \
          work-order-module technician-module invoice-module notification-module \
-         marketplace-module; do
+         marketplace-module shop-module; do
     echo "  cd rigoo-marine-backend/$m && mvn spring-boot:run"
 done
 echo ""

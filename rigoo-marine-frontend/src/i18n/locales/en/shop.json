@@ -1,0 +1,194 @@
+{
+  "title": "Parts & Tools Shop",
+  "tagline": "Marine parts and tools for every vessel",
+  "categories": {
+    "ALL": "All",
+    "PART": "Parts",
+    "TOOL": "Tools"
+  },
+  "filters": {
+    "search": "Search name, brand, SKU",
+    "category": "Category",
+    "brand": "Brand",
+    "priceMin": "Min price",
+    "priceMax": "Max price",
+    "inStock": "In stock only",
+    "clear": "Clear",
+    "filtersHeading": "Filters"
+  },
+  "card": {
+    "viewDetails": "View details",
+    "noImage": "No image",
+    "outOfStock": "Out of stock",
+    "lowStock": "Only {{count}} left",
+    "inStock": "In stock"
+  },
+  "detail": {
+    "specs": "Specifications",
+    "description": "Description",
+    "brand": "Brand",
+    "sku": "SKU",
+    "category": "Category",
+    "stock": "Availability",
+    "price": "Price",
+    "backToCatalog": "Back to catalog",
+    "quantity": "Quantity"
+  },
+  "stock": {
+    "available": "{{count}} in stock",
+    "low": "Only {{count}} left",
+    "out": "Out of stock"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "ACTIVE": "Active",
+    "ARCHIVED": "Archived"
+  },
+  "cta": {
+    "requestQuote": "Request quote",
+    "checkStock": "Check stock",
+    "addToCart": "Add to cart",
+    "checkout": "Checkout",
+    "comingSoon": "Coming soon",
+    "contact": "Contact us"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "browseProducts": "Browse products",
+    "subtotal": "Subtotal",
+    "taxNote": "Tax and shipping calculated at checkout. Currently free local pickup or delivery.",
+    "stockLeft": "{{count}} in stock",
+    "added": "Added to cart",
+    "addError": "Could not add to cart"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "processing": "Redirecting to secure payment…",
+    "success": "Payment successful",
+    "successDetail": "Your order is confirmed. We'll be in touch via WhatsApp to coordinate delivery.",
+    "cancelled": "Payment cancelled",
+    "cancelledDetail": "No payment was taken. Your cart has been kept — you can try again whenever you're ready.",
+    "viewOrder": "View order",
+    "tryAgain": "Try again",
+    "backToShop": "Back to shop",
+    "stockConflict": "Some items in your cart are no longer available in the requested quantity. Please update your cart.",
+    "requestedAvailable": "requested {{requested}}, available {{available}}",
+    "notConfigured": "Payments are not yet configured. Please contact us to complete your order.",
+    "error": "Could not start checkout. Please try again.",
+    "waitingForPayment": "Waiting for payment confirmation…",
+    "orderNumber": "Order number"
+  },
+  "orders": {
+    "title": "My orders",
+    "empty": "You haven't placed any orders yet.",
+    "browseShop": "Browse the shop",
+    "orderNumber": "Order #",
+    "placedOn": "Placed on",
+    "items": "Items",
+    "total": "Total",
+    "status": "Status",
+    "viewDetails": "View details",
+    "statuses": {
+      "PENDING_PAYMENT": "Pending payment",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled",
+      "REFUNDED": "Refunded"
+    }
+  },
+  "inquiry": {
+    "title": "Send an inquiry",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone (optional)",
+    "message": "Message",
+    "type": "Inquiry type",
+    "quantity": "Quantity",
+    "types": {
+      "QUOTE": "Request a quote",
+      "STOCK_CHECK": "Check availability",
+      "GENERAL": "General question"
+    },
+    "submit": "Send inquiry",
+    "cancel": "Cancel",
+    "success": "Inquiry sent. We'll be in touch shortly.",
+    "error": "Could not send inquiry. Please try again."
+  },
+  "empty": "No products match your filters.",
+  "loading": "Loading products…",
+  "currency": "QAR",
+  "navLink": "Shop",
+  "admin": {
+    "products": "Products",
+    "inquiries": "Shop inquiries",
+    "newProduct": "New product",
+    "editProduct": "Edit product",
+    "deleteConfirm": "Delete this product?",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "saved": "Product saved.",
+    "deleted": "Product deleted.",
+    "saveError": "Could not save product.",
+    "deleteError": "Could not delete product.",
+    "inquiryStatusUpdated": "Status updated.",
+    "sections": {
+      "basic": "Basic info",
+      "pricing": "Pricing & stock",
+      "specs": "Specifications",
+      "media": "Media (one URL per line)"
+    },
+    "fields": {
+      "slug": "Slug (auto if blank)",
+      "sku": "SKU (auto if blank)",
+      "status": "Status",
+      "category": "Category",
+      "brand": "Brand",
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "descriptionEn": "Description (English)",
+      "descriptionAr": "Description (Arabic)",
+      "specsEn": "Specifications (English)",
+      "specsAr": "Specifications (Arabic)",
+      "priceQar": "Price (QAR)",
+      "stockQty": "Stock quantity",
+      "mediaUrls": "Image URLs"
+    },
+    "inquiryColumns": {
+      "id": "ID",
+      "type": "Type",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "productId": "Product",
+      "quantity": "Qty",
+      "status": "Status",
+      "createdAt": "Submitted"
+    },
+    "productColumns": {
+      "id": "ID",
+      "sku": "SKU",
+      "name": "Name",
+      "category": "Category",
+      "brand": "Brand",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "orderInbox": {
+      "title": "Shop orders",
+      "description": "Customer orders. Status auto-updates from Stripe; manual override is for stuck orders only.",
+      "searchPlaceholder": "Search by order number or email",
+      "orderNumber": "Order #",
+      "placedOn": "Placed on",
+      "customer": "Customer",
+      "items": "Items",
+      "total": "Total",
+      "status": "Status",
+      "statusUpdated": "Status updated",
+      "statusError": "Could not update status"
+    }
+  }
+}

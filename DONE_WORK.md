@@ -357,3 +357,250 @@ Explicitly NOT in scope (deferred to Phase 2):
 - MyFatoorah / Tap (Qatar local processors). Same shape, separate webhook endpoint when provisioned.
 
 To go live: provision a Stripe test account, copy `sk_test_…` and run `stripe listen` to get `whsec_…`, set both as env vars, restart `invoice-service`.
+
+---
+
+## #14 — Item 2: Parts & Tools Shop — Phase 1
+
+Trimmed Phase 1 cut (mirrors marketplace #11 shape exactly): public catalog + product detail + admin CRUD + product inquiries. Cart, checkout, orders deferred to Phase 2 (blocked on Stripe creds — pairs with marketplace deposit work). Bilingual content (AR + EN) baked in from V1; no V2 churn like the marketplace migration needed.
+
+Locked decisions baked in:
+- **Bilingual content** — full EN + AR on `name`, `description`, `specs`. Admin enters both; UI picks based on `i18n.language`.
+- **Real `slug` column** — UNIQUE NOT NULL, generated as `slugify(nameEn) + "-" + UUID-8` before insert (lesson from #11 smoke-test fix; no two-phase save).
+- **Auto-generated `sku`** — `<C|P>-<UUID-8>` if admin leaves blank.
+- **Nullable `product_id` on inquiries** — DB CHECK enforces it for QUOTE/STOCK_CHECK; GENERAL may omit. Service-layer 400 catches it before the SQL exception. Single admin inbox handles every inquiry type.
+- **Phase 2 cart/checkout CTAs** — rendered but disabled with "Coming soon" tooltip; anchors them in the UI without half-built behavior.
+- **Image storage** — admin pastes hosted URLs (one per line) for now; S3 + thumbnail pipeline is Phase 2.
+
+Backend (`shop-module`, port 8089, `flyway_schema_history_shop`):
+- Flyway `V1__shop_schema.sql` — `products` (slug UNIQUE, sku UNIQUE, name_en/ar, description_en/ar, category PART|TOOL with CHECK, brand, price_qar, currency=QAR, stock_qty, status DRAFT|ACTIVE|ARCHIVED, media_urls, specs_en/ar, view_count) and `product_inquiries` (product_id nullable, name, email, phone, message, quantity, inquiry_type QUOTE|STOCK_CHECK|GENERAL, status NEW|IN_PROGRESS|CLOSED, admin_notes). Indexes on status/category/brand/slug + partial index `(category) WHERE status='ACTIVE'`. CHECK constraints: category, status, price_nonneg, stock_nonneg, inquiry type/status, product_required-when-bound.
+- Entities `Product` (`Category` PART|TOOL, `Status` DRAFT|ACTIVE|ARCHIVED) and `ProductInquiry` (`InquiryType` QUOTE|STOCK_CHECK|GENERAL, `InquiryStatus` NEW|IN_PROGRESS|CLOSED).
+- `ProductService` — full CRUD, paged JPA `Specification` (q matches nameEn/nameAr/descriptionEn/descriptionAr/brand/sku, category, brand, price range, in-stock toggle, optional `adminStatus` to bypass the public ACTIVE filter); slug + sku auto-generation in `create()`. New `getBySlug()`.
+- `ProductInquiryService.create()` — friendly 400 when product-bound types (QUOTE/STOCK_CHECK) omit `productId`; only checks product existence when `productId` is provided.
+- Controllers: `GET /api/products`, `GET /api/products/{id}`, `GET /api/products/by-slug/{slug}` (public); admin POST/PUT/DELETE under `@PreAuthorize("hasRole('ADMIN')")`. `POST /api/products/inquiries` (public), admin GET + `PUT /api/products/inquiries/{id}/status`.
+- `SecurityConfig` — JWT filter, public GET on products + slug + POST on inquiries; `@EnableMethodSecurity` for `@PreAuthorize`.
+- `ShopExceptionHandler` (`@RestControllerAdvice`) — maps `IllegalArgumentException` → 400 (lesson from #11; otherwise security forwards `/error` → 403).
+- `shop-module/pom.xml` — `spring-boot-starter-web/data-jpa/security/validation/actuator`, eureka client, postgres, flyway-core + flyway-database-postgresql, jjwt 0.12.5. Per-module Flyway history table from day 1.
+
+Gateway (`gateway-module/application.yml`):
+- New route `shop-inquiry-create-ratelimit` matching `POST /api/products/inquiries` only — IP-keyed strict limiter (replenishRate=1/sec, burstCapacity=3) anti-spam, declared **before** the general route so it wins on the predicate match.
+- New route `shop-service` matching `/api/products/**` — IP-keyed normal limiter (replenishRate=20/sec, burstCapacity=40), routes to `lb://shop-service`.
+
+Infra wiring:
+- `rigoo-marine-backend/pom.xml` — `<module>shop-module</module>` added.
+- `docker-compose.yml` — `shop-service` block (mirrors marketplace, port 8089, healthcheck on `/actuator/health`).
+- `start-all-docker.sh` — added to mvn `-pl` chain, healthy-count threshold bumped from 12 → 13.
+- `start-dev.sh` — added to dev script's service loop.
+- New `shop-module/Dockerfile` (mirrors marketplace's, EXPOSE 8089).
+
+Frontend:
+- `services/api.js` — new `shopApi` (`searchProducts`, `getProductById`, `getProductBySlug`, `createProduct`, `updateProduct`, `deleteProduct`, `createInquiry`, `searchInquiries`, `updateInquiryStatus`).
+- New `shop` i18n namespace in `src/i18n/locales/{en,ar}/shop.json` (full coverage: title/tagline, categories, filters, card incl. low-stock + out-of-stock, detail, stock badges, status, CTAs incl. comingSoon for cart/checkout, inquiry form with QUOTE/STOCK_CHECK/GENERAL, admin labels). Registered in `src/i18n/index.js`. Navbar link key added.
+- Reusable components under `src/components/shop/`:
+  - `ProductCard.jsx` — `Grow` mount with index-staggered delay, hover `translateY(-4px)` + shadow lift, RTL-aware status-badge corner, primary-image fallback icon (build for TOOL, bag for PART), stock-urgency chip ("Only N left" / "Out of stock"), `loading="lazy"` on images.
+  - `ProductPhotoCarousel.jsx` — cross-fade + scale on slide change, prev/next buttons, animated dot indicators, lazy-loaded non-primary images.
+  - `ProductInquiryDialog.jsx` — `Slide direction="up"` modal, type select (restricted to GENERAL when `productId` is null), conditional quantity field for QUOTE, submit via `shopApi.createInquiry`, toast on success/error.
+- Public pages under `src/pages/public/shop/`:
+  - `ProductCatalog.jsx` at `/shop` — All/Parts/Tools toggle in animated hero (linear gradient + Fade), filter sidebar (search, brand, price range, in-stock checkbox), paged grid with skeleton loaders during initial fetch and `keepPreviousData` for smooth filter transitions. `staleTime: 60_000` so back-nav from detail returns instantly.
+  - `ProductDetail.jsx` at `/shop/products/:slug` — animated photo carousel, Fade + Grow-staggered spec sections, sticky CTA panel with live "Request quote" + "Check stock" and disabled "Add to cart" / "Checkout" on "Coming soon" tooltips, RTL-aware back arrow.
+- Admin pages under `src/pages/admin/`:
+  - `ProductManagement.jsx` at `/admin/products` — `<FilterableTable>` with status + category filters, edit/delete row actions, "New product" CTA, stock-urgency chips inline.
+  - `ProductForm.jsx` at `/admin/products/new` and `/admin/products/:id/edit` — bilingual form (basic, pricing + stock, specs, media). Single section per group.
+  - `ProductInquiryManagement.jsx` at `/admin/shop-inquiries` — `<FilterableTable>` with status + type filters; inline status select per row uses `shopApi.updateInquiryStatus` and invalidates the query on success.
+- Routes wired in `App.jsx`. Navbar gains a Shop link (en + ar). `AdminLayout` nav gains Products + Shop inquiries entries.
+
+Verification:
+- `mvn -pl shop-module -am clean compile` ✓
+- `mvn -pl gateway-module -am compile` ✓
+- `npm run build` ✓ (6.3 s)
+- `npx eslint` on shop files → 0 errors (1 warning on `useEffect` complex-dep matches existing `BoatGallery`/`FilterableTable` pattern).
+
+Live verification still pending (until full local stack is up):
+- Bring up backend + gateway + frontend. Log in as ADMIN, create a product under `/admin/products/new` with bilingual names + image URLs + stock=5.
+- Verify `/shop` All/Parts/Tools toggle, filters, card hover lifts, low-stock badge when stock ≤ 3.
+- Open `/shop/products/:slug` detail, submit a Quote inquiry (with quantity) + a Stock-check inquiry. Confirm `/admin/shop-inquiries` lists both and the inline status select persists.
+- Toggle language to Arabic, confirm RTL rendering on the detail page (carousel direction, sticky panel side, back arrow flips).
+- Curl rate-limit check on `POST /api/products/inquiries` (expect 429 after the 3-burst is drained).
+
+Phase 2 (locked, deferred — blocks on Stripe + S3):
+- Cart entity + cart drawer (login-required, optimistic add-to-cart, localStorage-merge-on-login).
+- Order + OrderItem with snapshot pattern (price + name captured at order time).
+- Stripe Checkout redirect + webhook handler in `invoice-module` → mark order PAID + decrement stock with `@Version` optimistic locking + auto-generate Invoice via existing `Invoice` entity.
+- Soft reservation (5-min `reserved_until`) during active checkout to prevent overselling.
+- Order confirmation email via existing `notification-service`.
+- S3 image upload + thumbnail pipeline.
+
+Phase 3 (locked, deferred):
+- Technician wholesale pricing.
+- Work-order linkage (parts attached to a repair job).
+- Returns / refunds workflow.
+- Reviews & ratings.
+- Postgres FTS with `pg_trgm` typo tolerance.
+- Recently viewed, favorites, sitemap, JSON-LD `Product` schema.
+
+---
+
+## #15 — Item 2: Parts & Tools Shop — Phase 2 (cart + checkout + Stripe)
+
+End-to-end paid loop wired in. Frontend can now add to cart, redirect to Stripe-hosted Checkout, and reflect the PAID transition once the webhook fires. Stack still boots cleanly without Stripe creds — checkout returns 503 with `payments not configured` until `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` are set.
+
+**Locked decisions baked in** (from the shaping pass):
+- Drawer-only cart (no separate `/cart` page) — Slide-in MUI Drawer with full edit + checkout button at the bottom.
+- Login-gated cart from the start — anonymous "Add to cart" redirects to `/login?next=/shop/products/{slug}`. No localStorage cart merge logic.
+- No shipping address — phone follow-up model (admin contacts via WhatsApp). Order has `notes` field; no shipping_address.
+- No soft reservation — `@Version` optimistic lock on `Product.stockQty` is enough for v1 traffic.
+- Stripe SDK in `shop-module` for Checkout-creation; `invoice-module` keeps the webhook (per #13) and relays SHOP events back via internal HTTP callback.
+- `RGM-YYYY-NNNNN` order numbers (UNIQUE, customer-facing).
+- Stock validated **before** Stripe Session creation — returns `409` with `{ conflicts: [{ productId, requested, available }] }` instead of refund-spamming Stripe.
+- Idempotency table `processed_stripe_events` in `invoice-module`. Insert-or-skip on first line of every handler.
+
+**Backend (`shop-module`)**:
+- Flyway `V2__shop_orders.sql` — `version BIGINT NOT NULL DEFAULT 0` on `products`; new tables `carts`, `cart_items` (UNIQUE on cart_id+product_id, qty CHECK), `orders` (order_number UNIQUE, status CHECK PENDING_PAYMENT|PAID|CANCELLED|REFUNDED, stripe_session_id, stripe_payment_intent_id, paid_at, cancelled_at), `order_items` (snapshot of sku/name_en/ar/price_qar/image_url/quantity/line_total — survives product mutations).
+- Entities updated: `Product.@Version`, new `Cart`, `CartItem`, `Order`, `OrderItem`. EAGER fetch on items for in-transaction iteration.
+- DTOs: `CartDTO`, `CartItemDTO` (joined product info — slug, sku, name_en/ar, price, imageUrl, stockQty), `OrderDTO`, `OrderItemDTO`, `AddToCartRequest`, `UpdateCartItemRequest`, `CheckoutResponse`, `StockConflictItem`.
+- Repos: `CartRepository.findByUserEmail`, `OrderRepository.findByOrderNumber/findByStripeSessionId/findByUserEmail`.
+- `CartService` — get/add/update/remove/clear, all keyed by `userEmail` (JWT subject). `add` caps at available stock (UX limit only — race-safety is at checkout/webhook).
+- `OrderService.checkout(userEmail)`:
+  1. Throws `PaymentNotConfiguredException` (→ 503) when `stripe.secret-key` is blank.
+  2. Throws `StockConflictException` (→ 409) with the offending lines if any item is out of stock or below requested qty at checkout time.
+  3. Persists the order in PENDING_PAYMENT first (stable orderId for Stripe metadata).
+  4. Calls `Session.create(...)` with line items in fils (`priceQar.multiply(100)`), QAR currency, success/cancel URLs pointing to `${shop.frontend-base-url}/checkout/{success|cancel}?orderId={id}`, metadata `{ orderId, orderNumber, source=SHOP }`.
+  5. Saves `stripe_session_id` on the order, returns `{ orderId, orderNumber, checkoutUrl, sessionId }`.
+- `OrderService.markPaid(sessionId, paymentIntentId)` — `@Retryable(OptimisticLockException, maxAttempts=4, backoff=50ms×2)`. Idempotent: skips if already PAID. Decrements stock per line; on rare race (stock < qty due to admin edit between checkout and webhook), caps at 0 and logs error for admin handling. Clears the user's cart on success.
+- `OrderService.markCancelled(sessionId)` — flips PENDING_PAYMENT → CANCELLED.
+- `OrderService.generateOrderNumber()` — `RGM-{year}-{5-digit random}`, retries on collision (8x), falls back to UUID suffix.
+- `CartController` — `GET /api/cart`, `POST /api/cart/items`, `PUT /api/cart/items/{itemId}`, `DELETE /api/cart/items/{itemId}`, `DELETE /api/cart`. All read `auth.getName()` (email).
+- `OrderController` — `POST /api/orders/checkout`, `GET /api/orders/my` (paged, sorted by createdAt desc), `GET /api/orders/{id}` (owner-check via OrderService).
+- `InternalOrderController` (`/api/internal/orders/checkout-{completed,cancelled}`) — token-gated by `X-Internal-Api-Token` header, calls `OrderService.markPaid/markCancelled`.
+- `SecurityConfig` — `/api/internal/**` permitted at filter level (controller does the token check); `/api/cart/**` + `/api/orders/**` require auth.
+- `ShopExceptionHandler` extended — handles `StockConflictException` (409 with conflicts list), `PaymentNotConfiguredException` (503), `ForbiddenException` (403).
+- `pom.xml` — added `com.stripe:stripe-java:27.0.0`, `spring-retry`, `spring-aspects` (for `@Retryable` AOP).
+- `application.yml` — `stripe.secret-key`, `shop.frontend-base-url`, `shop.internal-api-token`.
+- `ShopApplication` — `@EnableRetry`.
+
+**Backend (`invoice-module`)**:
+- Flyway `V2__stripe_idempotency.sql` — `processed_stripe_events (event_id PK, event_type, processed_at)` plus index on `processed_at DESC`.
+- Entity `ProcessedStripeEvent` + repo.
+- `StripeWebhookController` rewritten:
+  1. Validates Stripe signature via `Webhook.constructEvent` (unchanged from #13).
+  2. Inserts `event.id` into `processed_stripe_events` — `DataIntegrityViolationException` on duplicate ⇒ idempotent 200 ack.
+  3. Switches on `event.getType()`:
+     - `checkout.session.completed` → reads `metadata.source`; if `SHOP`, calls `ShopCallbackClient.notifyCheckoutCompleted(sessionId, paymentIntentId)`.
+     - `checkout.session.expired`, `payment_intent.payment_failed` → relays cancel.
+     - `charge.refunded` → logged, Phase 3 wiring.
+  4. On handler exception, **deletes the idempotency row** so Stripe's retry actually re-runs the handler. Returns 500 to trigger retry.
+- `ShopCallbackClient` — `@LoadBalanced RestTemplate` + `lb://shop-service` URL via Eureka discovery. POSTs to `/api/internal/orders/checkout-{completed,cancelled}` with `X-Internal-Api-Token` shared secret.
+- `pom.xml` — added `spring-cloud-starter-loadbalancer` (for `@LoadBalanced`).
+- `application.yml` — `shop.internal-api-token`.
+
+**Gateway** (`gateway-module/application.yml`):
+- New route `shop-checkout-ratelimit` — POST `/api/orders/checkout` user-keyed strict limiter (replenishRate=1/s, burst=5) — anti-abuse on Stripe Session creation.
+- New route `shop-cart-and-orders` — `/api/cart/**,/api/orders/**` user-keyed normal limiter (10/s, burst 20).
+
+**Infra wiring** (`docker-compose.yml`):
+- `shop-service` env: `STRIPE_SECRET_KEY`, `INTERNAL_API_TOKEN`, `FRONTEND_BASE_URL` (defaulting empty / safe values). Heap bumped 256m → 384m.
+- `invoice-service` env: added `INTERNAL_API_TOKEN`.
+
+**Frontend**:
+- `services/api.js` — `shopApi` extended: `getCart`, `addToCart`, `updateCartItem`, `removeCartItem`, `clearCart`, `checkout`, `getMyOrders`, `getOrderById`.
+- `hooks/useCart.js` — React Query-backed, login-gated (`enabled: isAuthenticated`). `addItem` invalidates on success; `updateItem` and `removeItem` use optimistic updates (cancel ongoing queries, mutate cache, rollback on error, refetch on settle).
+- `components/shop/CartDrawer.jsx` — RTL-aware anchor (left in AR, right in EN), Avatar + product info, inline qty editor + delete, stock-left caption, subtotal + tax note + checkout button, conflict alert when 409 returned, redirects browser to `checkoutUrl` on success.
+- `components/layout/Navbar.jsx` — cart icon + `Badge` count for authenticated users; opens `CartDrawer`.
+- `pages/public/shop/ProductDetail.jsx` — replaced "Coming soon" tooltip with live qty stepper + "Add to cart" button. Anonymous click → `navigate('/login?next=...')`. Toast on success/error.
+- `pages/public/shop/CheckoutSuccess.jsx` (`/checkout/success?orderId=…`) — polls `getOrderById` every 3 s with `refetchInterval` until `status === 'PAID'`. Shows order number + total + line items snapshot + "View order" / "Back to shop" CTAs. Invalidates cart on PAID.
+- `pages/public/shop/CheckoutCancel.jsx` (`/checkout/cancel?orderId=…`) — friendly "no payment taken" message + back to shop.
+- `pages/dashboard/MyShopOrders.jsx` (`/dashboard/shop-orders`) — paged list of user's orders with status chip, total, line-item preview (3 + "+ N more"), staggered Fade-in.
+- Routes wired in `App.jsx` (`/checkout/success`, `/checkout/cancel` under `MainLayout` + `ProtectedRoute`; `/dashboard/shop-orders`).
+- `DashboardLayout` — added "Shop Orders" nav entry with `ShoppingBagOutlinedIcon`.
+- i18n (en + ar) — new `cart`, `checkout`, `orders` namespace sections in `shop.json`; covers cart UX, stock conflict copy, payment-not-configured copy, order statuses, success/cancel pages.
+
+**Verification**:
+- `mvn -pl shop-module,invoice-module,gateway-module -am clean compile` ✓
+- `npm run build` ✓ (6.1 s)
+- `npx eslint` on shop Phase 2 files → 0 errors (1 pre-existing warning on `BoatGallery`-style `useEffect` complex-dep — not from this work).
+
+**To go live** (separate, blocked on the user provisioning these — no business verification required for Stripe test mode):
+1. Sign up at stripe.com → copy `sk_test_…`.
+2. Run `stripe listen --forward-to http://localhost:8080/api/payments/webhooks/stripe` → copy `whsec_…`.
+3. Set `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (both `invoice-service` and the test-card flow), `INTERNAL_API_TOKEN` (must match across `shop-service` and `invoice-service`), `FRONTEND_BASE_URL` (e.g. `http://localhost:5173` for dev or your prod domain).
+4. Restart `shop-service` + `invoice-service`.
+5. Test card: `4242 4242 4242 4242`, any future expiry, any CVC.
+
+**Live verification still pending** (until creds + stack are up):
+- POST product → add to cart → checkout → Stripe-hosted page → success URL → poll until PAID → confirm stock decremented + cart cleared + order in `/dashboard/shop-orders`.
+- Concurrent webhook delivery: replay the same Stripe event twice via `stripe trigger checkout.session.completed --event-id <id>` and confirm idempotent 200 + no double stock decrement.
+- Stock conflict: edit a product's stock to 0 between `add-to-cart` and checkout → expect `409` with conflicts list rendered in the cart drawer.
+- 503 path: clear `STRIPE_SECRET_KEY`, click checkout → expect "payments not configured" toast.
+
+**Phase 2.1 follow-ups (admin inbox + Kafka email shipped in #16; refund button + low-stock alerts still deferred to Phase 3):**
+- ✅ Admin order inbox (`/admin/shop-orders`) — shipped in #16.
+- ✅ Confirmation email on PAID — shipped in #16 (Kafka topic + bilingual template + LogMailSender path).
+- ⏳ Marketplace deposit checkout (boat reservation Phase 2) — reuses `processed_stripe_events`, `ShopCallbackClient` becomes generic `*CallbackClient` per source.
+- ⏳ Refund button + Stripe API refund + restock.
+- ⏳ Low-stock alerts for admin.
+
+---
+
+## #16 — Item 2: Parts & Tools Shop — Phase 2.1 (admin order inbox + Kafka confirmation email)
+
+Closes the loop on Phase 2: admin can now see customer orders without hitting SQL, and the email path is wired end-to-end (writes to `LogMailSender` until SMTP creds land — flipping `MAIL_ENABLED=true` switches to real send with no code change).
+
+**Backend (`shop-module`)**:
+- `OrderRepository` extends `JpaSpecificationExecutor<Order>` for filterable admin search.
+- `AdminOrderService` — paged search by `status` + `q` (matches order_number or user_email, case-insensitive); `updateStatus` for manual admin overrides on stuck orders (does NOT touch stock — refund/restock is Phase 3).
+- `AdminOrderController` (`/api/admin/orders/**`) — `@PreAuthorize("hasRole('ADMIN')")` at class level. GET (paged + filterable), GET by id, PUT status.
+- `SecurityConfig` — `/api/admin/**` requires auth (controller's `@PreAuthorize` enforces ADMIN role).
+- New `KafkaConfig` — JSON serializer producer factory + `KafkaTemplate<String, Object>`, mirrors work-order-module's pattern (acks=all, retries=3).
+- `ShopOrderEvent` — flat DTO (type, orderId, orderNumber, userEmail, status, totalQar, currency, itemCount, occurredAt) so consumers don't need shop-module classes on classpath.
+- `OrderEventPublisher` — emits to topic `shop.order.status`. Kafka send is wrapped in try/catch and logged on failure — DB state is authoritative; the email is best-effort.
+- `OrderService.markPaid` calls `publishOrderPaid(order)` after successful PAID transition; `markCancelled` calls `publishOrderCancelled`.
+- `pom.xml` adds `spring-kafka`. `application.yml` adds `spring.kafka.bootstrap-servers`.
+
+**Backend (`notification-module`)**:
+- Mail infra mirrored from client-module (`MailSender` interface, `LogMailSender` `@ConditionalOnProperty(app.mail.enabled=false, matchIfMissing=true)`, `SmtpMailSender` `@ConditionalOnProperty(app.mail.enabled=true)`, `EmailTemplate` entity, `EmailTemplateRepository`, `EmailTemplateService` with `{{placeholder}}` substitution + AR/EN locale picker).
+- `ShopOrderEventConsumer` — `@KafkaListener(topics = "shop.order.status", groupId = "notification-shop-orders")`. Receives event as `Map<String, Object>` (Spring's JsonDeserializer with `spring.json.value.default.type=java.util.LinkedHashMap`). For `ORDER_PAID`, looks up the bilingual `ORDER_PAID` template and renders it. Defaults to English locale (no `preferred_language` column yet — see PAUSE_TASKS deferred i18n).
+- Flyway `V2__shop_order_paid_template.sql` — idempotent INSERT seeding the bilingual ORDER_PAID template (placeholders: orderNumber, totalQar, currency, itemCount). `WHERE NOT EXISTS` guards against re-seeding when the row already exists.
+- `pom.xml` adds `spring-boot-starter-mail`.
+- `application.yml` adds Kafka deserializer config (Map default-type), SMTP settings (defaults safe-but-empty), `app.mail.enabled` toggle, `management.health.mail.enabled: false` (so `/actuator/health` doesn't go DOWN when SMTP isn't reachable — same fix from #11).
+
+**Gateway** (`gateway-module/application.yml`):
+- New route `shop-admin` matching `/api/admin/orders/**` — user-keyed normal limit (10/s, burst 20).
+
+**Infra wiring** (`docker-compose.yml`):
+- `notification-service` env: added `MAIL_ENABLED`, `SPRING_MAIL_HOST/PORT/USERNAME/PASSWORD`, `MAIL_FROM` (all defaulting to safe values). Heap bumped 256m → 384m.
+
+**Frontend**:
+- `services/api.js` — `shopApi.searchAdminOrders`, `getAdminOrderById`, `updateAdminOrderStatus`.
+- `pages/admin/ShopOrderManagement.jsx` (`/admin/shop-orders`) — `<FilterableTable>` with status filter, expandable items row (click "N ▶" to reveal line-item snapshots + Stripe session ID truncated), inline status `<Select>` for manual transitions. Bilingual via `t(orders.statuses.…)` reused from Phase 2.
+- `pages/admin/AdminLayout.jsx` — "Shop orders" nav entry with `ReceiptLongIcon` (chosen to differ from invoice's `ReceiptIcon`).
+- Routes wired in `App.jsx` under `/admin/shop-orders`.
+- i18n (en + ar) — new `admin.orderInbox` section in `shop.json`.
+
+**Verification**:
+- `mvn -pl shop-module,notification-module,gateway-module -am clean compile` ✓
+- `npm run build` ✓ (6.6 s)
+- `npx eslint` on Phase 2.1 files → 0 errors.
+
+**To exercise the email path** (no SMTP needed):
+- Place an order, complete Stripe Checkout in test mode → notification-service logs:
+  ```
+  ==== [DEV MAIL] ====
+    To: customer@example.com
+    Subject: Your Rigoo Marine order is confirmed - RGM-2026-12345
+    Body: Hi, Thanks for your order...
+  ====================
+  ```
+- Flip `MAIL_ENABLED=true` + populate SMTP creds → `SmtpMailSender` activates automatically (Spring's `@ConditionalOnProperty`), no code change.
+
+**Live verification still pending** (paired with Phase 2 smoke tests):
+- Admin signs in → `/admin/shop-orders` lists orders → expand line items → change status manually (e.g. CANCELLED on a stuck PENDING_PAYMENT) → confirm UI updates.
+- Bring up Kafka + place a real test order → check notification-service logs for the dev mail.
+- Bring up the stack with `MAIL_ENABLED=true` and a real SMTP provider → confirm actual email delivery.
+
+**Still deferred to Phase 3:**
+- Refund button on the admin order page (Stripe API refund + restock).
+- Marketplace deposit checkout (boat reservation Phase 2) — webhook handler + callback client become source-aware.
+- Low-stock email alert for admin.
+- WhatsApp notification path (Twilio / Meta Business API).
+- User locale persistence for ORDER_PAID email language picking (currently hardcoded EN — needs `preferred_language` column on `clients`).
+

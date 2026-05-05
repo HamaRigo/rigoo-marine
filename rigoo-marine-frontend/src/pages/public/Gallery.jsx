@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Box, Container, Typography, Grid, Card, CardMedia, Chip, Dialog, DialogContent, IconButton } from '@mui/material';
+import { Box, Container, Typography, Card, CardMedia, Chip, Dialog, DialogContent, IconButton, Slide, Fade, Zoom } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { Reveal, Stagger } from '../../components/common/Motion';
 
 const galleryItems = [
   { id: 1, title: 'Engine Rebuild', category: 'Mechanical', image: 'https://images.unsplash.com/photo-1569263979104-565b634a6e79?w=800', beforeAfter: true },
@@ -24,60 +25,95 @@ export default function Gallery() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 6, textAlign: 'center' }}>
+      <Box
+        sx={{
+          color: 'white',
+          py: { xs: 5, md: 8 },
+          px: { xs: 2, sm: 3 },
+          textAlign: 'center',
+          background: 'linear-gradient(125deg, #004263 0%, #006994 60%, #0a8fbf 100%)',
+          backgroundSize: '200% 200%',
+          animation: 'rmShimmer 16s ease infinite',
+        }}
+      >
         <Container maxWidth="md">
-          <Typography variant="h3" gutterBottom>Gallery</Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9 }}>
-            See our work - Before & After transformations
-          </Typography>
+          <Slide in direction="down" timeout={600}>
+            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>Gallery</Typography>
+          </Slide>
+          <Fade in timeout={900} style={{ transitionDelay: '160ms' }}>
+            <Typography variant="h6" sx={{ opacity: 0.9 }}>
+              See our work - Before &amp; After transformations
+            </Typography>
+          </Fade>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, sm: 3 } }}>
         {/* Category Filters */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {categories.map((category) => (
-            <Chip
-              key={category}
-              label={category}
-              onClick={() => setSelectedCategory(category)}
-              color={selectedCategory === category ? 'primary' : 'default'}
-              variant={selectedCategory === category ? 'filled' : 'outlined'}
-              sx={{ px: 2 }}
-            />
-          ))}
-        </Box>
+        <Reveal variant="fade" timeout={500}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {categories.map((category) => (
+              <Chip
+                key={category}
+                label={category}
+                onClick={() => setSelectedCategory(category)}
+                color={selectedCategory === category ? 'primary' : 'default'}
+                variant={selectedCategory === category ? 'filled' : 'outlined'}
+                sx={{ px: 2, fontWeight: 600 }}
+              />
+            ))}
+          </Box>
+        </Reveal>
 
         {/* Gallery Grid */}
-        <Grid container spacing={3}>
+        <Stagger
+          key={selectedCategory}
+          variant="grow"
+          step={80}
+          timeout={520}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+            gap: 3,
+          }}
+        >
           {filteredItems.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
-              <Card
-                sx={{ cursor: 'pointer' }}
-                onClick={() => setSelectedImage(item)}
-              >
+            <Card
+              key={item.id}
+              sx={{
+                cursor: 'pointer',
+                overflow: 'hidden',
+                '& .gallery-img': {
+                  transition: 'transform 480ms cubic-bezier(0.2,0,0,1)',
+                },
+                '&:hover .gallery-img': { transform: 'scale(1.06)' },
+              }}
+              onClick={() => setSelectedImage(item)}
+            >
+              <Box sx={{ overflow: 'hidden' }}>
                 <CardMedia
                   component="img"
-                  height="200"
+                  className="gallery-img"
+                  height="220"
                   image={item.image}
                   alt={item.title}
                 />
-                <Box sx={{ p: 2 }}>
-                  <Chip
-                    label={item.category}
-                    size="small"
-                    sx={{ mb: 1 }}
-                    color="primary"
-                    variant="outlined"
-                  />
-                  <Typography variant="body1" fontWeight="600">
-                    {item.title}
-                  </Typography>
-                </Box>
-              </Card>
-            </Grid>
+              </Box>
+              <Box sx={{ p: 2 }}>
+                <Chip
+                  label={item.category}
+                  size="small"
+                  sx={{ mb: 1 }}
+                  color="primary"
+                  variant="outlined"
+                />
+                <Typography variant="body1" fontWeight="600">
+                  {item.title}
+                </Typography>
+              </Box>
+            </Card>
           ))}
-        </Grid>
+        </Stagger>
       </Container>
 
       {/* Image Dialog */}
@@ -86,6 +122,8 @@ export default function Gallery() {
         onClose={() => setSelectedImage(null)}
         maxWidth="md"
         fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={{ enter: 320, exit: 220 }}
       >
         <DialogContent sx={{ p: 0, position: 'relative' }}>
           <IconButton

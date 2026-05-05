@@ -640,6 +640,124 @@ export const marketplaceApi = {
   },
 };
 
+// ============== SHOP APIs ==============
+export const shopApi = {
+  /**
+   * Public paged product search.
+   * @param {object} params - q, category (PART|TOOL|ALL), brand, priceMin/Max, inStock,
+   *   page, size, sort, adminStatus
+   */
+  searchProducts: async (params = {}) => {
+    const response = await httpClient.get('/api/products', { params });
+    return response.data; // Spring Page<ProductDTO>
+  },
+
+  /** Public detail by id. */
+  getProductById: async (id) => {
+    const response = await httpClient.get(`/api/products/${id}`);
+    return response.data;
+  },
+
+  /** Public detail by SEO slug — preferred from the catalog. */
+  getProductBySlug: async (slug) => {
+    const response = await httpClient.get(`/api/products/by-slug/${slug}`);
+    return response.data;
+  },
+
+  /** Admin create. */
+  createProduct: async (dto) => {
+    const response = await httpClient.post('/api/products', dto);
+    return response.data;
+  },
+
+  /** Admin update. */
+  updateProduct: async (id, dto) => {
+    const response = await httpClient.put(`/api/products/${id}`, dto);
+    return response.data;
+  },
+
+  /** Admin delete. */
+  deleteProduct: async (id) => {
+    const response = await httpClient.delete(`/api/products/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Public inquiry submit. productId is required for QUOTE/STOCK_CHECK,
+   * optional for GENERAL.
+   */
+  createInquiry: async (payload) => {
+    const response = await httpClient.post('/api/products/inquiries', payload);
+    return response.data;
+  },
+
+  /** Admin inquiry inbox. */
+  searchInquiries: async (params = {}) => {
+    const response = await httpClient.get('/api/products/inquiries', { params });
+    return response.data; // Spring Page<ProductInquiryDTO>
+  },
+
+  /** Admin inquiry status update. */
+  updateInquiryStatus: async (id, status, adminNotes) => {
+    const response = await httpClient.put(`/api/products/inquiries/${id}/status`, {
+      status,
+      adminNotes: adminNotes ?? '',
+    });
+    return response.data;
+  },
+
+  // ----- Cart (Phase 2, auth-required) -----
+  getCart: async () => {
+    const response = await httpClient.get('/api/cart');
+    return response.data;
+  },
+  addToCart: async (productId, quantity) => {
+    const response = await httpClient.post('/api/cart/items', { productId, quantity });
+    return response.data;
+  },
+  updateCartItem: async (itemId, quantity) => {
+    const response = await httpClient.put(`/api/cart/items/${itemId}`, { quantity });
+    return response.data;
+  },
+  removeCartItem: async (itemId) => {
+    const response = await httpClient.delete(`/api/cart/items/${itemId}`);
+    return response.data;
+  },
+  clearCart: async () => {
+    const response = await httpClient.delete('/api/cart');
+    return response.data;
+  },
+
+  // ----- Orders (Phase 2, auth-required) -----
+  /** Returns { orderId, orderNumber, checkoutUrl, sessionId } — frontend redirects to checkoutUrl. */
+  checkout: async () => {
+    const response = await httpClient.post('/api/orders/checkout');
+    return response.data;
+  },
+  getMyOrders: async (page = 0, size = 20) => {
+    const response = await httpClient.get('/api/orders/my', { params: { page, size } });
+    return response.data;
+  },
+  getOrderById: async (id) => {
+    const response = await httpClient.get(`/api/orders/${id}`);
+    return response.data;
+  },
+
+  // ----- Admin order inbox (ADMIN role) -----
+  searchAdminOrders: async (params = {}) => {
+    const response = await httpClient.get('/api/admin/orders', { params });
+    return response.data; // Spring Page<OrderDTO>
+  },
+  getAdminOrderById: async (id) => {
+    const response = await httpClient.get(`/api/admin/orders/${id}`);
+    return response.data;
+  },
+  updateAdminOrderStatus: async (id, status) => {
+    const response = await httpClient.put(`/api/admin/orders/${id}/status`, { status });
+    return response.data;
+  },
+};
+
 // ============== TECHNICIAN APIs ==============
 export const technicianApi = {
   // Dashboard
@@ -727,6 +845,7 @@ export default {
   dashboard: dashboardApi,
   admin: adminApi,
   marketplace: marketplaceApi,
+  shop: shopApi,
   technician: technicianApi,
   file: fileApi,
 };

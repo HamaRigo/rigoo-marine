@@ -31,6 +31,34 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+        # Deserialize shop.order.status events as a generic Map — notification-service
+        # doesn't need shop-module classes on its classpath.
+        spring.json.value.default.type: java.util.LinkedHashMap
+        spring.json.use.type.headers: false
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.example.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# Mail toggle — flip MAIL_ENABLED=true and populate SPRING_MAIL_* once SMTP provider is provisioned.
+# When false (default), LogMailSender writes the email to stdout instead.
+app:
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@rigoomarine.qa}
+
+# Disable mail health probe — default points at smtp.example.com which would drag /actuator/health DOWN.
+management:
+  health:
+    mail:
+      enabled: false
 
 eureka:
   client:

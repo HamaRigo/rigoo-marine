@@ -27,7 +27,7 @@ fi
 echo ""
 echo "Step 1: Building backend JARs..."
 ( cd rigoo-marine-backend && mvn -q -DskipTests \
-    -pl discovery-service,gateway-module,client-module,vessel-module,service-module,work-order-module,technician-module,invoice-module,notification-module,marketplace-module \
+    -pl discovery-service,gateway-module,client-module,vessel-module,service-module,work-order-module,technician-module,invoice-module,notification-module,marketplace-module,shop-module \
     -am package )
 
 echo ""
@@ -50,7 +50,7 @@ while :; do
     starting=$(docker compose ps --format '{{.Status}}' | grep -c 'health: starting' || true)
     exited=$(docker compose ps -a --format '{{.State}}' | grep -c exited || true)
     echo "  healthy=$healthy  starting=$starting  exited=$exited"
-    if [ "$healthy" -ge 12 ] && [ "$starting" -eq 0 ]; then break; fi
+    if [ "$healthy" -ge 13 ] && [ "$starting" -eq 0 ]; then break; fi
     if [ "$(date +%s)" -ge "$deadline" ]; then
         echo "WARN: timeout waiting for healthchecks; continuing." >&2
         break

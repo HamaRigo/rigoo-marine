@@ -187,6 +187,63 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@ipKeyResolver}"
+        # Shop — strict rate limit on the public inquiry POST (anti-spam, mirrors marketplace),
+        # normal IP-keyed limit on the public catalog (browse + detail).
+        - id: shop-inquiry-create-ratelimit
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/products/inquiries
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 3
+                key-resolver: "#{@ipKeyResolver}"
+        - id: shop-service
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+        # Shop checkout — strict per-user limit (anti-abuse on Stripe Session creation).
+        - id: shop-checkout-ratelimit
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/orders/checkout
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@userKeyResolver}"
+        # Shop cart + orders — auth-gated (cart UI), normal user-keyed limit.
+        - id: shop-cart-and-orders
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/cart/**,/api/orders/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        # Shop admin endpoints — order inbox. ADMIN role enforced at controller via @PreAuthorize.
+        - id: shop-admin
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/admin/orders/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
 
 eureka:
   client:

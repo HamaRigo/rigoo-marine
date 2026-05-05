@@ -21,6 +21,10 @@ import Gallery from './pages/public/Gallery';
 import About from './pages/public/About';
 import BoatGallery from './pages/public/marketplace/BoatGallery';
 import BoatDetail from './pages/public/marketplace/BoatDetail';
+import ProductCatalog from './pages/public/shop/ProductCatalog';
+import ProductDetail from './pages/public/shop/ProductDetail';
+import CheckoutSuccess from './pages/public/shop/CheckoutSuccess';
+import CheckoutCancel from './pages/public/shop/CheckoutCancel';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -35,6 +39,7 @@ import MyOrders from './pages/dashboard/MyOrders';
 import MyVessels from './pages/dashboard/MyVessels';
 import Invoices from './pages/dashboard/Invoices';
 import Profile from './pages/dashboard/Profile';
+import MyShopOrders from './pages/dashboard/MyShopOrders';
 
 // Work Order Flow
 import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
@@ -54,6 +59,10 @@ import Settings from './pages/admin/Settings';
 import BoatListingManagement from './pages/admin/BoatListingManagement';
 import BoatListingForm from './pages/admin/BoatListingForm';
 import BoatInquiryManagement from './pages/admin/BoatInquiryManagement';
+import ProductManagement from './pages/admin/ProductManagement';
+import ProductForm from './pages/admin/ProductForm';
+import ProductInquiryManagement from './pages/admin/ProductInquiryManagement';
+import ShopOrderManagement from './pages/admin/ShopOrderManagement';
 
 // Technician Pages
 import TechnicianLayout from './pages/technician/TechnicianLayout';
@@ -79,6 +88,10 @@ function App() {
               <Route path="/about" element={<MainLayout><About /></MainLayout>} />
               <Route path="/boats" element={<MainLayout><BoatGallery /></MainLayout>} />
               <Route path="/boats/:slug" element={<MainLayout><BoatDetail /></MainLayout>} />
+              <Route path="/shop" element={<MainLayout><ProductCatalog /></MainLayout>} />
+              <Route path="/shop/products/:slug" element={<MainLayout><ProductDetail /></MainLayout>} />
+              <Route path="/checkout/success" element={<MainLayout><ProtectedRoute><CheckoutSuccess /></ProtectedRoute></MainLayout>} />
+              <Route path="/checkout/cancel" element={<MainLayout><ProtectedRoute><CheckoutCancel /></ProtectedRoute></MainLayout>} />
 
               {/* Auth Routes - Guest only (redirect if authenticated) */}
               <Route path="/login" element={<GuestRoute><MainLayout><Login /></MainLayout></GuestRoute>} />
@@ -113,6 +126,7 @@ function App() {
               >
                 <Route index element={<DashboardHome />} />
                 <Route path="orders" element={<MyOrders />} />
+                <Route path="shop-orders" element={<MyShopOrders />} />
                 <Route path="vessels" element={<MyVessels />} />
                 <Route path="invoices" element={<Invoices />} />
                 <Route path="profile" element={<Profile />} />
@@ -139,6 +153,11 @@ function App() {
                 <Route path="boats/new" element={<BoatListingForm />} />
                 <Route path="boats/:id/edit" element={<BoatListingForm />} />
                 <Route path="inquiries" element={<BoatInquiryManagement />} />
+                <Route path="products" element={<ProductManagement />} />
+                <Route path="products/new" element={<ProductForm />} />
+                <Route path="products/:id/edit" element={<ProductForm />} />
+                <Route path="shop-inquiries" element={<ProductInquiryManagement />} />
+                <Route path="shop-orders" element={<ShopOrderManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

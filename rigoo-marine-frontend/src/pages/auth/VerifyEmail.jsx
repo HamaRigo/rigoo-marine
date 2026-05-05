@@ -21,9 +21,9 @@ export default function VerifyEmail() {
   }, [token]);
 
   return (
-    <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: 6 }}>
-      <Container maxWidth="sm">
-        <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+    <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: { xs: 3, sm: 6 }, px: { xs: 1.5, sm: 3 } }}>
+      <Container maxWidth="sm" disableGutters sx={{ px: 0 }}>
+        <Paper elevation={3} sx={{ p: { xs: 2.5, sm: 4 }, textAlign: 'center', borderRadius: { xs: 2, sm: 3 } }}>
           {state === 'verifying' && (
             <Stack spacing={2} alignItems="center">
               <CircularProgress />

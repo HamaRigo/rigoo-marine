@@ -86,8 +86,16 @@ export default function DataTable({
       )}
 
       {/* Table */}
-      <TableContainer>
-        <Table>
+      <TableContainer
+        sx={{
+          width: '100%',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          borderRadius: 2,
+          border: '1px solid rgba(0,0,0,0.06)',
+        }}
+      >
+        <Table sx={{ minWidth: { xs: 560, sm: 640 } }}>
           <TableHead>
             <TableRow>
               {columns.map((col) => (
@@ -151,6 +159,12 @@ export default function DataTable({
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[5, 10, 25, 50]}
+        sx={{
+          '& .MuiTablePagination-toolbar': { flexWrap: 'wrap', gap: 1 },
+          '& .MuiTablePagination-selectLabel, & .MuiTablePagination-input': {
+            display: { xs: 'none', sm: 'flex' },
+          },
+        }}
       />
     </Box>
   );
