@@ -2,12 +2,16 @@ package com.rigoomarine.client.controller;
 
 import com.rigoomarine.client.auth.AuthService;
 import com.rigoomarine.client.auth.PhoneNumberService;
+import com.rigoomarine.client.auth.PhoneOtpService;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
+import com.rigoomarine.client.dto.PhoneOtpRequestRequest;
+import com.rigoomarine.client.dto.PhoneOtpVerifyRequest;
 import com.rigoomarine.client.security.JwtTokenProvider;
 import com.rigoomarine.client.security.TokenRevocationService;
 import com.rigoomarine.client.service.ClientService;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +41,7 @@ public class AuthenticationController {
     private final AuthService authService;
     private final PhoneNumberService phoneNumberService;
     private final TokenRevocationService tokenRevocationService;
+    private final PhoneOtpService phoneOtpService;
 
     /**
      * Register a new user
@@ -62,6 +67,80 @@ public class AuthenticationController {
         response.put("token", token);
         response.put("expiresAt", Instant.now().plusSeconds(3600).toString());
 
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Request a one-time SMS code for the given phone. Always returns the same
+     * generic success message — whether the phone is registered or not — to
+     * keep this endpoint enumeration-safe. Real signal goes only to the
+     * recipient's handset.
+     */
+    @PostMapping("/otp/request")
+    public ResponseEntity<Map<String, String>> requestOtp(
+            @Valid @RequestBody PhoneOtpRequestRequest request,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage,
+            HttpServletRequest httpRequest
+    ) {
+        String normalized;
+        try {
+            normalized = phoneNumberService.normalize(request.getPhone());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("errorCode", "INVALID_PHONE", "message", "Phone number is not valid"));
+        }
+
+        PhoneOtpService.RequestOutcome outcome = phoneOtpService.request(
+            normalized,
+            preferredLocale(acceptLanguage),
+            httpRequest.getRemoteAddr());
+
+        if (outcome == PhoneOtpService.RequestOutcome.RATE_LIMITED) {
+            return ResponseEntity.status(429)
+                .body(Map.of("errorCode", "RATE_LIMITED",
+                             "message", "Too many requests; try again later"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "message", "If an account exists for that phone, an SMS has been sent."
+        ));
+    }
+
+    /**
+     * Submit a code received via SMS. On success returns the standard
+     * login response shape ({@code user}, {@code token}, {@code expiresAt}).
+     * Failures collapse "wrong code" and "no such phone" to one response so
+     * this endpoint also can't be used for enumeration.
+     */
+    @PostMapping("/otp/verify")
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody PhoneOtpVerifyRequest request) {
+        String normalized;
+        try {
+            normalized = phoneNumberService.normalize(request.getPhone());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("errorCode", "INVALID_PHONE", "message", "Phone number is not valid"));
+        }
+
+        PhoneOtpService.VerifyResult result = phoneOtpService.verify(normalized, request.getCode());
+        if (result.outcome != PhoneOtpService.Outcome.SUCCESS) {
+            return ResponseEntity.status(401)
+                .body(Map.of("errorCode", "OTP_INVALID", "message", "Code is invalid or expired"));
+        }
+
+        ClientDTO client = clientService.getClientByEmail(result.email);
+        String token = jwtTokenProvider.generateToken(
+            client.getEmail(),
+            client.getRole(),
+            client.getPasswordChangedAt() != null
+                ? client.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                : null,
+            client.getId());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", client);
+        response.put("token", token);
+        response.put("expiresAt", Instant.now().plusSeconds(3600).toString());
         return ResponseEntity.ok(response);
     }
 
