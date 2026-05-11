@@ -15,11 +15,8 @@ import {
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { shopApi } from '../../../services/api';
+import { formatPrice } from '../../../utils/format';
 
-function fmtPrice(value, currency = 'QAR') {
-  if (value == null) return '—';
-  return `${currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
 
 export default function CheckoutSuccess() {
   const [params] = useSearchParams();
@@ -68,7 +65,7 @@ export default function CheckoutSuccess() {
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography color="text.secondary">{t('orders.total')}</Typography>
-                    <Typography fontWeight={600}>{fmtPrice(order?.totalQar, order?.currency)}</Typography>
+                    <Typography fontWeight={600}>{formatPrice(order?.totalQar, { currency: order?.currency || 'QAR' })}</Typography>
                   </Stack>
                   {order?.items?.length > 0 && (
                     <>
@@ -79,7 +76,7 @@ export default function CheckoutSuccess() {
                             <Typography variant="body2">
                               {((isAr ? it.nameAr : it.nameEn) || it.nameEn)} × {it.quantity}
                             </Typography>
-                            <Typography variant="body2">{fmtPrice(it.lineTotalQar, order.currency)}</Typography>
+                            <Typography variant="body2">{formatPrice(it.lineTotalQar, { currency: order.currency || 'QAR' })}</Typography>
                           </Stack>
                         ))}
                       </Stack>

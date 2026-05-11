@@ -21,11 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useCart } from '../../hooks/useCart';
 import { shopApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
-
-function formatPrice(value, currency = 'QAR') {
-  if (value == null) return '—';
-  return `${currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
+import { formatPrice } from '../../utils/format';
 
 export default function CartDrawer({ open, onClose }) {
   const { t, i18n } = useTranslation('shop');

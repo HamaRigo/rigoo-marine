@@ -3,6 +3,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '../../services/api';
 import FilterableTable from '../../components/admin/FilterableTable';
+import { formatPrice, formatDate } from '../../utils/format';
 
 const STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED'];
 const STATUS_COLORS = {
@@ -17,11 +18,11 @@ export default function QuotationManagement() {
     { id: 'quotationNumber', label: t('quotations.columns.number') },
     { id: 'clientId', label: t('quotations.columns.client') },
     { id: 'issueDate', label: t('quotations.columns.issueDate'),
-      render: (r) => r.issueDate ? new Date(r.issueDate).toLocaleDateString() : '—' },
+      render: (r) => formatDate(r.issueDate) },
     { id: 'expiryDate', label: t('quotations.columns.expiryDate'),
-      render: (r) => r.expiryDate ? new Date(r.expiryDate).toLocaleDateString() : '—' },
+      render: (r) => formatDate(r.expiryDate) },
     { id: 'total', label: t('quotations.columns.total'),
-      render: (r) => r.total != null ? `QAR ${Number(r.total).toFixed(2)}` : '—' },
+      render: (r) => formatPrice(r.total, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     { id: 'status', label: t('quotations.columns.status'),
       render: (r) => <Chip size="small" label={r.status} color={STATUS_COLORS[r.status] || 'default'} /> },
   ];

@@ -28,13 +28,8 @@ import ProductInquiryDialog from '../../../components/shop/ProductInquiryDialog'
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../hooks/useCart';
 import { useToast } from '../../../hooks/useToast';
+import { formatPrice } from '../../../utils/format';
 
-function fmtPrice(value, currency = 'QAR') {
-  if (value == null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  return `${currency} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
 
 function SpecRow({ label, value }) {
   if (value == null || value === '' || value === false) return null;
@@ -185,7 +180,7 @@ export default function ProductDetail() {
                       {t('detail.price')}
                     </Typography>
                     <Typography variant="h4" color="primary.main" fontWeight={700}>
-                      {fmtPrice(product.priceQar, product.currency)}
+                      {formatPrice(product.priceQar, { currency: product.currency || 'QAR' })}
                     </Typography>
                   </Box>
 

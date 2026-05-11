@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import toast from 'react-hot-toast';
+import { formatPrice, formatDate } from '../../utils/format';
 
 const statusColors = {
   PAID: 'success',
@@ -104,9 +105,9 @@ export default function Invoices() {
                 <TableRow key={invoice.id}>
                   <TableCell>{invoice.invoiceNumber || `#${invoice.id}`}</TableCell>
                   <TableCell>Order #{invoice.workOrderId}</TableCell>
-                  <TableCell>{new Date(invoice.issueDate || invoice.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>${invoice.total?.toFixed(2) || '0.00'}</TableCell>
+                  <TableCell>{formatDate(invoice.issueDate || invoice.createdAt)}</TableCell>
+                  <TableCell>{formatDate(invoice.dueDate)}</TableCell>
+                  <TableCell>{formatPrice(invoice.total ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>
                     <Chip
                       label={invoice.status}
@@ -169,10 +170,10 @@ export default function Invoices() {
                 <Grid item xs={12} sm={6} sx={{ textAlign: 'right' }}>
                   <Typography variant="subtitle2" color="text.secondary">Invoice Details:</Typography>
                   <Typography variant="body1">
-                    Issue: {new Date(selectedInvoice.issueDate || selectedInvoice.createdAt).toLocaleDateString()}
+                    Issue: {formatDate(selectedInvoice.issueDate || selectedInvoice.createdAt)}
                   </Typography>
                   <Typography variant="body1">
-                    Due: {new Date(selectedInvoice.dueDate).toLocaleDateString()}
+                    Due: {formatDate(selectedInvoice.dueDate)}
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
@@ -191,8 +192,8 @@ export default function Invoices() {
                           <TableRow key={index}>
                             <TableCell>{item.description}</TableCell>
                             <TableCell align="right">{item.quantity}</TableCell>
-                            <TableCell align="right">${item.unitPrice?.toFixed(2)}</TableCell>
-                            <TableCell align="right">${(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                            <TableCell align="right">{formatPrice(item.unitPrice, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell align="right">{formatPrice(item.quantity * item.unitPrice, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -203,17 +204,17 @@ export default function Invoices() {
                   <Box sx={{ width: 200 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
                       <Typography variant="body2">Subtotal:</Typography>
-                      <Typography variant="body2">${selectedInvoice.subtotal?.toFixed(2) || '0.00'}</Typography>
+                      <Typography variant="body2">{formatPrice(selectedInvoice.subtotal ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                     </Box>
                     {selectedInvoice.taxRate && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
                         <Typography variant="body2">Tax ({selectedInvoice.taxRate}%):</Typography>
-                        <Typography variant="body2">${selectedInvoice.taxAmount?.toFixed(2) || '0.00'}</Typography>
+                        <Typography variant="body2">{formatPrice(selectedInvoice.taxAmount ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                       </Box>
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderTop: '2px solid #000', fontWeight: 'bold' }}>
                       <Typography variant="h6">Total:</Typography>
-                      <Typography variant="h6">${selectedInvoice.total?.toFixed(2) || '0.00'}</Typography>
+                      <Typography variant="h6">{formatPrice(selectedInvoice.total ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                     </Box>
                   </Box>
                 </Grid>

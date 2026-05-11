@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import FilterableTable from '../../components/admin/FilterableTable';
 import { marketplaceApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
+import { formatPrice } from '../../utils/format';
 
 const STATUS_COLORS = {
   AVAILABLE: 'success',
@@ -62,9 +63,9 @@ export default function BoatListingManagement() {
       label: t('admin.listingColumns.price'),
       render: (r) =>
         r.salePrice
-          ? `${r.currency || 'QAR'} ${Number(r.salePrice).toLocaleString()}`
+          ? formatPrice(r.salePrice, { currency: r.currency || 'QAR', maximumFractionDigits: 0 })
           : r.dailyRate
-          ? `${r.currency || 'QAR'} ${Number(r.dailyRate).toLocaleString()} / d`
+          ? `${formatPrice(r.dailyRate, { currency: r.currency || 'QAR', maximumFractionDigits: 0 })} / d`
           : '—',
     },
     {

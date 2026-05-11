@@ -2,6 +2,7 @@ import { Box, Typography, Chip, Button } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '../../services/api';
 import FilterableTable from '../../components/admin/FilterableTable';
+import { formatPrice } from '../../utils/format';
 
 export default function ServiceManagement() {
   const { t } = useTranslation('admin');
@@ -11,7 +12,7 @@ export default function ServiceManagement() {
     { id: 'name', label: t('services.columns.name') },
     { id: 'category', label: t('services.columns.category'), render: (r) => r.category || '—' },
     { id: 'price', label: t('services.columns.price'),
-      render: (r) => r.price != null ? `QAR ${Number(r.price).toFixed(2)}` : '—' },
+      render: (r) => formatPrice(r.price, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     { id: 'active', label: t('services.columns.active'),
       render: (r) => (
         <Chip size="small" label={r.active ? t('users.yes') : t('users.no')}

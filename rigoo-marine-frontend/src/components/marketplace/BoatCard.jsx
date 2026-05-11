@@ -5,6 +5,7 @@ import StraightenIcon from '@mui/icons-material/Straighten';
 import EventIcon from '@mui/icons-material/Event';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../utils/format';
 
 const STATUS_COLORS = {
   AVAILABLE: 'success',
@@ -14,12 +15,7 @@ const STATUS_COLORS = {
   DRAFT: 'default',
 };
 
-function formatPrice(value, currency = 'QAR') {
-  if (value == null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  return `${currency} ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-}
+const priceOpts = (currency) => ({ currency: currency || 'QAR', fallback: null, maximumFractionDigits: 0 });
 
 export default function BoatCard({ listing, mode, index = 0 }) {
   const navigate = useNavigate();
@@ -30,8 +26,8 @@ export default function BoatCard({ listing, mode, index = 0 }) {
   const primaryImage = listing.mediaUrls?.[0];
   const isRent = mode === 'RENT';
   const priceLabel = isRent
-    ? formatPrice(listing.dailyRate, listing.currency)
-    : formatPrice(listing.salePrice, listing.currency);
+    ? formatPrice(listing.dailyRate, priceOpts(listing.currency))
+    : formatPrice(listing.salePrice, priceOpts(listing.currency));
 
   return (
     <Grow in timeout={400} style={{ transitionDelay: `${Math.min(index, 12) * 60}ms` }}>

@@ -4,13 +4,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-function formatPrice(value, currency = 'QAR') {
-  if (value == null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  return `${currency} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
+import { formatPrice } from '../../utils/format';
 
 export default function ProductCard({ product, index = 0 }) {
   const navigate = useNavigate();
@@ -110,7 +104,7 @@ export default function ProductCard({ product, index = 0 }) {
 
             <Box sx={{ mt: 'auto' }}>
               <Typography variant="h6" color="primary.main" fontWeight={700}>
-                {formatPrice(product.priceQar, product.currency) ?? t('cta.contact')}
+                {formatPrice(product.priceQar, { currency: product.currency || 'QAR', fallback: null }) ?? t('cta.contact')}
               </Typography>
             </Box>
           </Box>

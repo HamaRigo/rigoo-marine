@@ -28,6 +28,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { marketplaceApi } from '../../../services/api';
 import BoatPhotoCarousel from '../../../components/marketplace/BoatPhotoCarousel';
 import InquiryDialog from '../../../components/marketplace/InquiryDialog';
+import { formatPrice } from '../../../utils/format';
 
 const STATUS_COLORS = {
   AVAILABLE: 'success',
@@ -37,12 +38,6 @@ const STATUS_COLORS = {
   DRAFT: 'default',
 };
 
-function fmtPrice(value, currency = 'QAR') {
-  if (value == null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  return `${currency} ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-}
 
 function SpecRow({ label, value }) {
   if (value == null || value === '' || value === false) return null;
@@ -284,7 +279,7 @@ export default function BoatDetail() {
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="caption" color="text.secondary" textTransform="uppercase">{t('detail.askingPrice')}</Typography>
                       <Typography variant="h4" color="primary.main" fontWeight={700}>
-                        {fmtPrice(listing.salePrice, listing.currency)}
+                        {formatPrice(listing.salePrice, { currency: listing.currency || 'QAR' })}
                       </Typography>
                     </Box>
                   )}
@@ -293,11 +288,11 @@ export default function BoatDetail() {
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="caption" color="text.secondary" textTransform="uppercase">{t('detail.dailyRate')}</Typography>
                       <Typography variant="h5" color="primary.main" fontWeight={700}>
-                        {t('detail.from')} {fmtPrice(listing.dailyRate, listing.currency)}
+                        {t('detail.from')} {formatPrice(listing.dailyRate, { currency: listing.currency || 'QAR' })}
                       </Typography>
                       {listing.weeklyRate != null && (
                         <Typography variant="body2" color="text.secondary">
-                          {fmtPrice(listing.weeklyRate, listing.currency)} / {t('detail.weeklyRate').toLowerCase()}
+                          {formatPrice(listing.weeklyRate, { currency: listing.currency || 'QAR' })} / {t('detail.weeklyRate').toLowerCase()}
                         </Typography>
                       )}
                     </Box>
@@ -360,13 +355,13 @@ export default function BoatDetail() {
                       <Divider sx={{ mb: 1.5 }} />
                       <SpecRow label={t('detail.minNights')} value={listing.minRentalNights} />
                       <SpecRow label={t('detail.maxNights')} value={listing.maxRentalNights} />
-                      <SpecRow label={t('detail.cleaningFee')} value={fmtPrice(listing.cleaningFee, listing.currency)} />
-                      <SpecRow label={t('detail.rentalDeposit')} value={fmtPrice(listing.rentalSecurityDeposit, listing.currency)} />
+                      <SpecRow label={t('detail.cleaningFee')} value={formatPrice(listing.cleaningFee, { currency: listing.currency || 'QAR' })} />
+                      <SpecRow label={t('detail.rentalDeposit')} value={formatPrice(listing.rentalSecurityDeposit, { currency: listing.currency || 'QAR' })} />
                       <SpecRow
                         label={t('detail.captain')}
                         value={listing.captainRequired ? t(`captainOptions.${listing.captainRequired}`) : null}
                       />
-                      <SpecRow label={t('detail.captainFee')} value={fmtPrice(listing.captainDailyFee, listing.currency)} />
+                      <SpecRow label={t('detail.captainFee')} value={formatPrice(listing.captainDailyFee, { currency: listing.currency || 'QAR' })} />
                     </Box>
                   )}
                 </CardContent>

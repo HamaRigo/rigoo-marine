@@ -3,6 +3,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { useTranslation } from 'react-i18next';
 import { adminApi, invoiceApi } from '../../services/api';
 import FilterableTable from '../../components/admin/FilterableTable';
+import { formatPrice, formatDate } from '../../utils/format';
 
 const STATUSES = ['PENDING', 'PAID', 'OVERDUE', 'CANCELLED'];
 const STATUS_COLORS = {
@@ -16,11 +17,11 @@ export default function InvoiceManagement() {
     { id: 'invoiceNumber', label: t('invoices.columns.number') },
     { id: 'clientId', label: t('invoices.columns.client') },
     { id: 'issueDate', label: t('invoices.columns.issueDate'),
-      render: (r) => r.issueDate ? new Date(r.issueDate).toLocaleDateString() : '—' },
+      render: (r) => formatDate(r.issueDate) },
     { id: 'dueDate', label: t('invoices.columns.dueDate'),
-      render: (r) => r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '—' },
+      render: (r) => formatDate(r.dueDate) },
     { id: 'total', label: t('invoices.columns.total'),
-      render: (r) => r.total != null ? `QAR ${Number(r.total).toFixed(2)}` : '—' },
+      render: (r) => formatPrice(r.total, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     { id: 'status', label: t('invoices.columns.status'),
       render: (r) => <Chip size="small" label={r.status} color={STATUS_COLORS[r.status] || 'default'} /> },
   ];

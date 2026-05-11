@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';
+import { formatPrice } from '../../utils/format';
 
 const managementModules = [
   {
@@ -406,7 +407,7 @@ export default function AdminDashboard() {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <MoneyIcon sx={{ fontSize: 32, mr: 1, opacity: 0.8 }} />
-                <Typography variant="h5">${stats.monthlyRevenue.toLocaleString()}</Typography>
+                <Typography variant="h5">{formatPrice(stats.monthlyRevenue, { maximumFractionDigits: 0 })}</Typography>
               </Box>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>Monthly Revenue</Typography>
             </CardContent>
@@ -539,7 +540,7 @@ export default function AdminDashboard() {
                       recentInvoices.map((invoice) => (
                         <TableRow key={invoice.id}>
                           <TableCell>{invoice.invoiceNumber || `#${invoice.id}`}</TableCell>
-                          <TableCell>${invoice.total?.toFixed(2) || '0.00'}</TableCell>
+                          <TableCell>{formatPrice(invoice.total ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                           <TableCell>
                             <Chip
                               label={invoice.status}

@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { shopApi } from '../../services/api';
+import { formatPrice } from '../../utils/format';
 
 const STATUS_COLORS = {
   PENDING_PAYMENT: 'warning',
@@ -23,10 +24,6 @@ const STATUS_COLORS = {
   REFUNDED: 'info',
 };
 
-function fmtPrice(value, currency = 'QAR') {
-  if (value == null) return '—';
-  return `${currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
 
 export default function MyShopOrders() {
   const navigate = useNavigate();
@@ -97,7 +94,7 @@ export default function MyShopOrders() {
                         {t('orders.total')}
                       </Typography>
                       <Typography variant="h5" color="primary.main" fontWeight={700}>
-                        {fmtPrice(order.totalQar, order.currency)}
+                        {formatPrice(order.totalQar, { currency: order.currency || 'QAR' })}
                       </Typography>
                     </Box>
                   </Stack>
@@ -112,7 +109,7 @@ export default function MyShopOrders() {
                               {((isAr ? it.nameAr : it.nameEn) || it.nameEn)} × {it.quantity}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {fmtPrice(it.lineTotalQar, order.currency)}
+                              {formatPrice(it.lineTotalQar, { currency: order.currency || 'QAR' })}
                             </Typography>
                           </Stack>
                         ))}

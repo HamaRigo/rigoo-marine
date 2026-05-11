@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import FilterableTable from '../../components/admin/FilterableTable';
 import { shopApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
+import { formatPrice } from '../../utils/format';
 
 const STATUS_COLORS = {
   ACTIVE: 'success',
@@ -52,10 +53,7 @@ export default function ProductManagement() {
     {
       id: 'price',
       label: t('admin.productColumns.price'),
-      render: (r) =>
-        r.priceQar != null
-          ? `${r.currency || 'QAR'} ${Number(r.priceQar).toLocaleString()}`
-          : '—',
+      render: (r) => formatPrice(r.priceQar, { currency: r.currency || 'QAR', maximumFractionDigits: 0 }),
     },
     {
       id: 'stock',

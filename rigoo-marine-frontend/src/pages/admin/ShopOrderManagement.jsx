@@ -6,6 +6,7 @@ import { useState } from 'react';
 import FilterableTable from '../../components/admin/FilterableTable';
 import { shopApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
+import { formatPrice } from '../../utils/format';
 
 const STATUS_COLORS = {
   PENDING_PAYMENT: 'warning',
@@ -16,10 +17,6 @@ const STATUS_COLORS = {
 
 const STATUSES = ['PENDING_PAYMENT', 'PAID', 'CANCELLED', 'REFUNDED'];
 
-function fmtPrice(value, currency = 'QAR') {
-  if (value == null) return '—';
-  return `${currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
 
 function OrderItemsRow({ order }) {
   const { i18n } = useTranslation();
@@ -39,7 +36,7 @@ function OrderItemsRow({ order }) {
                 <Typography variant="caption" color="text.secondary">{it.sku}</Typography>
               </Box>
               <Typography variant="body2" fontWeight={500}>
-                {fmtPrice(it.lineTotalQar, order.currency)}
+                {formatPrice(it.lineTotalQar, { currency: order.currency || 'QAR' })}
               </Typography>
             </Stack>
           ))}
@@ -100,7 +97,7 @@ export default function ShopOrderManagement() {
       label: t('admin.orderInbox.total'),
       render: (r) => (
         <Typography variant="body2" fontWeight={600}>
-          {fmtPrice(r.totalQar, r.currency)}
+          {formatPrice(r.totalQar, { currency: r.currency || 'QAR' })}
         </Typography>
       ),
     },
