@@ -31,6 +31,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                // Internal service-to-service endpoints (work-order ownership lookup).
+                // Token-authenticated at the controller via X-Internal-Api-Token; never
+                // exposed through the api-gateway.
+                .requestMatchers("/api/internal/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

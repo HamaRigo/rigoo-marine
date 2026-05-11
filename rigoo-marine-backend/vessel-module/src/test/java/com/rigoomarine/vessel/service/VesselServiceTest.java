@@ -104,7 +104,10 @@ class VesselServiceTest {
 
     @Test
     void deleteVessel_ShouldCallRepositoryDelete() {
+        when(vesselRepository.findById(1L)).thenReturn(Optional.of(vessel));
+
         vesselService.deleteVessel(1L);
-        verify(vesselRepository).deleteById(1L);
+
+        verify(vesselRepository).delete(vessel);
     }
 }

@@ -4,21 +4,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rigoomarine.vessel.dto.CreateVesselRequest;
 import com.rigoomarine.vessel.entity.Vessel;
 import com.rigoomarine.vessel.repository.VesselRepository;
+import com.rigoomarine.common.security.AuthenticatedUser;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
 class VesselControllerIntegrationTest {
@@ -35,6 +42,16 @@ class VesselControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         vesselRepository.deleteAll();
+        AuthenticatedUser principal = new AuthenticatedUser(
+            "admin@test.local", 1L, List.of("ROLE_ADMIN"));
+        var auth = new UsernamePasswordAuthenticationToken(
+            principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -73,8 +90,7 @@ class VesselControllerIntegrationTest {
                 .build();
         vesselRepository.save(vessel2);
 
-        mockMvc.perform(get("/api/vessels/my")
-                        .param("clientId", "1"))
+        mockMvc.perform(get("/api/vessels/my"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }

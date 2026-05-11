@@ -28,6 +28,23 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- Shared AuthenticatedUser / SecurityUtils / TokenRevocationCheck. -->
+        <dependency>
+            <groupId>com.rigoomarine</groupId>
+            <artifactId>common-security</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- Shared ErrorResponse + CommonExceptionHandler (inherited by GlobalExceptionHandler). -->
+        <dependency>
+            <groupId>com.rigoomarine</groupId>
+            <artifactId>common-exceptions</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- Shared JWT revocation list (jwt:revoked:<jti>). See security/TokenRevocationCheck. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

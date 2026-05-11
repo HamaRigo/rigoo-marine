@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface VesselRepository extends JpaRepository<Vessel, Long> {
     List<Vessel> findByClientId(Long clientId);
+
+    boolean existsByIdAndClientId(Long id, Long clientId);
 }
