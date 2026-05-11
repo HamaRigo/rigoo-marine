@@ -53,7 +53,10 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 2000ms
-      database: 0
+      # database 1 holds the cross-service JWT revocation list (key: jwt:revoked:<jti>).
+      # Must match the api-gateway's spring.data.redis.database — otherwise the gateway
+      # filter reads from a db this service never writes to and revocations silently drop.
+      database: ${REDIS_DATABASE:1}
       ssl:
         enabled: ${REDIS_SSL_ENABLED:false}
   mail:

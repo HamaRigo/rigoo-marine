@@ -5,7 +5,9 @@ import com.rigoomarine.client.auth.PhoneNumberService;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.security.JwtTokenProvider;
+import com.rigoomarine.client.security.TokenRevocationService;
 import com.rigoomarine.client.service.ClientService;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
     private final PhoneNumberService phoneNumberService;
+    private final TokenRevocationService tokenRevocationService;
 
     /**
      * Register a new user
@@ -51,7 +54,8 @@ public class AuthenticationController {
         String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole(),
                 client.getPasswordChangedAt() != null
                     ? client.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    : null);
+                    : null,
+                client.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("user", client);
@@ -106,7 +110,8 @@ public class AuthenticationController {
             String token = jwtTokenProvider.generateToken(client.getEmail(), client.getRole(),
                 client.getPasswordChangedAt() != null
                     ? client.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    : null);
+                    : null,
+                client.getId());
 
             Map<String, Object> response = new HashMap<>();
             response.put("user", client);
@@ -195,7 +200,9 @@ public class AuthenticationController {
                     new UsernamePasswordAuthenticationToken(userDetails.getUsername(), currentPassword)
             );
 
-            // Update password
+            // Update password. Pass the RAW newPassword: ClientService.updateClientWithPassword
+            // is the sole encoder. Encoding here in addition would persist bcrypt(bcrypt(p)),
+            // which the login authenticator can never match — locking the user out.
             ClientDTO client = clientService.getClientByEmail(userDetails.getUsername());
             CreateClientRequest request = new CreateClientRequest();
             request.setName(client.getName());
@@ -203,7 +210,7 @@ public class AuthenticationController {
             request.setPhone(client.getPhone());
             request.setAddress(client.getAddress());
             request.setCompany(client.getCompany());
-            request.setPassword(passwordEncoder.encode(newPassword));
+            request.setPassword(newPassword);
 
             clientService.updateClientWithPassword(client.getId(), request);
 
@@ -215,17 +222,48 @@ public class AuthenticationController {
     }
 
     /**
-     * Logout endpoint (for JWT, this is more of a client-side token removal)
-     * Can be extended with token blacklist if needed
+     * Server-side logout: writes the bearer token's jti to the Redis revocation
+     * list with TTL = remaining token lifetime. The api-gateway short-circuits
+     * any subsequent request bearing this jti.
+     *
+     * <p>Idempotent: missing / malformed / already-expired tokens all return 200
+     * with no Redis write — there's nothing for the caller to do differently.
+     * Redis write failures surface as 500 so the frontend retries before
+     * clearing local state.
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        log.info("Logout request received");
-        // For JWT stateless auth, logout is primarily client-side (token removal)
-        // Future: Add token to blacklist with Redis
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        String token = extractBearer(authHeader);
+        if (token == null) {
+            return ResponseEntity.ok(Map.of("message", "Logged out"));
+        }
+        try {
+            if (!jwtTokenProvider.validateToken(token)) {
+                return ResponseEntity.ok(Map.of("message", "Logged out"));
+            }
+            Claims claims = jwtTokenProvider.getClaims(token);
+            String jti = claims.getId();
+            java.util.Date exp = claims.getExpiration();
+            String subject = claims.getSubject();
+            if (jti != null && exp != null) {
+                tokenRevocationService.revoke(jti, exp.toInstant(), subject);
+            }
+            return ResponseEntity.ok(Map.of("message", "Logged out"));
+        } catch (RuntimeException ex) {
+            log.error("logout.failed", ex);
+            return ResponseEntity.status(500).body(Map.of(
+                "errorCode", "LOGOUT_FAILED",
+                "message", "Could not revoke token; please retry"
+            ));
+        }
+    }
+
+    private static String extractBearer(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        String token = authHeader.substring(7).trim();
+        return token.isEmpty() ? null : token;
     }
 
     /**

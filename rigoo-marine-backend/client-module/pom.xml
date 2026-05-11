@@ -74,6 +74,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        <!-- Shared AuthenticatedUser / SecurityUtils / TokenRevocationCheck. -->
+        <dependency>
+            <groupId>com.rigoomarine</groupId>
+            <artifactId>common-security</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- Email (Task #6) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

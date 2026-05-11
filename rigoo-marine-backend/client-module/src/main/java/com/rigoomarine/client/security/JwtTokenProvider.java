@@ -46,25 +46,36 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(String email, String role) {
-        return generateToken(email, role, null);
+        return generateToken(email, role, null, null);
+    }
+
+    public String generateToken(String email, String role, Long pwdChangedAtMillis) {
+        return generateToken(email, role, pwdChangedAtMillis, null);
     }
 
     /**
      * @param pwdChangedAtMillis password_changed_at as epoch millis. Embedded as a "pwdIat" claim
      *                           so downstream services can reject tokens issued before the user's
      *                           last password change without a DB round-trip.
+     * @param clientId           the issuing client's primary-key id, embedded as a "clientId" claim.
+     *                           Downstream services use it for ownership checks without resolving
+     *                           email → id at every request.
      */
-    public String generateToken(String email, String role, Long pwdChangedAtMillis) {
+    public String generateToken(String email, String role, Long pwdChangedAtMillis, Long clientId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 
         var builder = Jwts.builder()
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(email)
                 .claim("roles", java.util.List.of("ROLE_" + role))
                 .issuedAt(now)
                 .expiration(expiryDate);
         if (pwdChangedAtMillis != null) {
             builder.claim("pwdIat", pwdChangedAtMillis);
+        }
+        if (clientId != null) {
+            builder.claim("clientId", clientId);
         }
         return builder.signWith(secretKey, Jwts.SIG.HS256).compact();
     }
