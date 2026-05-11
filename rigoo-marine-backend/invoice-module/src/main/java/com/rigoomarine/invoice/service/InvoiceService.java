@@ -8,6 +8,7 @@ import com.rigoomarine.invoice.repository.InvoiceRepository;
 import com.rigoomarine.invoice.dto.InvoiceDTO;
 import com.rigoomarine.invoice.dto.CreateInvoiceRequest;
 import com.rigoomarine.invoice.dto.InvoiceItemDTO;
+import com.rigoomarine.invoice.util.BrandingAssetLoader;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -232,19 +233,21 @@ public class InvoiceService {
             logoCell.setBorder(Rectangle.NO_BORDER);
             logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-            // Add logo image if available
+            // Logo: per-invoice URL wins; otherwise fall back to classpath:branding/logo.png; otherwise text header.
+            Image logoImage = null;
             if (invoice.getLogoUrl() != null && !invoice.getLogoUrl().isEmpty()) {
                 try {
-                    Image logoImage = Image.getInstance(invoice.getLogoUrl());
-                    logoImage.scaleToFit(120, 60);
-                    logoCell.addElement(logoImage);
-                    logoCell.addElement(Chunk.NEWLINE);
-                } catch (Exception e) {
-                    // If image fails, use text logo
-                    Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
-                    companyName.setSpacingAfter(5);
-                    logoCell.addElement(companyName);
+                    logoImage = Image.getInstance(invoice.getLogoUrl());
+                } catch (Exception ignored) {
                 }
+            }
+            if (logoImage == null) {
+                logoImage = BrandingAssetLoader.loadLogo();
+            }
+            if (logoImage != null) {
+                logoImage.scaleToFit(120, 60);
+                logoCell.addElement(logoImage);
+                logoCell.addElement(Chunk.NEWLINE);
             } else {
                 Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
                 companyName.setSpacingAfter(5);
@@ -484,6 +487,23 @@ public class InvoiceService {
                 termsArabicCell.addElement(new Paragraph(invoice.getTermsArabic(), smallFont));
                 termsArabicTable.addCell(termsArabicCell);
                 document.add(termsArabicTable);
+            }
+
+            // ============== COMPANY STAMP (right-aligned, above the footer) ==============
+            // Loads classpath:branding/stamp.png; silently skipped if not present.
+            Image stampImage = BrandingAssetLoader.loadStamp();
+            if (stampImage != null) {
+                stampImage.scaleToFit(120, 120);
+                PdfPTable stampTable = new PdfPTable(1);
+                stampTable.setWidthPercentage(100);
+                stampTable.setSpacingBefore(15);
+                PdfPCell stampCell = new PdfPCell();
+                stampCell.setBorder(Rectangle.NO_BORDER);
+                stampCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                stampImage.setAlignment(Image.ALIGN_RIGHT);
+                stampCell.addElement(stampImage);
+                stampTable.addCell(stampCell);
+                document.add(stampTable);
             }
 
             // ============== FOOTER (Striped Layout Style) ==============

@@ -10,6 +10,64 @@ import { SUPPORTED_LANGUAGES } from '../../i18n';
 import { useCart } from '../../hooks/useCart';
 import CartDrawer from '../shop/CartDrawer';
 
+function BrandMark({ size = 44, animated = false }) {
+  const [broken, setBroken] = useState(false);
+  const animationSx = animated ? { animation: 'rmFloat 4.5s ease-in-out infinite' } : {};
+  if (broken) {
+    return (
+      <Box
+        component="span"
+        sx={{
+          fontSize: size * 0.7,
+          lineHeight: 1,
+          width: size,
+          height: size,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'white',
+          borderRadius: '50%',
+          color: 'primary.main',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+          ...animationSx,
+        }}
+      >
+        ⚓
+      </Box>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        bgcolor: 'white',
+        borderRadius: '50%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: '4px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        flexShrink: 0,
+        ...animationSx,
+      }}
+    >
+      <Box
+        component="img"
+        src="/brand/logo.png"
+        alt="Rigoo Marine"
+        onError={() => setBroken(true)}
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+      />
+    </Box>
+  );
+}
+
 function NavLinkButton({ to, label, active }) {
   return (
     <Button
@@ -82,8 +140,12 @@ export default function Navbar() {
 
   const drawer = (
     <Box sx={{ p: 2, width: 280 }}>
-      <Typography variant="h6" sx={{ px: 2, py: 1, color: 'primary.main', fontWeight: 700 }}>
-        ⚓ {t('navbar:brand')}
+      <Typography
+        variant="h6"
+        sx={{ px: 2, py: 1, color: 'primary.main', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 1 }}
+      >
+        <BrandMark size={36} />
+        {t('navbar:brand')}
       </Typography>
       <List>
         {navLinks.map((link) => (
@@ -152,7 +214,7 @@ export default function Navbar() {
         }}
       >
         <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ minHeight: { xs: 60, md: 68 } }}>
+          <Toolbar disableGutters sx={{ minHeight: { xs: 72, md: 84 } }}>
             <Typography
               variant="h6"
               component={Link}
@@ -169,12 +231,7 @@ export default function Navbar() {
                 '&:hover': { transform: 'translateX(2px)', letterSpacing: '0.02em' },
               }}
             >
-              <Box
-                component="span"
-                sx={{ display: 'inline-block', animation: 'rmFloat 4.5s ease-in-out infinite' }}
-              >
-                ⚓
-              </Box>
+              <BrandMark size={48} animated />
               {t('navbar:brand')}
             </Typography>
 

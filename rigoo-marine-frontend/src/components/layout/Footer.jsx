@@ -1,8 +1,66 @@
+import { useState } from 'react';
 import { Box, Container, Typography, Link as MuiLink, Divider } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Reveal } from '../common/Motion';
 
+function FooterBrandMark({ size = 40 }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) {
+    return (
+      <Box
+        component="span"
+        sx={{
+          fontSize: size * 0.7,
+          lineHeight: 1,
+          width: size,
+          height: size,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'white',
+          color: 'primary.main',
+          borderRadius: '50%',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+          animation: 'rmFloat 4.5s ease-in-out infinite',
+        }}
+      >
+        ⚓
+      </Box>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        bgcolor: 'white',
+        borderRadius: '50%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: '4px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+        flexShrink: 0,
+        animation: 'rmFloat 4.5s ease-in-out infinite',
+      }}
+    >
+      <Box
+        component="img"
+        src="/brand/logo.png"
+        alt="Rigoo Marine"
+        onError={() => setBroken(true)}
+        sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+      />
+    </Box>
+  );
+}
+
 export default function Footer() {
+  const { i18n } = useTranslation();
+  const flyerHref = i18n.language === 'ar' ? '/flyers/rigoo-services-ar.pdf' : '/flyers/rigoo-services-en.pdf';
+  const flyerLabel = i18n.language === 'ar' ? 'تنزيل الكتيب (PDF)' : 'Download brochure (PDF)';
+  const cardLabel = i18n.language === 'ar' ? 'بطاقة العمل (PDF)' : 'Business card (PDF)';
   return (
     <Box
       component="footer"
@@ -35,12 +93,34 @@ export default function Footer() {
           >
             <Box sx={{ maxWidth: 320 }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                <Box component="span" sx={{ animation: 'rmFloat 4.5s ease-in-out infinite', display: 'inline-block' }}>⚓</Box>
+                <FooterBrandMark size={40} />
                 Rigoo Marine
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.85 }}>
                 Professional marine services for all your vessel needs.
               </Typography>
+              <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <MuiLink
+                  href={flyerHref}
+                  target="_blank"
+                  rel="noopener"
+                  color="inherit"
+                  underline="hover"
+                  sx={{ fontSize: '0.875rem', opacity: 0.9, '&:hover': { color: 'secondary.light' } }}
+                >
+                  {flyerLabel}
+                </MuiLink>
+                <MuiLink
+                  href="/flyers/business-card.pdf"
+                  target="_blank"
+                  rel="noopener"
+                  color="inherit"
+                  underline="hover"
+                  sx={{ fontSize: '0.875rem', opacity: 0.9, '&:hover': { color: 'secondary.light' } }}
+                >
+                  {cardLabel}
+                </MuiLink>
+              </Box>
             </Box>
 
             <Box>
