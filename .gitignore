@@ -115,3 +115,10 @@ PAUSE_TASKS.md
 .activity-fill.sh
 .activity-push.sh
 ACTIVITY.md
+
+# Oversized original-resolution brochure PDFs (>100 MB; exceed GitHub's
+# per-file limit). The footer links to /flyers/rigoo-services-{en,ar}.pdf —
+# a compressed version (≤25 MB) should replace the originals before
+# committing. Keep the high-res masters local-only or move them to LFS.
+rigoo-marine-frontend/public/flyers/rigoo-services-en.pdf
+rigoo-marine-frontend/public/flyers/rigoo-services-ar.pdf
