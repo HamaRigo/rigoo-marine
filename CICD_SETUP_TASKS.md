@@ -1,183 +1,83 @@
-# CI/CD Setup - Step by Step Tasks
+# CI/CD Setup — What's Left
 
-## Phase 1: Initialize Git Repository
+The repository is initialized, pushed to GitHub, and CI workflows exist (`backend-ci`, `frontend-ci`, `codeql`, `deploy-dev`, `deploy-prod`). Dockerfiles exist for every backend module + the frontend.
 
-- [ ] 1. Open terminal in the project root (`/Users/hammarigo/Desktop/Rigoomarine`)
-- [ ] 2. Run `git init` to initialize git repository
-- [ ] 3. Run `git add .` to stage all files
-- [ ] 4. Run `git commit -m "Initial commit with CI/CD pipeline"`
-- [ ] 5. Create a new repository on GitHub (do not initialize with README)
-- [ ] 6. Run `git branch -M main` to rename branch
-- [ ] 7. Run `git remote add origin <your-github-repo-url>`
-- [ ] 8. Run `git push -u origin main` to push code
+This file lists only the parts that still need configuration — secrets and (optional) deployment servers.
 
 ---
 
-## Phase 2: Create Docker Hub Account
+## 1. Docker Hub credentials (required for image publishing)
 
-- [ ] 1. Go to https://hub.docker.com and sign up/login
-- [ ] 2. Remember your Docker Hub username
-- [ ] 3. Go to Account Settings → Security → Access Tokens
-- [ ] 4. Click "New Access Token"
-- [ ] 5. Give it a name (e.g., "GitHub Actions CI")
-- [ ] 6. Select "Read & Write" permissions
-- [ ] 7. Copy the generated token (save it securely)
+If the `Backend CI/CD` or `Frontend CI/CD` workflow fails at the "Login to Docker Hub" step, these aren't set yet.
 
----
+1. Sign in at https://hub.docker.com.
+2. Account Settings → Security → **New Access Token** (Read & Write).
+3. In the GitHub repo → Settings → Secrets and variables → Actions → **New repository secret**:
 
-## Phase 3: Configure GitHub Secrets
+   | Secret name | Value |
+   |---|---|
+   | `DOCKERHUB_USERNAME` | your Docker Hub username |
+   | `DOCKERHUB_TOKEN` | the access token from step 2 |
 
-- [ ] 1. Go to your GitHub repository
-- [ ] 2. Click **Settings** tab
-- [ ] 3. In left sidebar, click **Secrets and variables** → **Actions**
-- [ ] 4. Click **New repository secret**
-- [ ] 5. Add these secrets one by one:
-
-| Secret Name | Value |
-|-------------|-------|
-| `DOCKERHUB_USERNAME` | Your Docker Hub username |
-| `DOCKERHUB_TOKEN` | The token you just created |
-
-- [ ] 6. Click "Add secret" for each
+4. Re-run the failed workflow to verify.
 
 ---
 
-## Phase 4: Verify Dockerfiles Exist
+## 2. (Optional) Dev server auto-deploy
 
-- [ ] 1. Check that all Dockerfiles exist:
-  - `rigoo-marine-backend/gateway-module/Dockerfile`
-  - `rigoo-marine-backend/client-module/Dockerfile`
-  - `rigoo-marine-backend/vessel-module/Dockerfile`
-  - `rigoo-marine-backend/service-module/Dockerfile`
-  - `rigoo-marine-backend/work-order-module/Dockerfile`
-  - `rigoo-marine-backend/technician-module/Dockerfile`
-  - `rigoo-marine-backend/invoice-module/Dockerfile`
-  - `rigoo-marine-backend/notification-module/Dockerfile`
-  - `rigoo-marine-backend/discovery-service/Dockerfile`
-  - `rigoo-marine-frontend/Dockerfile`
+Only needed if you have a long-running dev environment that should redeploy on every push to `main`.
 
----
+1. Generate a dedicated SSH key:
+   ```bash
+   ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions_dev
+   ```
+2. Copy the public key to the dev server:
+   ```bash
+   ssh-copy-id -i ~/.ssh/github_actions_dev.pub user@your-dev-server.com
+   ```
+3. Add GitHub secrets:
 
-## Phase 5: Test Local Build (Optional but Recommended)
+   | Secret name | Value |
+   |---|---|
+   | `DEV_SSH_PRIVATE_KEY` | contents of `~/.ssh/github_actions_dev` (the private key) |
+   | `DEV_SSH_USER` | SSH username on the dev server |
+   | `DEV_SERVER_HOST` | dev server IP or hostname |
 
-- [ ] 1. Run `cd rigoo-marine-backend`
-- [ ] 2. Run `mvn clean verify -B` to test backend build
-- [ ] 3. Run `cd ../rigoo-marine-frontend`
-- [ ] 4. Run `npm install` (if not already done)
-- [ ] 5. Run `npm run build` to test frontend build
+4. On the dev server:
+   ```bash
+   sudo mkdir -p /opt/rigoo-marine-dev
+   sudo chown $USER:$USER /opt/rigoo-marine-dev
+   scp docker-compose.yml user@your-dev-server:/opt/rigoo-marine-dev/
+   ```
 
----
-
-## Phase 6: Push and Trigger CI/CD
-
-- [ ] 1. Push your code to GitHub (if not done in Phase 1)
-- [ ] 2. Go to GitHub repository → **Actions** tab
-- [ ] 3. You should see workflows running (Backend CI/CD, Frontend CI/CD)
-- [ ] 4. Wait for builds to complete (green checkmark)
-- [ ] 5. Check Docker Hub to see images being pushed
+5. Verify with a manual `docker compose up -d` once before relying on the workflow.
 
 ---
 
-## Phase 7: (Optional) Set Up Development Server Deployment
+## 3. (Optional) Production deployment
 
-If you have a server for development:
+When ready to ship:
 
-- [ ] 1. Generate SSH key for GitHub Actions:
-  ```bash
-  ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions_dev
-  ```
-- [ ] 2. Copy public key to your dev server:
-  ```bash
-  ssh-copy-id -i ~/.ssh/github_actions_dev.pub user@your-dev-server.com
-  ```
-- [ ] 3. Add GitHub secrets:
-  - `DEV_SSH_PRIVATE_KEY` - contents of `~/.ssh/github_actions_dev`
-  - `DEV_SSH_USER` - SSH username on dev server
-  - `DEV_SERVER_HOST` - dev server IP or hostname
+1. GitHub repo → Settings → **Environments** → New environment named `production` (gives you required-reviewer protection on prod deploys).
+2. Generate a separate SSH key (do **not** reuse the dev key).
+3. Add the same shape of secrets, scoped to the `production` environment:
 
-- [ ] 4. On your dev server, create deployment directory:
-  ```bash
-  sudo mkdir -p /opt/rigoo-marine-dev
-  sudo chown $USER:$USER /opt/rigoo-marine-dev
-  ```
+   | Secret name | Value |
+   |---|---|
+   | `PROD_SSH_PRIVATE_KEY` | private key contents |
+   | `PROD_SSH_USER` | SSH username on prod |
+   | `PROD_SERVER_HOST` | prod server IP or hostname |
+   | `PROD_DOMAIN` | public domain name |
 
-- [ ] 5. Copy `docker-compose.yml` to the server and test:
-  ```bash
-  scp docker-compose.yml user@your-dev-server:/opt/rigoo-marine-dev/
-  ssh user@your-dev-server
-  cd /opt/rigoo-marine-dev
-  docker compose up -d
-  ```
-
----
-
-## Phase 8: (Optional) Set Up Production Deployment
-
-When ready for production:
-
-- [ ] 1. Create production environment in GitHub:
-  - Go to Settings → Environments → New environment
-  - Name it "production"
-  - Add required secrets
-
-- [ ] 2. Generate separate SSH key for production
-
-- [ ] 3. Add production secrets:
-  - `PROD_SSH_PRIVATE_KEY`
-  - `PROD_SSH_USER`
-  - `PROD_SERVER_HOST`
-  - `PROD_DOMAIN`
-
----
-
-## Checklist Summary
-
-| Phase | Task | Status |
-|-------|------|--------|
-| 1 | Git repository initialized | [ ] |
-| 1 | Code pushed to GitHub main branch | [ ] |
-| 2 | Docker Hub account created | [ ] |
-| 2 | Docker Hub access token generated | [ ] |
-| 3 | GitHub secrets configured | [ ] |
-| 4 | All Dockerfiles verified | [ ] |
-| 5 | Local build tested (optional) | [ ] |
-| 6 | CI/CD workflows running | [ ] |
-| 7 | Dev server configured (optional) | [ ] |
-| 8 | Prod server configured (optional) | [ ] |
+4. Production deploys are triggered by **creating a GitHub Release** (not by push to `main`).
 
 ---
 
 ## Troubleshooting
 
-### Workflow fails at "Login to Docker Hub"
-- Check that `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets are correct
-- Regenerate Docker Hub token if needed
-
-### Workflow fails at "Build with Maven"
-- Check that `pom.xml` files are correct
-- Run `mvn clean verify -B` locally to see detailed errors
-
-### Workflow fails at "Build and push"
-- Ensure Docker Hub username in secrets matches the one in workflow
-- Check Docker Hub account has available storage
-
-### Services don't start with docker-compose
-- Check logs: `docker compose logs -f`
-- Ensure ports 8080, 8761, 5432 are not in use
-- Check `.env` file exists with correct values
-
----
-
-## Next Steps After Setup
-
-1. Create a `develop` branch for ongoing development:
-   ```bash
-   git checkout -b develop
-   git push -u origin develop
-   ```
-
-2. Make changes and push to `develop` for auto-deployment
-
-3. When ready, create a Pull Request to `main`
-
-4. After merging to `main`, create a GitHub Release for production deployment
+| Symptom | Likely cause |
+|---|---|
+| Workflow fails at "Login to Docker Hub" | `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` missing or wrong (regenerate the token) |
+| Workflow fails at "Build with Maven" | Run `mvn clean verify -B` locally to reproduce; check the failing module's `pom.xml` |
+| Workflow fails at "Build and push" | Docker Hub username in the secret doesn't match the `image:` field in the workflow, or Docker Hub storage is full |
+| `docker compose up` fails on a server | Check `docker compose logs -f`; ensure ports 8080, 8761, 5432 are free; verify `.env` exists on the server |
