@@ -3,6 +3,7 @@ package com.rigoomarine.workorder.controller;
 import com.rigoomarine.workorder.dto.WorkOrderDTO;
 import com.rigoomarine.workorder.dto.CreateWorkOrderRequest;
 import com.rigoomarine.workorder.dto.ServiceRequestRequest;
+import com.rigoomarine.common.security.SecurityUtils;
 import com.rigoomarine.workorder.service.WorkOrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,21 @@ public class WorkOrderController {
 
     private final WorkOrderService workOrderService;
 
+    /**
+     * Bulk-create path used by ops scripts and admin tools. Clients submit through
+     * {@link #submitServiceRequest} instead.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<WorkOrderDTO> createWorkOrder(@Valid @RequestBody CreateWorkOrderRequest request) {
         return ResponseEntity.ok(workOrderService.createWorkOrder(request));
     }
 
+    /**
+     * Client-facing service-request submission. Identity is enforced inside the
+     * service layer: clients can only submit as themselves, technicians can submit
+     * on behalf of any client.
+     */
     @PostMapping("/service-request")
     public ResponseEntity<WorkOrderDTO> submitServiceRequest(@Valid @RequestBody ServiceRequestRequest request) {
         return ResponseEntity.ok(workOrderService.submitServiceRequest(request));
@@ -51,8 +62,13 @@ public class WorkOrderController {
         return ResponseEntity.ok(workOrderService.rejectServiceRequest(id, approverId, reason));
     }
 
+    /**
+     * Returns the caller's work orders. clientId is derived from the JWT — the
+     * previous {@code ?clientId=} query parameter is dropped to prevent spoofing.
+     */
     @GetMapping("/my")
-    public ResponseEntity<List<WorkOrderDTO>> getMyWorkOrders(@RequestParam Long clientId) {
+    public ResponseEntity<List<WorkOrderDTO>> getMyWorkOrders() {
+        Long clientId = SecurityUtils.currentClientIdOrThrow();
         return ResponseEntity.ok(workOrderService.getWorkOrdersByClientId(clientId));
     }
 
@@ -83,12 +99,13 @@ public class WorkOrderController {
         return PageRequest.of(Math.max(page, 0), safeSize, Sort.by(dir, parts[0]));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @workOrderSecurity.canAccess(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<WorkOrderDTO> getWorkOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(workOrderService.getWorkOrderById(id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    @PreAuthorize("hasRole('ADMIN') or @workOrderSecurity.canAccess(#id)")
     @PutMapping("/{id}/status")
     public ResponseEntity<WorkOrderDTO> updateWorkOrderStatus(
         @PathVariable Long id,

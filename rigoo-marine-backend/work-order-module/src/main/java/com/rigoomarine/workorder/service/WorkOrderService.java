@@ -1,12 +1,18 @@
 package com.rigoomarine.workorder.service;
 
+import com.rigoomarine.workorder.client.VesselOwnershipClient;
+import com.rigoomarine.workorder.entity.SubmittedByRole;
 import com.rigoomarine.workorder.entity.WorkOrder;
+import com.rigoomarine.workorder.exception.WorkOrderNotFoundException;
 import com.rigoomarine.workorder.repository.WorkOrderRepository;
 import com.rigoomarine.workorder.dto.WorkOrderDTO;
 import com.rigoomarine.workorder.dto.CreateWorkOrderRequest;
 import com.rigoomarine.workorder.dto.ServiceRequestRequest;
+import com.rigoomarine.common.security.AuthenticatedUser;
+import com.rigoomarine.common.security.SecurityUtils;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,11 +25,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class WorkOrderService {
 
     private final WorkOrderRepository workOrderRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final VesselOwnershipClient vesselOwnershipClient;
 
     public WorkOrderDTO createWorkOrder(CreateWorkOrderRequest request) {
         // Convert mediaUrls set to JSON string for storage
@@ -58,6 +66,34 @@ public class WorkOrderService {
     }
 
     public WorkOrderDTO submitServiceRequest(ServiceRequestRequest request) {
+        // Identity override: clients cannot submit on behalf of someone else, nor claim
+        // submittedByRole=TECHNICIAN to bypass approval. Only ADMIN/TECHNICIAN actors
+        // honor the request body's clientId + submittedByRole.
+        Long effectiveClientId = request.getClientId();
+        SubmittedByRole effectiveSubmittedBy = request.getSubmittedByRole();
+
+        AuthenticatedUser actor = SecurityUtils.currentUser().orElse(null);
+        if (actor == null || !(actor.hasRole("ADMIN") || actor.hasRole("TECHNICIAN"))) {
+            Long jwtClientId = actor != null ? actor.getClientId() : null;
+            if (jwtClientId == null) {
+                throw new IllegalStateException("SESSION_RESTART_REQUIRED");
+            }
+            if (!jwtClientId.equals(request.getClientId())) {
+                log.info("audit.identity_override actor={} requestedClientId={} effectiveClientId={}",
+                    actor.getEmail(), request.getClientId(), jwtClientId);
+            }
+            effectiveClientId = jwtClientId;
+            effectiveSubmittedBy = SubmittedByRole.CLIENT;
+        }
+
+        // Cross-service ownership check: vessel-service is the source of truth for
+        // vessel→client mapping. Uses the internal endpoint with an explicit
+        // ownerClientId — so TECHNICIAN/ADMIN submissions are validated against the
+        // body's effectiveClientId (not the staff caller's JWT identity, which would
+        // short-circuit via read-all). Throws VesselNotOwnedException (→ 400) on
+        // mismatch, VesselLookupUnavailableException (→ 503) on outage.
+        vesselOwnershipClient.verifyAccess(request.getVesselId(), effectiveClientId);
+
         String mediaUrlsJson = null;
         if (request.getMediaUrls() != null && !request.getMediaUrls().isEmpty()) {
             mediaUrlsJson = request.getMediaUrls().stream()
@@ -70,7 +106,7 @@ public class WorkOrderService {
             : null;
 
         WorkOrder workOrder = WorkOrder.builder()
-            .clientId(request.getClientId())
+            .clientId(effectiveClientId)
             .vesselId(request.getVesselId())
             .description(request.getDescription())
             .priority("NORMAL")
@@ -80,7 +116,7 @@ public class WorkOrderService {
             .latitude(request.getLatitude())
             .longitude(request.getLongitude())
             .phone(request.getPhone())
-            .submittedByRole(request.getSubmittedByRole())
+            .submittedByRole(effectiveSubmittedBy)
             .issueCategory(request.getIssueCategory().name())
             .issueCategoryOther(issueCategoryOther)
             .mediaUrls(mediaUrlsJson)
@@ -93,7 +129,7 @@ public class WorkOrderService {
 
     public WorkOrderDTO approveServiceRequest(Long id, Long approverId) {
         WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Work order not found"));
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
         if (workOrder.getStatus() != WorkOrder.WorkOrderStatus.PENDING_APPROVAL) {
             throw new IllegalStateException("Only PENDING_APPROVAL work orders can be approved");
         }
@@ -107,7 +143,7 @@ public class WorkOrderService {
 
     public WorkOrderDTO rejectServiceRequest(Long id, Long approverId, String reason) {
         WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Work order not found"));
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
         if (workOrder.getStatus() != WorkOrder.WorkOrderStatus.PENDING_APPROVAL) {
             throw new IllegalStateException("Only PENDING_APPROVAL work orders can be rejected");
         }
@@ -177,12 +213,12 @@ public class WorkOrderService {
     public WorkOrderDTO getWorkOrderById(Long id) {
         return workOrderRepository.findById(id)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Work order not found"));
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
     }
 
     public WorkOrderDTO updateStatus(Long id, String status) {
         WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Work order not found"));
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
 
         workOrder.setStatus(WorkOrder.WorkOrderStatus.valueOf(status));
 
@@ -197,7 +233,7 @@ public class WorkOrderService {
 
     public WorkOrderDTO assignTechnician(Long id, Long technicianId) {
         WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Work order not found"));
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
 
         workOrder.setAssignedTechnicianId(technicianId);
         workOrder.setStatus(WorkOrder.WorkOrderStatus.IN_PROGRESS);
@@ -208,7 +244,9 @@ public class WorkOrderService {
     }
 
     public void deleteWorkOrder(Long id) {
-        workOrderRepository.deleteById(id);
+        WorkOrder wo = workOrderRepository.findById(id)
+            .orElseThrow(() -> new WorkOrderNotFoundException(id));
+        workOrderRepository.delete(wo);
     }
 
     private void sendNotificationEvent(WorkOrder workOrder, String eventType) {

@@ -1,4 +1,6 @@
 package com.rigoomarine.workorder.security;
+import com.rigoomarine.common.security.TokenRevocationCheck;
+import com.rigoomarine.common.security.AuthenticatedUser;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -23,6 +25,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenRevocationCheck revocationCheck;
 
     @Override
     protected void doFilterInternal(
@@ -45,18 +48,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            // Server-side revocation check — see TokenRevocationCheck. Fails open.
+            String jti = claims.getId();
+            if (jti != null && revocationCheck.isRevoked(jti)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String email = claims.getSubject();
             @SuppressWarnings("unchecked")
             List<String> roles = claims.get("roles", List.class);
             if (roles == null) roles = List.of("ROLE_CLIENT");
 
-            List<SimpleGrantedAuthority> authorities = roles.stream()
+            List<String> normalizedRoles = roles.stream()
                     .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                    .toList();
+            List<SimpleGrantedAuthority> authorities = normalizedRoles.stream()
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
+            Long clientId = claims.get("clientId", Long.class);
+            AuthenticatedUser principal = new AuthenticatedUser(email, clientId, normalizedRoles);
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
