@@ -1,32 +1,36 @@
 import { useState, useEffect } from 'react';
 import { Box, Container, Typography, Card, CardContent, CardActions, Button, Chip, Slide, Fade } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { SkeletonCardGrid } from '../../components/common/SkeletonCard';
+import { formatPrice } from '../../utils/format';
 
-const serviceCategories = ['All', 'Mechanical', 'Structural', 'Finishing'];
+const SERVICE_CATEGORIES = ['All', 'Mechanical', 'Structural', 'Finishing'];
+
+const SERVICE_ITEMS = [
+  { id: 1, key: 'engineDiagnostic', category: 'Mechanical', price: 150 },
+  { id: 2, key: 'engineRepair',     category: 'Mechanical', price: null },
+  { id: 3, key: 'oilChange',        category: 'Mechanical', price: 89 },
+  { id: 4, key: 'hullRepair',       category: 'Structural', price: null },
+  { id: 5, key: 'gelCoat',          category: 'Finishing',  price: 500 },
+  { id: 6, key: 'bottomPaint',      category: 'Finishing',  price: 800 },
+  { id: 7, key: 'propellerRepair',  category: 'Mechanical', price: 200 },
+  { id: 8, key: 'transomRepair',    category: 'Structural', price: null },
+];
 
 export default function Services() {
+  const { t } = useTranslation('public');
   const [services, setServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mockServices = [
-      { id: 1, name: 'Engine Diagnostic', category: 'Mechanical', description: 'Complete engine analysis and troubleshooting', price: 150 },
-      { id: 2, name: 'Engine Repair', category: 'Mechanical', description: 'Full engine repair and rebuild services', price: null },
-      { id: 3, name: 'Oil Change', category: 'Mechanical', description: 'Regular oil change and filter replacement', price: 89 },
-      { id: 4, name: 'Hull Repair', category: 'Structural', description: 'Fiberglass repair and hull restoration', price: null },
-      { id: 5, name: 'Gel Coat Restoration', category: 'Finishing', description: 'Professional gel coat polishing and restoration', price: 500 },
-      { id: 6, name: 'Bottom Paint', category: 'Finishing', description: 'Anti-fouling bottom paint application', price: 800 },
-      { id: 7, name: 'Propeller Repair', category: 'Mechanical', description: 'Propeller straightening and repair', price: 200 },
-      { id: 8, name: 'Transom Repair', category: 'Structural', description: 'Transom reinforcement and replacement', price: null },
-    ];
-    const t = setTimeout(() => {
-      setServices(mockServices);
+    const id = setTimeout(() => {
+      setServices(SERVICE_ITEMS);
       setLoading(false);
     }, 200);
-    return () => clearTimeout(t);
+    return () => clearTimeout(id);
   }, []);
 
   const filteredServices = selectedCategory === 'All'
@@ -51,11 +55,13 @@ export default function Services() {
       >
         <Container maxWidth="md">
           <Slide in direction="down" timeout={600}>
-            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>Our Services</Typography>
+            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>
+              {t('services.header.title')}
+            </Typography>
           </Slide>
           <Fade in timeout={900} style={{ transitionDelay: '160ms' }}>
             <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Professional marine services for all vessel types
+              {t('services.header.subtitle')}
             </Typography>
           </Fade>
         </Container>
@@ -65,10 +71,10 @@ export default function Services() {
         {/* Category Filters */}
         <Reveal variant="fade" timeout={500}>
           <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {serviceCategories.map((category) => (
+            {SERVICE_CATEGORIES.map((category) => (
               <Chip
                 key={category}
-                label={category}
+                label={t(`services.categories.${category === 'All' ? 'all' : category}`)}
                 onClick={() => setSelectedCategory(category)}
                 color={selectedCategory === category ? 'primary' : 'default'}
                 variant={selectedCategory === category ? 'filled' : 'outlined'}
@@ -100,29 +106,29 @@ export default function Services() {
               >
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Chip
-                    label={service.category}
+                    label={t(`services.categories.${service.category}`)}
                     size="small"
                     sx={{ mb: 1 }}
                     color="primary"
                     variant="outlined"
                   />
                   <Typography variant="h6" gutterBottom>
-                    {service.name}
+                    {t(`services.items.${service.key}.name`)}
                   </Typography>
                   <Typography color="text.secondary" paragraph>
-                    {service.description}
+                    {t(`services.items.${service.key}.description`)}
                   </Typography>
-                  {service.price && (
+                  {service.price != null && (
                     <Typography variant="h6" color="primary.main">
-                      From ${service.price}
+                      {t('services.fromPrice', { price: formatPrice(service.price) })}
                     </Typography>
                   )}
                 </CardContent>
                 <CardActions>
                   <Button component={Link} to="/register" size="small">
-                    Request Service
+                    {t('services.request')}
                   </Button>
-                  <Button size="small">Learn More</Button>
+                  <Button size="small">{t('services.learnMore')}</Button>
                 </CardActions>
               </Card>
             ))}
@@ -133,10 +139,10 @@ export default function Services() {
         <Reveal variant="slide" direction="up" timeout={620}>
           <Box textAlign="center" sx={{ mt: 6 }}>
             <Typography variant="h6" paragraph>
-              Don't see what you need?
+              {t('services.cta.title')}
             </Typography>
             <Button component={Link} to="/register" variant="contained" size="large" sx={{ px: 4 }}>
-              Request a Custom Quote
+              {t('services.cta.button')}
             </Button>
           </Box>
         </Reveal>

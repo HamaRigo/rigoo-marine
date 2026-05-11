@@ -10,6 +10,7 @@ import enWorkOrder from './locales/en/workorder.json';
 import enAdmin from './locales/en/admin.json';
 import enMarketplace from './locales/en/marketplace.json';
 import enShop from './locales/en/shop.json';
+import enPublic from './locales/en/public.json';
 import arCommon from './locales/ar/common.json';
 import arNavbar from './locales/ar/navbar.json';
 import arHome from './locales/ar/home.json';
@@ -18,6 +19,7 @@ import arWorkOrder from './locales/ar/workorder.json';
 import arAdmin from './locales/ar/admin.json';
 import arMarketplace from './locales/ar/marketplace.json';
 import arShop from './locales/ar/shop.json';
+import arPublic from './locales/ar/public.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'];
 export const RTL_LANGUAGES = ['ar'];
@@ -28,13 +30,13 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    fallbackLng: 'ar',
+    fallbackLng: 'en',
     supportedLngs: SUPPORTED_LANGUAGES,
-    ns: ['common', 'navbar', 'home', 'auth', 'workorder', 'admin', 'marketplace', 'shop'],
+    ns: ['common', 'navbar', 'home', 'auth', 'workorder', 'admin', 'marketplace', 'shop', 'public'],
     defaultNS: 'common',
     resources: {
-      en: { common: enCommon, navbar: enNavbar, home: enHome, auth: enAuth, workorder: enWorkOrder, admin: enAdmin, marketplace: enMarketplace, shop: enShop },
-      ar: { common: arCommon, navbar: arNavbar, home: arHome, auth: arAuth, workorder: arWorkOrder, admin: arAdmin, marketplace: arMarketplace, shop: arShop },
+      en: { common: enCommon, navbar: enNavbar, home: enHome, auth: enAuth, workorder: enWorkOrder, admin: enAdmin, marketplace: enMarketplace, shop: enShop, public: enPublic },
+      ar: { common: arCommon, navbar: arNavbar, home: arHome, auth: arAuth, workorder: arWorkOrder, admin: arAdmin, marketplace: arMarketplace, shop: arShop, public: arPublic },
     },
     detection: {
       order: ['localStorage', 'navigator'],

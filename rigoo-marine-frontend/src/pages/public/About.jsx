@@ -1,22 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Box, Container, Typography, Grid, Card, CardContent, CircularProgress, Slide, Fade } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '../../services/api';
 import { Reveal, Stagger } from '../../components/common/Motion';
+import { formatPhone } from '../../utils/format';
 
-const team = [
-  { name: 'John Smith', role: 'Founder & Master Technician', bio: '25+ years of marine engine experience' },
-  { name: 'Sarah Johnson', role: 'Service Manager', bio: 'Certified in fiberglass and structural repair' },
-  { name: 'Mike Davis', role: 'Senior Technician', bio: 'Specialist in electrical systems and diagnostics' },
-];
+const VALUE_KEYS = ['quality', 'transparency', 'efficiency', 'trust'];
+const VALUE_EMOJIS = { quality: '🎯', transparency: '💬', efficiency: '⏱️', trust: '🤝' };
 
-const values = [
-  { emoji: '🎯', title: 'Quality', desc: 'We never cut corners - every job is done right the first time' },
-  { emoji: '💬', title: 'Transparency', desc: 'Clear communication and honest pricing on every project' },
-  { emoji: '⏱️', title: 'Efficiency', desc: 'Fast turnaround times without compromising quality' },
-  { emoji: '🤝', title: 'Trust', desc: 'Building long-term relationships with our customers' },
-];
+const TEAM_KEYS = ['founder', 'manager', 'senior'];
 
 export default function About() {
+  const { t } = useTranslation('public');
   const [contactInfo, setContactInfo] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -41,10 +36,9 @@ export default function About() {
     fetchContactInfo();
   }, []);
 
-  const getContact = (key) => contactInfo[key] || {
-    'phone_primary': '+1 (555) 123-4567',
-    'email_general': 'info@rigoomarine.com',
-  }[key] || '';
+  const email = contactInfo.email_general || 'info@rigoomarine.com';
+  const phoneRaw = contactInfo.phone_primary || '+97450123456';
+  const phone = formatPhone(phoneRaw);
 
   if (loading) {
     return (
@@ -70,11 +64,13 @@ export default function About() {
       >
         <Container maxWidth="md">
           <Slide in direction="down" timeout={600}>
-            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>About Rigoo Marine</Typography>
+            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>
+              {t('about.header.title')}
+            </Typography>
           </Slide>
           <Fade in timeout={900} style={{ transitionDelay: '160ms' }}>
             <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Your trusted partner for professional marine services
+              {t('about.header.subtitle')}
             </Typography>
           </Fade>
         </Container>
@@ -86,20 +82,10 @@ export default function About() {
           <Grid item xs={12} md={6}>
             <Reveal variant="slide" direction="right" timeout={620}>
               <Box>
-                <Typography variant="h4" gutterBottom>Our Story</Typography>
-                <Typography paragraph>
-                  Founded in 1998, Rigoo Marine has been serving boat owners and marine
-                  businesses with professional repair, maintenance, and restoration services.
-                </Typography>
-                <Typography paragraph>
-                  What started as a small engine repair shop has grown into a full-service
-                  marine facility capable of handling projects of all sizes - from routine
-                  maintenance to complete vessel restorations.
-                </Typography>
-                <Typography paragraph>
-                  Our commitment to quality workmanship, transparent pricing, and excellent
-                  customer service has made us the go-to choice for marine services in the region.
-                </Typography>
+                <Typography variant="h4" gutterBottom>{t('about.story.title')}</Typography>
+                <Typography paragraph>{t('about.story.p1')}</Typography>
+                <Typography paragraph>{t('about.story.p2')}</Typography>
+                <Typography paragraph>{t('about.story.p3')}</Typography>
               </Box>
             </Reveal>
           </Grid>
@@ -108,7 +94,7 @@ export default function About() {
               <Box
                 component="img"
                 src="/gallery/about-workshop.jpg"
-                alt="Marine workshop"
+                alt={t('about.story.title')}
                 loading="lazy"
                 sx={{
                   width: '100%',
@@ -134,7 +120,7 @@ export default function About() {
       >
         <Container maxWidth="lg">
           <Reveal variant="fade">
-            <Typography variant="h4" textAlign="center" gutterBottom>Our Values</Typography>
+            <Typography variant="h4" textAlign="center" gutterBottom>{t('about.values.title')}</Typography>
           </Reveal>
           <Stagger
             variant="slide"
@@ -148,12 +134,16 @@ export default function About() {
               mt: 3,
             }}
           >
-            {values.map((v) => (
-              <Card key={v.title} sx={{ height: '100%', textAlign: 'center' }}>
+            {VALUE_KEYS.map((key) => (
+              <Card key={key} sx={{ height: '100%', textAlign: 'center' }}>
                 <CardContent>
-                  <Typography variant="h3" sx={{ mb: 2 }}>{v.emoji}</Typography>
-                  <Typography variant="h6" gutterBottom>{v.title}</Typography>
-                  <Typography color="text.secondary">{v.desc}</Typography>
+                  <Typography variant="h3" sx={{ mb: 2 }}>{VALUE_EMOJIS[key]}</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    {t(`about.values.items.${key}.title`)}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {t(`about.values.items.${key}.description`)}
+                  </Typography>
                 </CardContent>
               </Card>
             ))}
@@ -164,7 +154,7 @@ export default function About() {
       {/* Team */}
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 }, px: { xs: 2, sm: 3 } }}>
         <Reveal variant="fade">
-          <Typography variant="h4" textAlign="center" gutterBottom>Meet Our Team</Typography>
+          <Typography variant="h4" textAlign="center" gutterBottom>{t('about.team.title')}</Typography>
         </Reveal>
         <Stagger
           variant="grow"
@@ -177,12 +167,18 @@ export default function About() {
             mt: 3,
           }}
         >
-          {team.map((member) => (
-            <Card key={member.name} sx={{ height: '100%' }}>
+          {TEAM_KEYS.map((key) => (
+            <Card key={key} sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>{member.name}</Typography>
-                <Typography color="primary.main" gutterBottom>{member.role}</Typography>
-                <Typography color="text.secondary">{member.bio}</Typography>
+                <Typography variant="h6" gutterBottom>
+                  {t(`about.team.members.${key}.name`)}
+                </Typography>
+                <Typography color="primary.main" gutterBottom>
+                  {t(`about.team.members.${key}.role`)}
+                </Typography>
+                <Typography color="text.secondary">
+                  {t(`about.team.members.${key}.bio`)}
+                </Typography>
               </CardContent>
             </Card>
           ))}
@@ -201,12 +197,12 @@ export default function About() {
           }}
         >
           <Container maxWidth="md">
-            <Typography variant="h5" gutterBottom>Have Questions?</Typography>
+            <Typography variant="h5" gutterBottom>{t('about.cta.title')}</Typography>
             <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
-              Contact us today to discuss your marine service needs
+              {t('about.cta.subtitle')}
             </Typography>
             <Typography variant="body1">
-              📧 {getContact('email_general') || 'info@rigoomarine.com'} | 📞 {getContact('phone_primary') || '+1 (555) 123-4567'}
+              📧 <bdi>{email}</bdi> &nbsp;|&nbsp; 📞 <bdi>{phone}</bdi>
             </Typography>
           </Container>
         </Box>

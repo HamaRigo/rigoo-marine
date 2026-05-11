@@ -1,0 +1,103 @@
+{
+  "footer": {
+    "tagline": "Professional marine services for all your vessel needs.",
+    "downloads": {
+      "brochure": "Download brochure (PDF)",
+      "businessCard": "Business card (PDF)"
+    },
+    "quickLinks": "QUICK LINKS",
+    "links": {
+      "services": "Services",
+      "gallery": "Gallery",
+      "about": "About Us"
+    },
+    "contact": {
+      "title": "CONTACT",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone"
+    },
+    "rights": "All rights reserved."
+  },
+  "services": {
+    "header": {
+      "title": "Our Services",
+      "subtitle": "Professional marine services for all vessel types"
+    },
+    "categories": {
+      "all": "All",
+      "Mechanical": "Mechanical",
+      "Structural": "Structural",
+      "Finishing": "Finishing"
+    },
+    "items": {
+      "engineDiagnostic": { "name": "Engine Diagnostic", "description": "Complete engine analysis and troubleshooting" },
+      "engineRepair":     { "name": "Engine Repair", "description": "Full engine repair and rebuild services" },
+      "oilChange":        { "name": "Oil Change", "description": "Regular oil change and filter replacement" },
+      "hullRepair":       { "name": "Hull Repair", "description": "Fiberglass repair and hull restoration" },
+      "gelCoat":          { "name": "Gel Coat Restoration", "description": "Professional gel coat polishing and restoration" },
+      "bottomPaint":      { "name": "Bottom Paint", "description": "Anti-fouling bottom paint application" },
+      "propellerRepair":  { "name": "Propeller Repair", "description": "Propeller straightening and repair" },
+      "transomRepair":    { "name": "Transom Repair", "description": "Transom reinforcement and replacement" }
+    },
+    "fromPrice": "From {{price}}",
+    "request": "Request Service",
+    "learnMore": "Learn More",
+    "cta": {
+      "title": "Don't see what you need?",
+      "button": "Request a Custom Quote"
+    }
+  },
+  "gallery": {
+    "header": {
+      "title": "Gallery",
+      "subtitle": "See our work — Before & After transformations"
+    },
+    "categories": {
+      "all": "All",
+      "Mechanical": "Mechanical",
+      "Structural": "Structural",
+      "Finishing": "Finishing"
+    },
+    "items": {
+      "engine-rebuild":       "Engine Rebuild",
+      "hull-restoration":     "Hull Restoration",
+      "gel-coat-polish":      "Gel Coat Polish",
+      "bottom-paint":         "Bottom Paint Job",
+      "propeller-repair":     "Propeller Repair",
+      "transom-replacement":  "Transom Replacement"
+    }
+  },
+  "about": {
+    "header": {
+      "title": "About Rigoo Marine",
+      "subtitle": "Your trusted partner for professional marine services in Qatar"
+    },
+    "story": {
+      "title": "Our Story",
+      "p1": "Rigoo Marine serves boat owners and marine businesses across Qatar with professional repair, maintenance, and restoration services.",
+      "p2": "What started as a focused engine repair shop has grown into a full-service marine facility — from routine maintenance to complete vessel restorations.",
+      "p3": "Our commitment to quality workmanship, transparent QAR pricing, and bilingual customer service has made us a trusted partner for marine work in the region."
+    },
+    "values": {
+      "title": "Our Values",
+      "items": {
+        "quality":      { "title": "Quality", "description": "We never cut corners — every job is done right the first time" },
+        "transparency": { "title": "Transparency", "description": "Clear communication and honest pricing on every project" },
+        "efficiency":   { "title": "Efficiency", "description": "Fast turnaround times without compromising quality" },
+        "trust":        { "title": "Trust", "description": "Building long-term relationships with our customers" }
+      }
+    },
+    "team": {
+      "title": "Meet Our Team",
+      "members": {
+        "founder": { "name": "John Smith", "role": "Founder & Master Technician", "bio": "25+ years of marine engine experience" },
+        "manager": { "name": "Sarah Johnson", "role": "Service Manager", "bio": "Certified in fiberglass and structural repair" },
+        "senior":  { "name": "Mike Davis", "role": "Senior Technician", "bio": "Specialist in electrical systems and diagnostics" }
+      }
+    },
+    "cta": {
+      "title": "Have Questions?",
+      "subtitle": "Contact us today to discuss your marine service needs"
+    }
+  }
+}

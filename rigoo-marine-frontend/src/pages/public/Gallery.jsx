@@ -1,26 +1,31 @@
 import { useState } from 'react';
 import { Box, Container, Typography, Card, CardMedia, Chip, Dialog, DialogContent, IconButton, Slide, Fade, Zoom } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTranslation } from 'react-i18next';
 import { Reveal, Stagger } from '../../components/common/Motion';
 
-const galleryItems = [
-  { slug: 'engine-rebuild', title: 'Engine Rebuild', category: 'Mechanical' },
-  { slug: 'hull-restoration', title: 'Hull Restoration', category: 'Structural' },
-  { slug: 'gel-coat-polish', title: 'Gel Coat Polish', category: 'Finishing' },
-  { slug: 'bottom-paint', title: 'Bottom Paint Job', category: 'Finishing' },
-  { slug: 'propeller-repair', title: 'Propeller Repair', category: 'Mechanical' },
-  { slug: 'transom-replacement', title: 'Transom Replacement', category: 'Structural' },
+const GALLERY_ITEMS = [
+  { slug: 'engine-rebuild',       category: 'Mechanical' },
+  { slug: 'hull-restoration',     category: 'Structural' },
+  { slug: 'gel-coat-polish',      category: 'Finishing' },
+  { slug: 'bottom-paint',         category: 'Finishing' },
+  { slug: 'propeller-repair',     category: 'Mechanical' },
+  { slug: 'transom-replacement',  category: 'Structural' },
 ].map((item) => ({ ...item, image: `/gallery/${item.slug}.jpg` }));
 
-const categories = ['All', 'Mechanical', 'Structural', 'Finishing'];
+const CATEGORIES = ['All', 'Mechanical', 'Structural', 'Finishing'];
 
 export default function Gallery() {
+  const { t } = useTranslation('public');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedImage, setSelectedImage] = useState(null);
 
   const filteredItems = selectedCategory === 'All'
-    ? galleryItems
-    : galleryItems.filter(item => item.category === selectedCategory);
+    ? GALLERY_ITEMS
+    : GALLERY_ITEMS.filter((item) => item.category === selectedCategory);
+
+  const itemTitle = (slug) => t(`gallery.items.${slug}`);
+  const categoryLabel = (cat) => t(`gallery.categories.${cat === 'All' ? 'all' : cat}`);
 
   return (
     <Box>
@@ -38,11 +43,11 @@ export default function Gallery() {
       >
         <Container maxWidth="md">
           <Slide in direction="down" timeout={600}>
-            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>Gallery</Typography>
+            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>{t('gallery.header.title')}</Typography>
           </Slide>
           <Fade in timeout={900} style={{ transitionDelay: '160ms' }}>
             <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              See our work - Before &amp; After transformations
+              {t('gallery.header.subtitle')}
             </Typography>
           </Fade>
         </Container>
@@ -52,10 +57,10 @@ export default function Gallery() {
         {/* Category Filters */}
         <Reveal variant="fade" timeout={500}>
           <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <Chip
                 key={category}
-                label={category}
+                label={categoryLabel(category)}
                 onClick={() => setSelectedCategory(category)}
                 color={selectedCategory === category ? 'primary' : 'default'}
                 variant={selectedCategory === category ? 'filled' : 'outlined'}
@@ -79,7 +84,7 @@ export default function Gallery() {
         >
           {filteredItems.map((item) => (
             <Card
-              key={item.id}
+              key={item.slug}
               sx={{
                 cursor: 'pointer',
                 overflow: 'hidden',
@@ -96,20 +101,20 @@ export default function Gallery() {
                   className="gallery-img"
                   height="220"
                   image={item.image}
-                  alt={item.title}
+                  alt={itemTitle(item.slug)}
                   loading="lazy"
                 />
               </Box>
               <Box sx={{ p: 2 }}>
                 <Chip
-                  label={item.category}
+                  label={categoryLabel(item.category)}
                   size="small"
                   sx={{ mb: 1 }}
                   color="primary"
                   variant="outlined"
                 />
                 <Typography variant="body1" fontWeight="600">
-                  {item.title}
+                  {itemTitle(item.slug)}
                 </Typography>
               </Box>
             </Card>
@@ -144,12 +149,12 @@ export default function Gallery() {
             <Box>
               <img
                 src={selectedImage.image}
-                alt={selectedImage.title}
+                alt={itemTitle(selectedImage.slug)}
                 style={{ width: '100%', maxHeight: '80vh', objectFit: 'cover' }}
               />
               <Box sx={{ p: 3 }}>
-                <Typography variant="h6">{selectedImage.title}</Typography>
-                <Typography color="text.secondary">{selectedImage.category}</Typography>
+                <Typography variant="h6">{itemTitle(selectedImage.slug)}</Typography>
+                <Typography color="text.secondary">{categoryLabel(selectedImage.category)}</Typography>
               </Box>
             </Box>
           )}

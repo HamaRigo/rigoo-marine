@@ -57,10 +57,8 @@ function FooterBrandMark({ size = 40 }) {
 }
 
 export default function Footer() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation(['public', 'navbar']);
   const flyerHref = i18n.language === 'ar' ? '/flyers/rigoo-services-ar.pdf' : '/flyers/rigoo-services-en.pdf';
-  const flyerLabel = i18n.language === 'ar' ? 'تنزيل الكتيب (PDF)' : 'Download brochure (PDF)';
-  const cardLabel = i18n.language === 'ar' ? 'بطاقة العمل (PDF)' : 'Business card (PDF)';
   return (
     <Box
       component="footer"
@@ -94,10 +92,10 @@ export default function Footer() {
             <Box sx={{ maxWidth: 320 }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                 <FooterBrandMark size={40} />
-                Rigoo Marine
+                {t('navbar:brand')}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.85 }}>
-                Professional marine services for all your vessel needs.
+                {t('public:footer.tagline')}
               </Typography>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 <MuiLink
@@ -108,7 +106,7 @@ export default function Footer() {
                   underline="hover"
                   sx={{ fontSize: '0.875rem', opacity: 0.9, '&:hover': { color: 'secondary.light' } }}
                 >
-                  {flyerLabel}
+                  {t('public:footer.downloads.brochure')}
                 </MuiLink>
                 <MuiLink
                   href="/flyers/business-card.pdf"
@@ -118,37 +116,37 @@ export default function Footer() {
                   underline="hover"
                   sx={{ fontSize: '0.875rem', opacity: 0.9, '&:hover': { color: 'secondary.light' } }}
                 >
-                  {cardLabel}
+                  {t('public:footer.downloads.businessCard')}
                 </MuiLink>
               </Box>
             </Box>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom sx={{ letterSpacing: 1, opacity: 0.85 }}>
-                QUICK LINKS
+                {t('public:footer.quickLinks')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 <MuiLink component={Link} to="/services" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
-                  Services
+                  {t('public:footer.links.services')}
                 </MuiLink>
                 <MuiLink component={Link} to="/gallery" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
-                  Gallery
+                  {t('public:footer.links.gallery')}
                 </MuiLink>
                 <MuiLink component={Link} to="/about" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
-                  About Us
+                  {t('public:footer.links.about')}
                 </MuiLink>
               </Box>
             </Box>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom sx={{ letterSpacing: 1, opacity: 0.85 }}>
-                CONTACT
+                {t('public:footer.contact.title')}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Email: info@rigoomarine.com
+                {t('public:footer.contact.emailLabel')}: <bdi>info@rigoomarine.com</bdi>
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Phone: +1 (555) 123-4567
+                {t('public:footer.contact.phoneLabel')}: <bdi>+974 5012 3456</bdi>
               </Typography>
             </Box>
           </Box>
@@ -158,7 +156,7 @@ export default function Footer() {
 
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" sx={{ opacity: 0.75 }}>
-            &copy; {new Date().getFullYear()} Rigoo Marine. All rights reserved.
+            &copy; {new Date().getFullYear()} {t('navbar:brand')}. {t('public:footer.rights')}
           </Typography>
         </Box>
       </Container>
