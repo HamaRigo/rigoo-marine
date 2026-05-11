@@ -1,4 +1,5 @@
 package com.rigoomarine.technician.security;
+import com.rigoomarine.common.security.TokenRevocationCheck;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,6 +22,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenRevocationCheck revocationCheck;
 
     @Override
     protected void doFilterInternal(
@@ -32,8 +34,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractTokenFromRequest(request);
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            String email = jwtTokenProvider.getEmailFromToken(token);
             io.jsonwebtoken.Claims claims = jwtTokenProvider.parseClaims(token);
+
+            // Server-side revocation check — see TokenRevocationCheck. Fails open.
+            String jti = claims.getId();
+            if (jti != null && revocationCheck.isRevoked(jti)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String email = jwtTokenProvider.getEmailFromToken(token);
             List<String> roles = claims.get("roles", List.class);
 
             if (roles == null) {

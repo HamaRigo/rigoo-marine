@@ -1,4 +1,5 @@
 package com.rigoomarine.marketplace.security;
+import com.rigoomarine.common.security.TokenRevocationCheck;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -23,6 +24,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenRevocationCheck revocationCheck;
 
     @Override
     protected void doFilterInternal(
@@ -39,6 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long pwdIat = claims.get("pwdIat", Long.class);
             Date iat = claims.getIssuedAt();
             if (pwdIat != null && iat != null && iat.getTime() < pwdIat) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Server-side revocation check — see TokenRevocationCheck. Fails open.
+            String jti = claims.getId();
+            if (jti != null && revocationCheck.isRevoked(jti)) {
                 filterChain.doFilter(request, response);
                 return;
             }
