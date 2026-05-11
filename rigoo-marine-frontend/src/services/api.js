@@ -43,6 +43,30 @@ export const authApi = {
   },
 
   /**
+   * Request an SMS one-time code for the given phone. Backend is enumeration-
+   * safe — same response whether the phone matches an account or not. Caller
+   * should always advance to the code-entry step on success.
+   * @param {string} phone  raw or E.164; backend normalizes via libphonenumber
+   * @returns {Promise<{message: string}>}
+   */
+  requestOtp: async (phone) => {
+    const response = await httpClient.post('/auth/otp/request', { phone });
+    return response.data;
+  },
+
+  /**
+   * Verify an SMS one-time code. On success returns the standard login
+   * response shape so AuthContext can persist exactly as with password login.
+   * @param {string} phone
+   * @param {string} code  6-digit numeric
+   * @returns {Promise<{user: object, token: string, expiresAt?: string}>}
+   */
+  verifyOtp: async (phone, code) => {
+    const response = await httpClient.post('/auth/otp/verify', { phone, code });
+    return response.data;
+  },
+
+  /**
    * Request password reset
    * @param {string} email
    * @returns {Promise<{message: string}>}

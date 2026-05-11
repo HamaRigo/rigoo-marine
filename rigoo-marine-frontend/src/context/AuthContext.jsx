@@ -53,6 +53,28 @@ export function AuthProvider({ children }) {
     return userData;
   }, []);
 
+  /**
+   * SMS-OTP variant of login. Backend's /otp/verify returns the same shape as
+   * /login, so persistence and return value are identical — callers don't need
+   * to branch on which method was used.
+   */
+  const loginWithOtp = useCallback(async (phone, code) => {
+    const response = await authApi.verifyOtp(phone, code);
+    const { user: userData, token, refreshToken, expiresAt } = response;
+
+    localStorage.setItem('token', token);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+    if (expiresAt) {
+      localStorage.setItem('tokenExpiresAt', expiresAt);
+    }
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+
+    return userData;
+  }, []);
+
   const logout = useCallback(async () => {
     // Try server-side revocation first so the JWT is blacklisted at the gateway
     // before we drop our local copy. If the API call fails we still clear local
@@ -135,6 +157,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     role: user?.role,
     login,
+    loginWithOtp,
     logout,
     register,
     refreshToken,
