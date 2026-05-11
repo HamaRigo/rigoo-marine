@@ -107,8 +107,9 @@ export default function About() {
             <Reveal variant="slide" direction="left" timeout={620}>
               <Box
                 component="img"
-                src="https://images.unsplash.com/photo-1567890944229-2d6d1d4e6c61?w=800"
+                src="/gallery/about-workshop.jpg"
                 alt="Marine workshop"
+                loading="lazy"
                 sx={{
                   width: '100%',
                   borderRadius: 3,

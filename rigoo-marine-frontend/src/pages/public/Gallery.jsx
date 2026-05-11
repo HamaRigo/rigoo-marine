@@ -4,13 +4,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Reveal, Stagger } from '../../components/common/Motion';
 
 const galleryItems = [
-  { id: 1, title: 'Engine Rebuild', category: 'Mechanical', image: 'https://images.unsplash.com/photo-1569263979104-565b634a6e79?w=800', beforeAfter: true },
-  { id: 2, title: 'Hull Restoration', category: 'Structural', image: 'https://images.unsplash.com/photo-1544551763-46a8723ba3f9?w=800', beforeAfter: true },
-  { id: 3, title: 'Gel Coat Polish', category: 'Finishing', image: 'https://images.unsplash.com/photo-1567890944229-2d6d1d4e6c61?w=800', beforeAfter: true },
-  { id: 4, title: 'Bottom Paint Job', category: 'Finishing', image: 'https://images.unsplash.com/photo-1566808996799-011a7d8f0a56?w=800', beforeAfter: true },
-  { id: 5, title: 'Propeller Repair', category: 'Mechanical', image: 'https://images.unsplash.com/photo-1598460662955-43f54f3c784b?w=800', beforeAfter: true },
-  { id: 6, title: 'Transom Replacement', category: 'Structural', image: 'https://images.unsplash.com/photo-1540946485062-a6264be0b608?w=800', beforeAfter: true },
-];
+  { slug: 'engine-rebuild', title: 'Engine Rebuild', category: 'Mechanical' },
+  { slug: 'hull-restoration', title: 'Hull Restoration', category: 'Structural' },
+  { slug: 'gel-coat-polish', title: 'Gel Coat Polish', category: 'Finishing' },
+  { slug: 'bottom-paint', title: 'Bottom Paint Job', category: 'Finishing' },
+  { slug: 'propeller-repair', title: 'Propeller Repair', category: 'Mechanical' },
+  { slug: 'transom-replacement', title: 'Transom Replacement', category: 'Structural' },
+].map((item) => ({ ...item, image: `/gallery/${item.slug}.jpg` }));
 
 const categories = ['All', 'Mechanical', 'Structural', 'Finishing'];
 
@@ -97,6 +97,7 @@ export default function Gallery() {
                   height="220"
                   image={item.image}
                   alt={item.title}
+                  loading="lazy"
                 />
               </Box>
               <Box sx={{ p: 2 }}>
