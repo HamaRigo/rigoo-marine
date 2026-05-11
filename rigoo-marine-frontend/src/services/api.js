@@ -32,6 +32,17 @@ export const authApi = {
   },
 
   /**
+   * Revoke the current JWT server-side. client-service writes the token's jti
+   * to a Redis revocation list; the api-gateway rejects any subsequent request
+   * bearing the same jti. Caller should clear local state after this resolves.
+   * @returns {Promise<{message: string}>}
+   */
+  logout: async () => {
+    const response = await httpClient.post('/auth/logout');
+    return response.data;
+  },
+
+  /**
    * Request password reset
    * @param {string} email
    * @returns {Promise<{message: string}>}
@@ -183,14 +194,12 @@ export const workOrderApi = {
   },
 
   /**
-   * Get current user's work orders
-   * @param {number} clientId - Client ID to fetch orders for
+   * Get current user's work orders. clientId is derived from the JWT by
+   * work-order-service; the previous query param is no longer supported.
    * @returns {Promise<Array>}
    */
-  getMyWorkOrders: async (clientId) => {
-    const response = await httpClient.get('/api/work-orders/my', {
-      params: { clientId },
-    });
+  getMyWorkOrders: async () => {
+    const response = await httpClient.get('/api/work-orders/my');
     return response.data;
   },
 
@@ -254,14 +263,12 @@ export const vesselApi = {
   },
 
   /**
-   * Get current user's vessels
-   * @param {number} clientId - Client ID to fetch vessels for
+   * Get current user's vessels. The clientId is derived from the JWT by
+   * vessel-service; passing it as a query param is no longer supported.
    * @returns {Promise<Array>}
    */
-  getMyVessels: async (clientId) => {
-    const response = await httpClient.get('/api/vessels/my', {
-      params: { clientId },
-    });
+  getMyVessels: async () => {
+    const response = await httpClient.get('/api/vessels/my');
     return response.data;
   },
 
@@ -357,15 +364,11 @@ export const invoiceApi = {
 // ============== DASHBOARD APIs ==============
 export const dashboardApi = {
   /**
-   * Get dashboard statistics
-   * @param {number} clientId - Client ID for stats
+   * Get dashboard statistics. clientId is derived from the JWT server-side.
    * @returns {Promise<{activeOrders: number, vessels: number, pendingInvoices: number, completedOrders: number}>}
    */
-  getStats: async (clientId) => {
-    const response = await httpClient.get('/api/work-orders/my', {
-      params: { clientId },
-    });
-    // Calculate stats from orders
+  getStats: async () => {
+    const response = await httpClient.get('/api/work-orders/my');
     const orders = response.data || [];
     return {
       activeOrders: orders.filter((o) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length,
@@ -376,15 +379,12 @@ export const dashboardApi = {
   },
 
   /**
-   * Get recent orders
-   * @param {number} clientId - Client ID to fetch orders for
+   * Get recent orders. clientId is derived from the JWT server-side.
    * @param {number} limit
    * @returns {Promise<Array>}
    */
-  getRecentOrders: async (clientId, limit = 5) => {
-    const response = await httpClient.get('/api/work-orders/my', {
-      params: { clientId },
-    });
+  getRecentOrders: async (limit = 5) => {
+    const response = await httpClient.get('/api/work-orders/my');
     return (response.data || []).slice(0, limit);
   },
 };

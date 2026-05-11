@@ -53,7 +53,17 @@ export function AuthProvider({ children }) {
     return userData;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // Try server-side revocation first so the JWT is blacklisted at the gateway
+    // before we drop our local copy. If the API call fails we still clear local
+    // state — the user expects logout to be terminal client-side. Worst case
+    // the token remains valid until its exp claim and the user's own pwdIat
+    // cutoff bounds the damage from a leaked token.
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.warn('logout: server-side revocation failed, clearing local state anyway', err);
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
