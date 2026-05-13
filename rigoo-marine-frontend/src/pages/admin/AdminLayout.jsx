@@ -14,6 +14,7 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import MarkChatUnreadIcon from '@mui/icons-material/MarkChatUnread';
 import ContactSupportIcon from '@mui/icons-material/ContactSupport';
+import HistoryIcon from '@mui/icons-material/History';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 
@@ -30,6 +31,7 @@ const navItems = [
   { name: 'Products', path: '/admin/products', icon: <StorefrontIcon /> },
   { name: 'Shop orders', path: '/admin/shop-orders', icon: <ReceiptLongIcon /> },
   { name: 'Shop inquiries', path: '/admin/shop-inquiries', icon: <ContactSupportIcon /> },
+  { name: 'Audit log', path: '/admin/audit', icon: <HistoryIcon /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];
 

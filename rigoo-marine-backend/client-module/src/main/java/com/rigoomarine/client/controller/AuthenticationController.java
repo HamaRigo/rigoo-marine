@@ -3,6 +3,7 @@ package com.rigoomarine.client.controller;
 import com.rigoomarine.client.auth.AuthService;
 import com.rigoomarine.client.auth.PhoneNumberService;
 import com.rigoomarine.client.auth.PhoneOtpService;
+import com.rigoomarine.client.auth.RegisterRateLimiter;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.dto.PhoneOtpRequestRequest;
@@ -42,9 +43,18 @@ public class AuthenticationController {
     private final PhoneNumberService phoneNumberService;
     private final TokenRevocationService tokenRevocationService;
     private final PhoneOtpService phoneOtpService;
+    private final RegisterRateLimiter registerRateLimiter;
 
     /**
-     * Register a new user
+     * Register a new user. Two-tier rate limiting:
+     * <ol>
+     *   <li>The gateway gates per-IP via {@code auth-register-ratelimit} (1/s
+     *       replenish, 5 burst) — handles fast hammers from one source.</li>
+     *   <li>This handler additionally gates per-phone-prefix (6-digit slice of
+     *       the E.164 phone) at 10 / hour via {@link RegisterRateLimiter} —
+     *       handles distributed "numbering walk" attacks where the attacker
+     *       rotates IPs but the registrations share a phone block.</li>
+     * </ol>
      */
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(
@@ -52,6 +62,25 @@ public class AuthenticationController {
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         log.info("Registering new user with email: {}", request.getEmail());
+
+        // Normalize the phone first so the rate-limit key matches downstream
+        // persistence. Invalid phones get a 400 before we touch Redis.
+        String normalizedPhone;
+        try {
+            normalizedPhone = phoneNumberService.normalize(request.getPhone());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "errorCode", "INVALID_PHONE",
+                "message", "Phone number is not valid"));
+        }
+
+        if (!registerRateLimiter.allow(normalizedPhone)) {
+            log.warn("register.rate_limited phonePrefix={}",
+                RegisterRateLimiter.prefixOf(normalizedPhone));
+            return ResponseEntity.status(429).body(Map.of(
+                "errorCode", "RATE_LIMITED",
+                "message", "Too many registrations from this phone prefix; please wait."));
+        }
 
         ClientDTO client = clientService.createClient(request);
         authService.issueVerificationToken(client.getEmail(), preferredLocale(acceptLanguage));

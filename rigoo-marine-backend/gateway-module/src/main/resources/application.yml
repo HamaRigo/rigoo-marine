@@ -52,6 +52,21 @@ spring:
                 redis-rate-limiter.replenishRate: 1
                 redis-rate-limiter.burstCapacity: 5
                 key-resolver: "#{@ipKeyResolver}"
+        # Per-IP gate on register. The per-phone-prefix gate lives in the
+        # controller (Redis bucket on first 6 digits of the E.164 phone) so
+        # numbering walks are bounded even when the attacker rotates IPs.
+        - id: auth-register-ratelimit
+          uri: lb://client-service
+          predicates:
+            - Path=/auth/register
+            - Method=POST
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@ipKeyResolver}"
         - id: auth-passthrough
           uri: lb://client-service
           predicates:

@@ -9,8 +9,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,10 +35,9 @@ public class EmailOutboxRedriver {
     static final int MAX_REDRIVE_ATTEMPTS = 5;
     private static final int CYCLE_BATCH_SIZE = 50;
     private static final long STALE_CLAIM_MINUTES = 5;
-    /** Backoff curve in minutes; index = redrive_attempts BEFORE incrementing. */
-    private static final long[] BACKOFF_MINUTES = { 5, 10, 20, 40, 60 };
 
     private final EmailOutboxRepository outboxRepository;
+    private final EmailOutboxSettler settler;
     private final JavaMailSender javaMailSender;
     private final MailMetrics mailMetrics;
 
@@ -106,59 +103,29 @@ public class EmailOutboxRedriver {
 
         try {
             javaMailSender.send(msg);
-            settleSent(row);
+            // Cross-bean call → proxy applies → @Transactional(REQUIRES_NEW)
+            // on the settler actually takes effect. Each settle commits
+            // independently of the batch.
+            settler.settleSent(row);
             mailMetrics.recordRedriveSuccess(row.getTemplateName());
             return Outcome.SENT;
         } catch (MailException ex) {
             int newAttempts = row.getRedriveAttempts() + 1;
             if (newAttempts >= MAX_REDRIVE_ATTEMPTS) {
-                settleDead(row, ex);
+                settler.settleDead(row, ex);
                 mailMetrics.recordDead(row.getTemplateName());
                 log.warn("outbox.redrive.dead id={} attempts={} cause={}",
                     row.getId(), newAttempts, ex.getClass().getSimpleName());
                 return Outcome.DEAD;
             }
-            settleFailed(row, ex, newAttempts);
+            settler.settleFailed(row, ex, newAttempts);
             mailMetrics.recordRedriveFailure(row.getTemplateName());
             return Outcome.FAILED;
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void settleSent(EmailOutboxEntry row) {
-        row.setStatus("SENT");
-        row.setClaimedAt(null);
-        row.setNextRetryAt(null);
-        row.setLastAttemptAt(LocalDateTime.now());
-        outboxRepository.save(row);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void settleFailed(EmailOutboxEntry row, MailException ex, int newAttempts) {
-        row.setStatus("FAILED");
-        row.setClaimedAt(null);
-        row.setRedriveAttempts(newAttempts);
-        row.setNextRetryAt(LocalDateTime.now().plusMinutes(backoffMinutes(newAttempts)));
-        row.setLastAttemptAt(LocalDateTime.now());
-        row.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
-        outboxRepository.save(row);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void settleDead(EmailOutboxEntry row, MailException ex) {
-        row.setStatus("DEAD");
-        row.setClaimedAt(null);
-        row.setNextRetryAt(null);
-        row.setRedriveAttempts(row.getRedriveAttempts() + 1);
-        row.setLastAttemptAt(LocalDateTime.now());
-        row.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
-        outboxRepository.save(row);
-    }
-
+    /** Backoff curve — single source of truth lives on the settler. */
     static long backoffMinutes(int attemptNumber) {
-        // attemptNumber is the NEW count after incrementing — 1 means "first redrive
-        // just failed; schedule the second". Indexing: array slot (attemptNumber-1).
-        int idx = Math.max(0, Math.min(attemptNumber - 1, BACKOFF_MINUTES.length - 1));
-        return BACKOFF_MINUTES[idx];
+        return EmailOutboxSettler.backoffMinutes(attemptNumber);
     }
 }

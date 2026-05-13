@@ -1,6 +1,7 @@
 package com.rigoomarine.client.service;
 
 import com.rigoomarine.client.entity.Client;
+import com.rigoomarine.client.exception.ClientNotFoundException;
 import com.rigoomarine.client.repository.ClientRepository;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
@@ -93,7 +94,7 @@ public class ClientService {
     public ClientDTO getClientById(Long id) {
         return clientRepository.findById(id)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Client not found"));
+            .orElseThrow(() -> new ClientNotFoundException(id));
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +102,7 @@ public class ClientService {
     public ClientDTO getClientByEmail(String email) {
         return clientRepository.findByEmail(email)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Client not found"));
+            .orElseThrow(() -> new ClientNotFoundException(email));
     }
 
     /**
@@ -116,7 +117,7 @@ public class ClientService {
     @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClient(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Client not found"));
+            .orElseThrow(() -> new ClientNotFoundException(id));
 
         client.setName(request.getName());
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
@@ -141,7 +142,7 @@ public class ClientService {
     @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClientWithPassword(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Client not found"));
+            .orElseThrow(() -> new ClientNotFoundException(id));
 
         client.setName(request.getName());
         if (request.getPhone() != null && !request.getPhone().isBlank()) {

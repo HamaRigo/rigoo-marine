@@ -19,6 +19,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ClientNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleClientNotFound(ClientNotFoundException ex) {
+        // Specific 404 path. Declared BEFORE the broader RuntimeException
+        // handler so the typed exception wins Spring's most-specific match.
+        log.warn("Client not found: {}", ex.getMessage());
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         log.warn("Runtime exception: {}", ex.getMessage());

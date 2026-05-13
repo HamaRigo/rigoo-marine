@@ -1,5 +1,9 @@
 package com.rigoomarine.client.controller;
 
+import com.rigoomarine.client.admin.AdminAuditEntry;
+import com.rigoomarine.client.admin.AdminAuditService;
+import com.rigoomarine.client.dto.AdminAuditDTO;
+import com.rigoomarine.client.dto.AdminPasswordResetRequest;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.dto.CreateMediaRequest;
@@ -9,6 +13,7 @@ import com.rigoomarine.client.dto.ContactInfoDTO;
 import com.rigoomarine.client.service.ClientService;
 import com.rigoomarine.client.service.MediaService;
 import com.rigoomarine.client.service.ContactInfoService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +22,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -33,6 +40,7 @@ public class AdminController {
     private final ClientService clientService;
     private final MediaService mediaService;
     private final ContactInfoService contactInfoService;
+    private final AdminAuditService adminAuditService;
 
     // ============== Dashboard Stats ==============
 
@@ -97,7 +105,8 @@ public class AdminController {
     @PutMapping("/users/{id}/role")
     public ResponseEntity<ClientDTO> updateUserRole(
             @PathVariable Long id,
-            @RequestBody Map<String, String> roleUpdate
+            @RequestBody Map<String, String> roleUpdate,
+            HttpServletRequest httpRequest
     ) {
         String newRole = roleUpdate.get("role");
 
@@ -107,6 +116,7 @@ public class AdminController {
         }
 
         ClientDTO existing = clientService.getClientById(id);
+        String oldRole = existing.getRole();
 
         CreateClientRequest request = new CreateClientRequest();
         request.setName(existing.getName());
@@ -118,6 +128,48 @@ public class AdminController {
 
         ClientDTO updated = clientService.updateClient(id, request);
         log.info("Updated user {} role to {}", id, newRole);
+        adminAuditService.record(
+            actorEmail(), actorId(),
+            AdminAuditService.ACTION_ROLE_CHANGE, AdminAuditService.TARGET_USER, id,
+            "{\"oldRole\":\"" + oldRole + "\",\"newRole\":\"" + newRole + "\"}",
+            httpRequest.getRemoteAddr());
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Admin-initiated password reset. Lost-phone / lost-email scenarios where
+     * the user can't self-reset. Goes through the same
+     * {@code updateClientWithPassword} path used by self-service, so bcrypt
+     * encoding happens exactly once (mirrors the /auth/password fix from
+     * earlier in this session). {@code password_changed_at} advances, which
+     * invalidates every JWT the target user issued before this call.
+     */
+    @PostMapping("/users/{id}/reset-password")
+    public ResponseEntity<ClientDTO> resetUserPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminPasswordResetRequest body,
+            HttpServletRequest httpRequest
+    ) {
+        ClientDTO existing = clientService.getClientById(id);
+        CreateClientRequest request = new CreateClientRequest();
+        request.setName(existing.getName());
+        request.setEmail(existing.getEmail());
+        request.setPhone(existing.getPhone());
+        request.setAddress(existing.getAddress());
+        request.setCompany(existing.getCompany());
+        request.setRole(existing.getRole());
+        // RAW password. ClientService.updateClientWithPassword is the sole encoder.
+        request.setPassword(body.getNewPassword());
+
+        ClientDTO updated = clientService.updateClientWithPassword(id, request);
+        log.info("Admin-reset password for user {}", id);
+        String details = body.getReason() == null || body.getReason().isBlank()
+            ? "{}"
+            : "{\"reason\":" + jsonString(body.getReason()) + "}";
+        adminAuditService.record(
+            actorEmail(), actorId(),
+            AdminAuditService.ACTION_PASSWORD_RESET, AdminAuditService.TARGET_USER, id,
+            details, httpRequest.getRemoteAddr());
         return ResponseEntity.ok(updated);
     }
 
@@ -132,10 +184,69 @@ public class AdminController {
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id, HttpServletRequest httpRequest) {
         clientService.deleteClient(id);
         log.info("Deleted user {}", id);
+        adminAuditService.record(
+            actorEmail(), actorId(),
+            AdminAuditService.ACTION_USER_DELETE, AdminAuditService.TARGET_USER, id,
+            "{}", httpRequest.getRemoteAddr());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Recent admin actions for the ops dashboard. Optional {@code action}
+     * filter (e.g. {@code ?action=PASSWORD_RESET}). Default limit 100, max 500.
+     */
+    @GetMapping("/audit")
+    public ResponseEntity<List<AdminAuditDTO>> recentAudit(
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String action
+    ) {
+        List<AdminAuditEntry> rows = adminAuditService.recent(limit, action);
+        return ResponseEntity.ok(rows.stream().map(AdminAuditDTO::from).collect(Collectors.toList()));
+    }
+
+    /** JWT principal's email from the SecurityContext for audit attribution. */
+    private static String actorEmail() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return "anonymous";
+        Object principal = auth.getPrincipal();
+        if (principal instanceof com.rigoomarine.common.security.AuthenticatedUser u) {
+            return u.getEmail();
+        }
+        return String.valueOf(principal);
+    }
+
+    private static Long actorId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return null;
+        Object principal = auth.getPrincipal();
+        if (principal instanceof com.rigoomarine.common.security.AuthenticatedUser u) {
+            return u.getClientId();
+        }
+        return null;
+    }
+
+    /** Minimal JSON-string escaping for the audit {@code details} blob. */
+    private static String jsonString(String raw) {
+        StringBuilder sb = new StringBuilder(raw.length() + 2);
+        sb.append('"');
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            switch (c) {
+                case '"', '\\' -> sb.append('\\').append(c);
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+                }
+            }
+        }
+        sb.append('"');
+        return sb.toString();
     }
 
     // Note: previous /admin/orders, /admin/services, /admin/invoices, /admin/quotations endpoints

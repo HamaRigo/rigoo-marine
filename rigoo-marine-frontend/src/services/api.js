@@ -465,6 +465,27 @@ export const adminApi = {
     return response.data;
   },
 
+  /**
+   * Admin-initiated password reset. Backend bcrypt-encodes exactly once and
+   * advances password_changed_at — every existing JWT for the target is
+   * invalidated server-side via the pwdIat claim.
+   */
+  resetUserPassword: async (userId, newPassword, reason) => {
+    const body = reason && reason.trim()
+      ? { newPassword, reason: reason.trim() }
+      : { newPassword };
+    const response = await httpClient.post(`/admin/users/${userId}/reset-password`, body);
+    return response.data;
+  },
+
+  /** Recent admin actions for the audit dashboard. */
+  getAuditLog: async ({ limit = 100, action } = {}) => {
+    const params = { limit };
+    if (action) params.action = action;
+    const response = await httpClient.get('/admin/audit', { params });
+    return response.data;
+  },
+
   // Services — direct via gateway
   searchServices: async (params = {}) => {
     const response = await httpClient.get('/api/services', { params });

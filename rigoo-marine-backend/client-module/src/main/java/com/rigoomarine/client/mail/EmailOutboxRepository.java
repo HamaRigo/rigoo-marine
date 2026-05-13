@@ -51,4 +51,45 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutboxEntry, L
         WHERE status = 'RETRYING' AND claimed_at < :threshold
         """, nativeQuery = true)
     int reclaimStale(@Param("threshold") LocalDateTime threshold);
+
+    /**
+     * Bounded purge of terminally-SENT rows older than {@code threshold}.
+     * Native query because JPA-QL doesn't accept {@code DELETE ... LIMIT};
+     * Postgres needs the subquery shape. Uses {@code last_attempt_at} (set on
+     * each settle) rather than {@code created_at} so a row that was FAILED
+     * for days before turning SENT only starts its retention clock from the
+     * SENT moment.
+     *
+     * @return the number of SENT rows deleted in this batch.
+     */
+    @Modifying
+    @Query(value = """
+        DELETE FROM email_outbox
+        WHERE id IN (
+            SELECT id FROM email_outbox
+            WHERE status = 'SENT' AND last_attempt_at < :threshold
+            LIMIT :batchSize
+        )
+        """, nativeQuery = true)
+    int deleteSentOlderThan(@Param("threshold") LocalDateTime threshold,
+                            @Param("batchSize") int batchSize);
+
+    /**
+     * Bounded purge of DEAD rows older than {@code threshold}. Retention is
+     * longer than SENT (30 days vs 7) because DEAD rows reflect permanent
+     * failures that ops may want to inspect over multiple weeks.
+     *
+     * @return the number of DEAD rows deleted in this batch.
+     */
+    @Modifying
+    @Query(value = """
+        DELETE FROM email_outbox
+        WHERE id IN (
+            SELECT id FROM email_outbox
+            WHERE status = 'DEAD' AND last_attempt_at < :threshold
+            LIMIT :batchSize
+        )
+        """, nativeQuery = true)
+    int deleteDeadOlderThan(@Param("threshold") LocalDateTime threshold,
+                            @Param("batchSize") int batchSize);
 }

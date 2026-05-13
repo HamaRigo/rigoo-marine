@@ -32,4 +32,25 @@ public interface PhoneOtpRepository extends JpaRepository<PhoneOtpEntry, Long> {
            AND e.expiresAt > :now
         """)
     int invalidateActiveForPhone(@Param("phone") String phone, @Param("now") LocalDateTime now);
+
+    /**
+     * Bounded purge for the scheduled cleanup job. Native query because JPA
+     * doesn't support {@code DELETE ... LIMIT} (Postgres requires the
+     * subquery shape). Every row has a 5-min TTL by design, so a {@code
+     * created_at} cutoff alone covers both used and never-used codes — at 24h
+     * past creation, no row is in any usable state.
+     *
+     * @return the number of rows deleted in this batch.
+     */
+    @Modifying
+    @Query(value = """
+        DELETE FROM phone_otp_codes
+        WHERE id IN (
+            SELECT id FROM phone_otp_codes
+            WHERE created_at < :threshold
+            LIMIT :batchSize
+        )
+        """, nativeQuery = true)
+    int deleteOlderThan(@Param("threshold") LocalDateTime threshold,
+                        @Param("batchSize") int batchSize);
 }

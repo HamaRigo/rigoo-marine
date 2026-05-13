@@ -33,7 +33,52 @@
     "actions": "Actions",
     "edit": "Edit",
     "delete": "Delete",
-    "promote": "Change role"
+    "promote": "Change role",
+    "resetPassword": {
+      "action": "Reset password",
+      "title": "Reset user password",
+      "subtitle": "Set a new password for this user. They will be signed out everywhere and must use the new password to sign in again.",
+      "newPassword": "New password",
+      "passwordHelper": "Minimum {{min}} characters.",
+      "passwordTooShort": "Password must be at least {{min}} characters.",
+      "reason": "Reason (optional)",
+      "reasonHelper": "Captured on the audit row, e.g. \"user lost phone, support ticket #1234\".",
+      "forcesSignOut": "All existing sessions for this user will be invalidated immediately.",
+      "cancel": "Cancel",
+      "confirm": "Reset password",
+      "submitting": "Resetting…",
+      "success": "Password reset for {{name}}.",
+      "errors": {
+        "invalid": "Password is invalid. Please review and try again.",
+        "userGone": "This user no longer exists.",
+        "fallback": "Could not reset password. Please try again."
+      }
+    }
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Recent sensitive admin actions. Append-only — entries are never modified after recording.",
+    "filterAction": "Filter by action",
+    "retry": "Try again",
+    "errorFallback": "Could not load audit entries.",
+    "columns": {
+      "timestamp": "When",
+      "actor": "Actor",
+      "action": "Action",
+      "target": "Target",
+      "details": "Details",
+      "ip": "IP"
+    },
+    "actions": {
+      "all": "All actions",
+      "PASSWORD_RESET": "Password reset",
+      "ROLE_CHANGE": "Role change",
+      "USER_DELETE": "User deleted"
+    },
+    "empty": {
+      "all": "No audit entries recorded yet.",
+      "filtered": "No {{action}} entries recorded yet."
+    }
   },
   "orders": {
     "title": "Order Management",

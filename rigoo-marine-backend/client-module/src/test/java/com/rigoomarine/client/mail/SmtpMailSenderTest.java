@@ -97,11 +97,13 @@ class SmtpMailSenderTest {
 
         @Override public long countByStatus(String s) { return saves.size(); }
 
-        // Redrive-related queries: this fake is only used by the recover-path
-        // tests; the redriver has its own coverage. No-op shims.
+        // Redrive- and cleanup-related queries: this fake is only used by the
+        // recover-path tests; both have their own dedicated coverage. No-op shims.
         @Override public int claim(java.time.LocalDateTime now, int limit) { return 0; }
         @Override public java.util.List<EmailOutboxEntry> findAllByStatusAndClaimedAtGreaterThanEqual(String status, java.time.LocalDateTime since) { return java.util.List.of(); }
         @Override public int reclaimStale(java.time.LocalDateTime threshold) { return 0; }
+        @Override public int deleteSentOlderThan(java.time.LocalDateTime threshold, int batchSize) { return 0; }
+        @Override public int deleteDeadOlderThan(java.time.LocalDateTime threshold, int batchSize) { return 0; }
 
         @Override public <S extends EmailOutboxEntry> S save(S entity) {
             if (failOnSave) throw new RuntimeException("simulated db outage");

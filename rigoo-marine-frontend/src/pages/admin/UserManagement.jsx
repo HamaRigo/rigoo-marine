@@ -1,7 +1,12 @@
-import { Box, Typography, Chip, Button } from '@mui/material';
+import { useState } from 'react';
+import { Box, Typography, Chip, Button, Stack } from '@mui/material';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '../../services/api';
+import { formatDate } from '../../utils/format';
 import FilterableTable from '../../components/admin/FilterableTable';
+import ResetPasswordDialog from './ResetPasswordDialog';
+import { useToast } from '../../hooks/useToast';
 
 const ROLES = ['CLIENT', 'TECHNICIAN', 'ADMIN'];
 
@@ -13,6 +18,8 @@ const ROLE_COLORS = {
 
 export default function UserManagement() {
   const { t } = useTranslation('admin');
+  const { success: toastSuccess } = useToast();
+  const [resetTarget, setResetTarget] = useState(null);
 
   const columns = [
     { id: 'id', label: t('users.columns.id') },
@@ -24,7 +31,7 @@ export default function UserManagement() {
     { id: 'emailVerified', label: t('users.columns.verified'),
       render: (r) => r.emailVerified ? t('users.yes') : t('users.no') },
     { id: 'createdAt', label: t('users.columns.createdAt'),
-      render: (r) => r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—' },
+      render: (r) => formatDate(r.createdAt) },
   ];
 
   return (
@@ -45,10 +52,25 @@ export default function UserManagement() {
             ] },
         ]}
         renderActions={(row) => (
-          <Button size="small" variant="outlined" href={`/admin/users/${row.id}`}>
-            {t('users.edit')}
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              variant="outlined"
+              color="warning"
+              startIcon={<LockResetIcon fontSize="small" />}
+              onClick={() => setResetTarget(row)}
+            >
+              {t('users.resetPassword.action')}
+            </Button>
+          </Stack>
         )}
+      />
+
+      <ResetPasswordDialog
+        open={!!resetTarget}
+        targetUser={resetTarget}
+        onClose={() => setResetTarget(null)}
+        onSuccess={(user) => toastSuccess(t('users.resetPassword.success', { name: user.name }))}
       />
     </Box>
   );
