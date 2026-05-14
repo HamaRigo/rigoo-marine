@@ -3,16 +3,20 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Tabs, Tab, Button, Stack, Skeleton, Alert, Card, CardContent, Grid,
+  ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import AddIcon from '@mui/icons-material/Add';
+import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
 import { vesselApi } from '../../services/api';
 import useVesselDossier from '../../hooks/maintenance/useVesselDossier';
 import EngineHoursCard from '../../components/maintenance/EngineHoursCard';
 import ServiceHistoryTimeline from '../../components/maintenance/ServiceHistoryTimeline';
 import ServiceScheduleList from '../../components/maintenance/ServiceScheduleList';
+import ServiceScheduleCalendar from '../../components/maintenance/ServiceScheduleCalendar';
 import AddServiceHistoryDialog from '../../components/maintenance/AddServiceHistoryDialog';
 import { Reveal } from '../../components/common/Motion';
 
@@ -27,6 +31,7 @@ export default function MyVesselDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation('maintenance');
   const [tab, setTab] = useState(0);
+  const [scheduleView, setScheduleView] = useState('list');
   const [addOpen, setAddOpen] = useState(false);
 
   const { data: vessel } = useQuery({
@@ -144,7 +149,29 @@ export default function MyVesselDetail() {
       )}
 
       {tab === 2 && (
-        <ServiceScheduleList vesselId={vesselId} schedule={d.schedule} />
+        <Box>
+          <Stack direction="row" justifyContent="flex-end" mb={1.5}>
+            <ToggleButtonGroup
+              size="small"
+              value={scheduleView}
+              exclusive
+              onChange={(_, v) => v && setScheduleView(v)}
+              aria-label="schedule view mode"
+            >
+              <ToggleButton value="list" aria-label={t('schedule.view.list')}>
+                <ViewListRoundedIcon fontSize="small" sx={{ mr: 0.5 }} />
+                {t('schedule.view.list')}
+              </ToggleButton>
+              <ToggleButton value="calendar" aria-label={t('schedule.view.calendar')}>
+                <CalendarMonthRoundedIcon fontSize="small" sx={{ mr: 0.5 }} />
+                {t('schedule.view.calendar')}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+          {scheduleView === 'list'
+            ? <ServiceScheduleList vesselId={vesselId} schedule={d.schedule} />
+            : <ServiceScheduleCalendar vesselId={vesselId} schedule={d.schedule} />}
+        </Box>
       )}
 
       <AddServiceHistoryDialog

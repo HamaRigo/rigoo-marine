@@ -61,7 +61,18 @@
       "overdue": "Overdue",
       "due_soon": "Due soon",
       "upcoming": "Upcoming"
+    },
+    "view": {
+      "list": "List",
+      "calendar": "Calendar"
     }
+  },
+  "calendar": {
+    "today": "Jump to today",
+    "prev": "Previous month",
+    "next": "Next month",
+    "emptyMonth": "No scheduled services in this month.",
+    "hoursOnlyHint": "{{count}} reminder(s) trigger on engine hours only — see the list view."
   },
   "widget": {
     "title": "Upcoming maintenance",
