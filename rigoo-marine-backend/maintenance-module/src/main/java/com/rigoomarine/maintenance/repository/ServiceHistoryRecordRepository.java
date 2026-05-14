@@ -36,4 +36,12 @@ public interface ServiceHistoryRecordRepository extends JpaRepository<ServiceHis
 
     Optional<ServiceHistoryRecord> findFirstByVesselIdAndServiceTypeOrderByPerformedOnDescIdDesc(
         Long vesselId, ServiceType serviceType);
+
+    /**
+     * Idempotency check for the work-order auto-history flow. Backed by the
+     * partial unique index {@code ux_service_history_workorder_type} which is
+     * the authoritative dedup boundary; this method is just the cheap pre-check
+     * to avoid the exception path on the common case.
+     */
+    boolean existsByWorkOrderIdAndServiceType(Long workOrderId, ServiceType serviceType);
 }

@@ -1,8 +1,11 @@
 package com.rigoomarine.workorder.service;
 
+import com.rigoomarine.workorder.client.ServiceCatalogClient;
 import com.rigoomarine.workorder.client.VesselOwnershipClient;
 import com.rigoomarine.workorder.entity.SubmittedByRole;
 import com.rigoomarine.workorder.entity.WorkOrder;
+import com.rigoomarine.workorder.event.WorkOrderCompletedEvent;
+import com.rigoomarine.workorder.event.WorkOrderEventPublisher;
 import com.rigoomarine.workorder.exception.WorkOrderNotFoundException;
 import com.rigoomarine.workorder.repository.WorkOrderRepository;
 import com.rigoomarine.workorder.dto.WorkOrderDTO;
@@ -19,8 +22,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +38,8 @@ public class WorkOrderService {
     private final WorkOrderRepository workOrderRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final VesselOwnershipClient vesselOwnershipClient;
+    private final ServiceCatalogClient serviceCatalogClient;
+    private final WorkOrderEventPublisher workOrderEventPublisher;
 
     public WorkOrderDTO createWorkOrder(CreateWorkOrderRequest request) {
         // Convert mediaUrls set to JSON string for storage
@@ -220,7 +228,10 @@ public class WorkOrderService {
         WorkOrder workOrder = workOrderRepository.findById(id)
             .orElseThrow(() -> new WorkOrderNotFoundException(id));
 
-        workOrder.setStatus(WorkOrder.WorkOrderStatus.valueOf(status));
+        WorkOrder.WorkOrderStatus previousStatus = workOrder.getStatus();
+        WorkOrder.WorkOrderStatus nextStatus = WorkOrder.WorkOrderStatus.valueOf(status);
+
+        workOrder.setStatus(nextStatus);
 
         if (status.equals("COMPLETED")) {
             workOrder.setCompletedAt(java.time.LocalDateTime.now());
@@ -228,7 +239,42 @@ public class WorkOrderService {
 
         WorkOrder updated = workOrderRepository.save(workOrder);
         sendNotificationEvent(updated, "WORK_ORDER_STATUS_CHANGED");
+
+        // Auto-create maintenance history: publish only on the FIRST transition
+        // into COMPLETED. Re-completing a re-opened WO is a no-op upstream and
+        // is deduped downstream via the (work_order_id, service_type) constraint,
+        // but skipping here avoids unnecessary work and Kafka traffic.
+        if (nextStatus == WorkOrder.WorkOrderStatus.COMPLETED
+            && previousStatus != WorkOrder.WorkOrderStatus.COMPLETED) {
+            publishCompletedEvent(updated);
+        }
         return toDTO(updated);
+    }
+
+    private void publishCompletedEvent(WorkOrder wo) {
+        if (wo.getVesselId() == null || wo.getClientId() == null) {
+            log.warn("Skipping WorkOrderCompletedEvent — missing vesselId/clientId on WO {}", wo.getId());
+            return;
+        }
+        // Catalog lookup is fail-open: if service-service is down the consumer
+        // falls back to mapping from issueCategory.
+        List<String> serviceNames = serviceCatalogClient.getNamesList(wo.getServiceIds());
+
+        WorkOrderCompletedEvent event = WorkOrderCompletedEvent.builder()
+            .eventId(UUID.randomUUID().toString())
+            .eventType("WorkOrderCompletedEvent")
+            .occurredAt(Instant.now())
+            .workOrderId(wo.getId())
+            .clientId(wo.getClientId())
+            .vesselId(wo.getVesselId())
+            .technicianId(wo.getAssignedTechnicianId())
+            .completedAt(wo.getCompletedAt())
+            .serviceIds(wo.getServiceIds())
+            .serviceNames(serviceNames)
+            .issueCategory(wo.getIssueCategory())
+            .notes(wo.getNotes())
+            .build();
+        workOrderEventPublisher.publishAfterCommit(event);
     }
 
     public WorkOrderDTO assignTechnician(Long id, Long technicianId) {

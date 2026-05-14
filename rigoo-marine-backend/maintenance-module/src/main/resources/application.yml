@@ -35,6 +35,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: maintenance-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        # We deserialise both maintenance.service-due and workorder.completed
+        # events as generic Maps — keeps this module decoupled from the
+        # publishing modules' class paths.
+        spring.json.value.default.type: java.util.LinkedHashMap
+        spring.json.use.type.headers: false
 
 eureka:
   client:
