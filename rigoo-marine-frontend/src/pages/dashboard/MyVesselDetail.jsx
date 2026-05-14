@@ -10,8 +10,10 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import AddIcon from '@mui/icons-material/Add';
 import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { vesselApi } from '../../services/api';
+import { vesselApi, maintenanceApi } from '../../services/api';
 import useVesselDossier from '../../hooks/maintenance/useVesselDossier';
 import EngineHoursCard from '../../components/maintenance/EngineHoursCard';
 import ServiceHistoryTimeline from '../../components/maintenance/ServiceHistoryTimeline';
@@ -29,10 +31,38 @@ export default function MyVesselDetail() {
   const { id } = useParams();
   const vesselId = Number(id);
   const navigate = useNavigate();
-  const { t } = useTranslation('maintenance');
+  const { t, i18n } = useTranslation('maintenance');
   const [tab, setTab] = useState(0);
   const [scheduleView, setScheduleView] = useState('list');
   const [addOpen, setAddOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Triggers a browser save of the maintenance dossier PDF. The backend ships
+   * the binary with Content-Disposition: attachment, but we still create the
+   * blob URL + temporary anchor because some browsers ignore the header on
+   * Ajax responses. Filename matches the server-side default but stays
+   * controlled here so the locale param is reflected in what the user sees.
+   */
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const blob = await maintenanceApi.downloadDossierPdf(vesselId, i18n.language || 'en');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vessel-${vesselId}-maintenance.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const code = err.response?.data?.errorCode;
+      toast.error(code ? t(`errors.${code}`, { defaultValue: err.message }) : err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const { data: vessel } = useQuery({
     queryKey: ['vessel', vesselId],
@@ -79,6 +109,14 @@ export default function MyVesselDetail() {
           {t('page.back')}
         </Button>
         <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="outlined"
+          startIcon={<PictureAsPdfRoundedIcon />}
+          onClick={handleExportPdf}
+          disabled={exporting}
+        >
+          {t('pdf.export')}
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
