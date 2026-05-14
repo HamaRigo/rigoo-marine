@@ -1,0 +1,14 @@
+{
+  "bell": {
+    "tooltip": "Notifications",
+    "title": "Notifications",
+    "markAll": "Mark all as read",
+    "empty": "You're all caught up.",
+    "viewAll": "View all"
+  },
+  "page": {
+    "title": "Notifications",
+    "markAll": "Mark all read",
+    "empty": "No notifications yet — we'll let you know when there's news."
+  }
+}

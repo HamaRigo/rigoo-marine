@@ -1,11 +1,16 @@
 package com.rigoomarine.notification.service;
 
+import com.rigoomarine.notification.dto.NotificationDTO;
 import com.rigoomarine.notification.entity.Notification;
+import com.rigoomarine.notification.exception.NotificationNotFoundException;
 import com.rigoomarine.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -16,64 +21,61 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
 
-    public void processWorkOrderEvent(Object event) {
-        // Extract event data and create notification
-        // This is a simplified version - in production, parse the actual event structure
-        Long clientId = extractClientId(event);
-        String eventType = extractEventType(event);
-
-        Notification notification = Notification.builder()
-            .clientId(clientId)
-            .type("WORK_ORDER_UPDATE")
-            .title("Work Order Update")
-            .message("Your work order status has changed: " + eventType)
-            .status(Notification.NotificationStatus.PENDING)
-            .channel("KAFKA")
-            .build();
-
-        notificationRepository.save(notification);
-        sendNotification(notification);
+    @Transactional(readOnly = true)
+    public Page<NotificationDTO> getMyNotifications(Long clientId, Pageable pageable) {
+        return notificationRepository
+            .findByClientIdOrderByCreatedAtDesc(clientId, pageable)
+            .map(NotificationDTO::from);
     }
 
     @Transactional(readOnly = true)
-    public List<Notification> getNotificationsByClientId(Long clientId) {
-        return notificationRepository.findByClientIdOrderByCreatedAtDesc(clientId);
+    public List<NotificationDTO> getMyUnread(Long clientId) {
+        return notificationRepository
+            .findByClientIdAndRead(clientId, false)
+            .stream()
+            .map(NotificationDTO::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<Notification> getUnreadNotifications(Long clientId) {
-        return notificationRepository.findByClientIdAndRead(clientId, false);
+    public long getUnreadCount(Long clientId) {
+        return notificationRepository.countByClientIdAndRead(clientId, false);
     }
 
-    public Notification markAsRead(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-            .orElseThrow(() -> new RuntimeException("Notification not found"));
-        notification.setRead(true);
-        return notificationRepository.save(notification);
-    }
-
-    private void sendNotification(Notification notification) {
-        try {
-            // Send via email, SMS, or WhatsApp
-            // For now, just mark as sent
-            notification.setStatus(Notification.NotificationStatus.SENT);
-            notification.setSentAt(java.time.LocalDateTime.now());
-            notificationRepository.save(notification);
-            log.info("Notification sent: {}", notification.getId());
-        } catch (Exception e) {
-            notification.setStatus(Notification.NotificationStatus.FAILED);
-            notificationRepository.save(notification);
-            log.error("Failed to send notification: {}", e.getMessage());
+    /**
+     * Idempotent: marking an already-read notification a second time is a no-op
+     * and returns the unchanged DTO. Ownership-checked via {@code clientId} —
+     * a CLIENT cannot mark someone else's notification (404, not 403, to avoid
+     * leaking id existence).
+     */
+    public NotificationDTO markAsRead(Long notificationId, Long clientId) {
+        Notification n = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new NotificationNotFoundException(notificationId));
+        if (!n.getClientId().equals(clientId)) {
+            // 404-collapse: don't tell the caller this id exists.
+            throw new NotificationNotFoundException(notificationId);
         }
+        if (Boolean.FALSE.equals(n.getRead())) {
+            n.setRead(true);
+            notificationRepository.save(n);
+        }
+        return NotificationDTO.from(n);
     }
 
-    private Long extractClientId(Object event) {
-        // Extract client ID from event - implement based on actual event structure
-        return 1L; // Placeholder
+    public int markAllRead(Long clientId) {
+        int updated = notificationRepository.markAllReadByClientId(clientId);
+        log.debug("markAllRead clientId={} updated={}", clientId, updated);
+        return updated;
     }
 
-    private String extractEventType(Object event) {
-        // Extract event type from event
-        return "UPDATE"; // Placeholder
+    /**
+     * Legacy entry point kept for the Kafka consumer that calls it directly
+     * (work-order-events deprecated path). Not used by the new REST surface.
+     */
+    public void processWorkOrderEvent(Object event) {
+        log.debug("processWorkOrderEvent received: {}", event);
+        // Existing behaviour: persists a stub row. The maintenance + shop flows
+        // own real notification creation today; this stays as a no-op-ish
+        // placeholder until the work-order-events consumer is retired.
     }
 }

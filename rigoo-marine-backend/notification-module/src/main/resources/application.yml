@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: notification-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      # database 1 must match api-gateway + client-service so the JWT revocation
+      # list (key: jwt:revoked:<jti>) is readable here.
+      database: ${REDIS_DATABASE:1}
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:rigoomarine}
     username: ${DB_USERNAME:postgres}
@@ -70,3 +78,6 @@ eureka:
 logging:
   level:
     com.rigoomarine.notification: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}

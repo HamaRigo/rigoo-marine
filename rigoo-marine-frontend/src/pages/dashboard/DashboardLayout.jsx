@@ -8,9 +8,11 @@ import BuildIcon from '@mui/icons-material/Build';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
+import NotificationBell from '../../components/notifications/NotificationBell';
 
 const drawerWidth = 240;
 const navItems = [
@@ -18,6 +20,7 @@ const navItems = [
   { name: 'My Orders', path: '/dashboard/orders', icon: <BuildIcon /> },
   { name: 'Shop Orders', path: '/dashboard/shop-orders', icon: <ShoppingBagOutlinedIcon /> },
   { name: 'My Vessels', path: '/dashboard/vessels', icon: <DirectionsBoatIcon /> },
+  { name: 'Notifications', path: '/dashboard/notifications', icon: <NotificationsOutlinedIcon /> },
   { name: 'Invoices', path: '/dashboard/invoices', icon: <ReceiptIcon /> },
   { name: 'Profile', path: '/dashboard/profile', icon: <PersonIcon /> },
 ];
@@ -118,6 +121,7 @@ export default function DashboardLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Dashboard'}
           </Typography>
+          <NotificationBell />
         </Toolbar>
       </AppBar>
 

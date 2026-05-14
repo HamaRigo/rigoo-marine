@@ -803,6 +803,43 @@ export const shopApi = {
   },
 };
 
+// ============== NOTIFICATIONS APIs ==============
+/**
+ * In-app notification feed. Backend at /api/notifications/** behind JWT auth;
+ * clientId is derived from the JWT — every endpoint operates on the caller.
+ */
+export const notificationApi = {
+  /** Paged feed for the dedicated /dashboard/notifications page. */
+  getPage: async ({ page = 0, size = 20, sort = 'createdAt,desc' } = {}) => {
+    const response = await httpClient.get('/api/notifications/my', {
+      params: { page, size, sort },
+    });
+    return response.data; // Spring Page<NotificationDTO>
+  },
+
+  /** Compact list for the bell dropdown — backend returns only unread rows. */
+  getUnread: async () => {
+    const response = await httpClient.get('/api/notifications/my/unread');
+    return response.data;
+  },
+
+  /** Just the count, for the badge. Cheap to poll. */
+  getUnreadCount: async () => {
+    const response = await httpClient.get('/api/notifications/my/unread-count');
+    return response.data.count;
+  },
+
+  markRead: async (id) => {
+    const response = await httpClient.put(`/api/notifications/${id}/read`);
+    return response.data;
+  },
+
+  markAllRead: async () => {
+    const response = await httpClient.put('/api/notifications/my/read-all');
+    return response.data;
+  },
+};
+
 // ============== MAINTENANCE APIs ==============
 /**
  * Maintenance service: vessel history, schedule, dossier, engine hours.
@@ -964,4 +1001,5 @@ export default {
   technician: technicianApi,
   file: fileApi,
   maintenance: maintenanceApi,
+  notifications: notificationApi,
 };
