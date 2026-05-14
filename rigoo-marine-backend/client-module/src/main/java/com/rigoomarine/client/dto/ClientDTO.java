@@ -20,4 +20,5 @@ public class ClientDTO implements Serializable {
     private LocalDateTime createdAt;
     private Boolean emailVerified;
     private LocalDateTime passwordChangedAt;
+    private String preferredLanguage;
 }

@@ -26,4 +26,12 @@ public class CreateClientRequest {
     private String role;
     private String address;
     private String company;
+
+    /**
+     * Optional on create + update. When null on create, ClientService falls
+     * back to "en". Validated lightly — anything beyond 5 chars is rejected;
+     * the consumer layer treats unknown locales as "en".
+     */
+    @Size(max = 5, message = "preferredLanguage must be a BCP-47 short tag")
+    private String preferredLanguage;
 }

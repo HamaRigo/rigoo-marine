@@ -10,12 +10,15 @@ import java.util.Optional;
 
 /**
  * Minimal lookup against the {@code clients} table (owned by client-module but
- * shared in the same database) to resolve a clientId → email + locale pair for
- * outbound notifications. Uses JdbcTemplate so notification-module does not
- * need a {@code Client} JPA entity duplicated from client-module.
+ * shared in the same database) to resolve a clientId → email + locale tuple
+ * for outbound notifications. Uses JdbcTemplate so notification-module does
+ * not need a {@code Client} JPA entity duplicated from client-module.
  *
- * <p>preferred_language column may not exist on older deployments — defaults
- * to "en" when missing; an Arabic clean-up migration would be a separate task.
+ * <p>Reads the {@code preferred_language} column added in client-module's V8
+ * migration. SQL-level COALESCE protects against legacy rows where the column
+ * might be NULL despite the NOT NULL constraint — defensive belt because
+ * Flyway runs per-module, so this consumer may transiently see the column
+ * before the seed default has taken effect.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,14 +31,14 @@ public class RecipientLookup {
         if (clientId == null) return Optional.empty();
         try {
             return jdbc.query(
-                "SELECT email, name FROM clients WHERE id = ?",
+                "SELECT id, email, name, COALESCE(preferred_language, 'en') AS lang FROM clients WHERE id = ?",
                 rs -> {
                     if (rs.next()) {
                         return Optional.of(new Recipient(
-                            clientId,
+                            rs.getLong("id"),
                             rs.getString("email"),
                             rs.getString("name"),
-                            "en"  // preferred_language not yet wired — see PAUSE_TASKS
+                            rs.getString("lang")
                         ));
                     }
                     return Optional.empty();
@@ -44,6 +47,36 @@ public class RecipientLookup {
             );
         } catch (Exception ex) {
             log.warn("RecipientLookup failed for clientId={}: {}", clientId, ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Email-keyed variant for consumers whose event payload doesn't carry a
+     * clientId — e.g. ShopOrderEventConsumer reads userEmail off the order
+     * event. Returns empty when no matching client row exists (anonymous
+     * checkout would be the future case, none today).
+     */
+    public Optional<Recipient> findByEmail(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        try {
+            return jdbc.query(
+                "SELECT id, email, name, COALESCE(preferred_language, 'en') AS lang FROM clients WHERE LOWER(email) = LOWER(?)",
+                rs -> {
+                    if (rs.next()) {
+                        return Optional.of(new Recipient(
+                            rs.getLong("id"),
+                            rs.getString("email"),
+                            rs.getString("name"),
+                            rs.getString("lang")
+                        ));
+                    }
+                    return Optional.empty();
+                },
+                email
+            );
+        } catch (Exception ex) {
+            log.warn("RecipientLookup byEmail failed for {}: {}", email, ex.getMessage());
             return Optional.empty();
         }
     }

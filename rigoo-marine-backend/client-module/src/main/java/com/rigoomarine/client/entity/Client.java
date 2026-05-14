@@ -55,12 +55,22 @@ public class Client {
     @Column(name = "password_changed_at")
     private LocalDateTime passwordChangedAt;
 
+    /**
+     * BCP-47 language tag (currently only "en" or "ar"). Drives outbound email
+     * locale resolution in notification-module's EmailTemplateService — falls
+     * back to 'en' when null so legacy rows behave as they did before this
+     * column existed.
+     */
+    @Column(name = "preferred_language", length = 5, nullable = false)
+    private String preferredLanguage;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (emailVerified == null) emailVerified = Boolean.FALSE;
         if (passwordChangedAt == null) passwordChangedAt = createdAt;
+        if (preferredLanguage == null) preferredLanguage = "en";
     }
 
     @PreUpdate

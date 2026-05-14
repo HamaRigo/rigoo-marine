@@ -275,6 +275,11 @@ public class AuthenticationController {
         request.setPhone(updates.getOrDefault("phone", client.getPhone()));
         request.setAddress(updates.get("address"));
         request.setCompany(updates.get("company"));
+        // Optional — only forward when the client actually sent it, so we
+        // don't accidentally null-out a stored value on a partial update.
+        if (updates.containsKey("preferredLanguage")) {
+            request.setPreferredLanguage(updates.get("preferredLanguage"));
+        }
 
         ClientDTO updated = clientService.updateClient(client.getId(), request);
         Map<String, Object> response = new HashMap<>();

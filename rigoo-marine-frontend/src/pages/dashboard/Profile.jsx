@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Typography, Card, CardContent, TextField, Button, Grid, Avatar, CircularProgress } from '@mui/material';
+import {
+  Box, Typography, Card, CardContent, TextField, Button, Grid, Avatar,
+  CircularProgress, ToggleButtonGroup, ToggleButton, Divider,
+} from '@mui/material';
+import LanguageIcon from '@mui/icons-material/Language';
 import { authApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PersonIcon from '@mui/icons-material/Person';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 export default function Profile() {
   const { user, updateProfile } = useAuth();
   const queryClient = useQueryClient();
+  const { i18n, t } = useTranslation();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -18,12 +24,28 @@ export default function Profile() {
     confirmPassword: '',
   });
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  // Locked to the user's stored preference, not the UI language — the two can
+  // diverge (a client may browse in EN but want emails in AR while travelling).
+  const [preferredLanguage, setPreferredLanguage] = useState(user?.preferredLanguage || 'en');
+
+  // Keep the local control in sync if AuthContext refreshes the user (e.g.
+  // post-login from a different device with a different preference).
+  useEffect(() => {
+    if (user?.preferredLanguage) setPreferredLanguage(user.preferredLanguage);
+  }, [user?.preferredLanguage]);
 
   const updateMutation = useMutation({
     mutationFn: authApi.updateProfile,
     onSuccess: (data) => {
       updateProfile(data.user);
       queryClient.invalidateQueries({ queryKey: ['auth', 'profile'] });
+      // If the user changed their preferred language, switch the UI locale to
+      // match — saves them from a second click on the navbar selector. The
+      // i18n.on('languageChanged') hook in i18n/index.js handles document.dir.
+      if (data.user?.preferredLanguage
+          && data.user.preferredLanguage !== i18n.language) {
+        i18n.changeLanguage(data.user.preferredLanguage);
+      }
       toast.success('Profile updated successfully');
     },
     onError: (err) => {
@@ -50,6 +72,7 @@ export default function Profile() {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      preferredLanguage,
     });
   };
 
@@ -128,6 +151,26 @@ export default function Profile() {
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       required
                     />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <LanguageIcon fontSize="small" color="action" />
+                      <Typography variant="subtitle2">Communication language</Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                      Emails and in-app reminders will be sent in this language.
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={preferredLanguage}
+                      exclusive
+                      onChange={(_, v) => v && setPreferredLanguage(v)}
+                      size="small"
+                      aria-label="preferred communication language"
+                    >
+                      <ToggleButton value="en">{t('language.english', 'English')}</ToggleButton>
+                      <ToggleButton value="ar">{t('language.arabic', 'العربية')}</ToggleButton>
+                    </ToggleButtonGroup>
                   </Grid>
                 </Grid>
                 <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>

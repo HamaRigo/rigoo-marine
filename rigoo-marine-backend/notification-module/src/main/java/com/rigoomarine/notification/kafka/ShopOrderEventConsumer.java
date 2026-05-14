@@ -1,6 +1,7 @@
 package com.rigoomarine.notification.kafka;
 
 import com.rigoomarine.notification.mail.EmailTemplateService;
+import com.rigoomarine.notification.recipient.RecipientLookup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class ShopOrderEventConsumer {
 
     private final EmailTemplateService emailTemplateService;
+    private final RecipientLookup recipientLookup;
 
     @KafkaListener(topics = "shop.order.status", groupId = "notification-shop-orders")
     public void onShopOrderEvent(Map<String, Object> event) {
@@ -46,10 +48,16 @@ public class ShopOrderEventConsumer {
         vars.put("currency", stringOf(event.getOrDefault("currency", "QAR")));
         vars.put("itemCount", stringOf(event.get("itemCount")));
 
-        // Locale: events don't carry per-user preference yet (no preferred_language column —
-        // see PAUSE_TASKS deferred i18n work). Default to English; Arabic fallback when that lands.
-        emailTemplateService.send("ORDER_PAID", userEmail, "en", vars);
-        log.info("Sent ORDER_PAID email to {} for {}", userEmail, vars.get("orderNumber"));
+        // Per-recipient locale: resolved from the clients table via RecipientLookup.
+        // Falls back to "en" when the lookup misses (anonymous-ish edge cases —
+        // an order email without a matching client row).
+        String locale = recipientLookup.findByEmail(userEmail)
+            .map(RecipientLookup.Recipient::safeLocale)
+            .orElse("en");
+
+        emailTemplateService.send("ORDER_PAID", userEmail, locale, vars);
+        log.info("Sent ORDER_PAID email to {} for {} (locale={})",
+            userEmail, vars.get("orderNumber"), locale);
     }
 
     private static String stringOf(Object v) {

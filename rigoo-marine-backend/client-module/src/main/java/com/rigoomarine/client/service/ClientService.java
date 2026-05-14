@@ -135,8 +135,26 @@ public class ClientService {
             client.setRole(Client.UserRole.valueOf(request.getRole()));
         }
 
+        // Profile may omit preferredLanguage on submit; preserve the existing
+        // value unless the caller explicitly sent a new one. Normalised below
+        // so only languages with templates can ever land in the column.
+        if (request.getPreferredLanguage() != null) {
+            client.setPreferredLanguage(normaliseLanguage(request.getPreferredLanguage()));
+        }
+
         Client updated = clientRepository.save(client);
         return toDTO(updated);
+    }
+
+    /**
+     * Two languages are wired up today (EN/AR templates exist for both).
+     * Anything else collapses to "en" so a typo from the frontend doesn't
+     * land a row that breaks every future template lookup.
+     */
+    private static String normaliseLanguage(String lang) {
+        if (lang == null) return "en";
+        String lower = lang.trim().toLowerCase();
+        return "ar".equals(lower) ? "ar" : "en";
     }
 
     @CacheEvict(value = "clients", key = "#id")
@@ -186,6 +204,7 @@ public class ClientService {
             .createdAt(client.getCreatedAt())
             .emailVerified(Boolean.TRUE.equals(client.getEmailVerified()))
             .passwordChangedAt(client.getPasswordChangedAt())
+            .preferredLanguage(client.getPreferredLanguage() == null ? "en" : client.getPreferredLanguage())
             .build();
     }
 }
