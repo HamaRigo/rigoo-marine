@@ -1,0 +1,92 @@
+{
+  "tabs": {
+    "info": "Info",
+    "history": "Service history",
+    "schedule": "Service calendar"
+  },
+  "page": {
+    "title": "{{name}} — maintenance dossier",
+    "back": "Back to vessels"
+  },
+  "engineHours": {
+    "title": "Engine hours",
+    "current": "Current reading",
+    "updated": "Updated {{when}}",
+    "noReading": "No reading yet — log your first service to seed it.",
+    "update": "Update reading",
+    "save": "Save",
+    "unavailable": "Engine-hours reading is temporarily unavailable. Reminders driven by calendar dates still work."
+  },
+  "history": {
+    "empty": "No services logged yet.",
+    "add": "Log a service",
+    "delete": "Delete entry",
+    "deleteConfirm": "Remove this service entry?",
+    "columns": {
+      "date": "Date",
+      "type": "Service",
+      "hours": "Engine hours",
+      "cost": "Cost",
+      "notes": "Notes"
+    }
+  },
+  "dialog": {
+    "title": "Log a service",
+    "type": "Service",
+    "performedOn": "Performed on",
+    "engineHours": "Engine hours at service",
+    "cost": "Cost",
+    "currency": "Currency",
+    "performedBy": "Performed by",
+    "notes": "Notes",
+    "save": "Save entry",
+    "cancel": "Cancel"
+  },
+  "schedule": {
+    "empty": "No scheduled services yet — set up your first reminder.",
+    "add": "Add reminder",
+    "edit": "Edit",
+    "snooze": "Snooze 7 days",
+    "pause": "Pause",
+    "resume": "Resume",
+    "type": "Service",
+    "intervalDays": "Repeat every (days)",
+    "intervalHours": "Or every (engine hours)",
+    "nextDueDate": "Next due",
+    "nextDueHours": "Or at engine hours",
+    "save": "Save reminder",
+    "snoozedUntil": "Snoozed until {{date}}",
+    "paused": "Paused",
+    "status": {
+      "overdue": "Overdue",
+      "due_soon": "Due soon",
+      "upcoming": "Upcoming"
+    }
+  },
+  "widget": {
+    "title": "Upcoming maintenance",
+    "empty": "Everything is up to date.",
+    "viewAll": "View all"
+  },
+  "types": {
+    "OIL_CHANGE": "Oil change",
+    "ENGINE_SERVICE": "Engine service",
+    "HULL_CLEANING": "Hull cleaning",
+    "ANTIFOULING": "Antifouling",
+    "PROPELLER_SERVICE": "Propeller service",
+    "IMPELLER": "Impeller",
+    "FUEL_FILTER": "Fuel filter",
+    "ZINC_ANODES": "Zinc anodes",
+    "BATTERY": "Battery",
+    "INSPECTION": "Inspection",
+    "OTHER": "Other"
+  },
+  "errors": {
+    "INVALID_ENGINE_HOURS": "That engine-hours reading doesn't look right — check the number or use force mode.",
+    "VESSEL_NOT_OWNED": "Vessel not found.",
+    "VESSEL_LOOKUP_UNAVAILABLE": "Vessel service is temporarily unavailable — try again shortly.",
+    "SERVICE_HISTORY_NOT_FOUND": "That entry is no longer available.",
+    "SERVICE_SCHEDULE_NOT_FOUND": "That reminder no longer exists.",
+    "CONCURRENT_MODIFICATION": "Another change reached the server first — please refresh."
+  }
+}

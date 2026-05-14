@@ -27,6 +27,7 @@
         <module>notification-module</module>
         <module>marketplace-module</module>
         <module>shop-module</module>
+        <module>maintenance-module</module>
     </modules>
 
     <parent>

@@ -179,6 +179,16 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
+        - id: maintenance-service
+          uri: lb://maintenance-service
+          predicates:
+            - Path=/api/maintenance/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
         # Marketplace — strict rate limit on the public inquiry POST (anti-spam),
         # normal IP-keyed limit on the public catalog (browse + detail).
         - id: marketplace-inquiry-create-ratelimit

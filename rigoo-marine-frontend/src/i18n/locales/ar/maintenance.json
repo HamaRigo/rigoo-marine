@@ -1,0 +1,92 @@
+{
+  "tabs": {
+    "info": "المعلومات",
+    "history": "سجل الخدمة",
+    "schedule": "تقويم الصيانة"
+  },
+  "page": {
+    "title": "{{name}} — ملف الصيانة",
+    "back": "العودة إلى السفن"
+  },
+  "engineHours": {
+    "title": "ساعات تشغيل المحرك",
+    "current": "القراءة الحالية",
+    "updated": "تم التحديث {{when}}",
+    "noReading": "لا توجد قراءة بعد — سجّل أول خدمة لإضافتها.",
+    "update": "تحديث القراءة",
+    "save": "حفظ",
+    "unavailable": "قراءة ساعات المحرك غير متاحة مؤقتاً. التذكيرات المعتمدة على التواريخ لا تزال تعمل."
+  },
+  "history": {
+    "empty": "لم يتم تسجيل أي خدمات بعد.",
+    "add": "تسجيل خدمة",
+    "delete": "حذف الإدخال",
+    "deleteConfirm": "هل تريد حذف هذا الإدخال؟",
+    "columns": {
+      "date": "التاريخ",
+      "type": "الخدمة",
+      "hours": "ساعات المحرك",
+      "cost": "التكلفة",
+      "notes": "ملاحظات"
+    }
+  },
+  "dialog": {
+    "title": "تسجيل خدمة",
+    "type": "الخدمة",
+    "performedOn": "تاريخ التنفيذ",
+    "engineHours": "ساعات المحرك عند الخدمة",
+    "cost": "التكلفة",
+    "currency": "العملة",
+    "performedBy": "نُفّذت بواسطة",
+    "notes": "ملاحظات",
+    "save": "حفظ الإدخال",
+    "cancel": "إلغاء"
+  },
+  "schedule": {
+    "empty": "لا توجد خدمات مجدولة — أضف أول تذكير.",
+    "add": "إضافة تذكير",
+    "edit": "تعديل",
+    "snooze": "تأجيل ٧ أيام",
+    "pause": "إيقاف مؤقت",
+    "resume": "استئناف",
+    "type": "الخدمة",
+    "intervalDays": "تكرار كل (أيام)",
+    "intervalHours": "أو كل (ساعات تشغيل)",
+    "nextDueDate": "تاريخ الاستحقاق التالي",
+    "nextDueHours": "أو عند ساعات المحرك",
+    "save": "حفظ التذكير",
+    "snoozedUntil": "مؤجل حتى {{date}}",
+    "paused": "متوقف مؤقتاً",
+    "status": {
+      "overdue": "متأخر",
+      "due_soon": "مستحق قريباً",
+      "upcoming": "قادم"
+    }
+  },
+  "widget": {
+    "title": "الصيانة القادمة",
+    "empty": "كل شيء محدّث.",
+    "viewAll": "عرض الكل"
+  },
+  "types": {
+    "OIL_CHANGE": "تغيير الزيت",
+    "ENGINE_SERVICE": "صيانة المحرك",
+    "HULL_CLEANING": "تنظيف الهيكل",
+    "ANTIFOULING": "طلاء مضاد للحشف",
+    "PROPELLER_SERVICE": "خدمة المروحة",
+    "IMPELLER": "الدافعة",
+    "FUEL_FILTER": "فلتر الوقود",
+    "ZINC_ANODES": "أنودات الزنك",
+    "BATTERY": "البطارية",
+    "INSPECTION": "فحص",
+    "OTHER": "أخرى"
+  },
+  "errors": {
+    "INVALID_ENGINE_HOURS": "قراءة ساعات المحرك غير منطقية — تحقق من الرقم أو استخدم وضع التجاوز.",
+    "VESSEL_NOT_OWNED": "السفينة غير موجودة.",
+    "VESSEL_LOOKUP_UNAVAILABLE": "خدمة السفن غير متاحة مؤقتاً — حاول مرة أخرى.",
+    "SERVICE_HISTORY_NOT_FOUND": "هذا الإدخال لم يعد متاحاً.",
+    "SERVICE_SCHEDULE_NOT_FOUND": "هذا التذكير لم يعد موجوداً.",
+    "CONCURRENT_MODIFICATION": "تم حفظ تغيير آخر قبلك — يرجى التحديث."
+  }
+}

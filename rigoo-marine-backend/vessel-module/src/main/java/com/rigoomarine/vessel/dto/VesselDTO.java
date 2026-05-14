@@ -1,6 +1,9 @@
 package com.rigoomarine.vessel.dto;
 
 import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,5 +22,7 @@ public class VesselDTO {
     private String length;
     private String hullMaterial;
     private String registrationNumber;
+    private BigDecimal currentEngineHours;
+    private Instant engineHoursUpdatedAt;
     private LocalDateTime createdAt;
 }

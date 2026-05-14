@@ -8,6 +8,7 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AddIcon from '@mui/icons-material/Add';
 import { Reveal, Stagger } from '../../components/common/Motion';
+import UpcomingServicesWidget from '../../components/maintenance/UpcomingServicesWidget';
 
 function StatCard({ icon: Icon, value, label, bg, color = 'white', accent }) {
   return (
@@ -157,6 +158,11 @@ export default function DashboardHome() {
           accent="#006994"
         />
       </Stagger>
+
+      {/* Upcoming maintenance (overdue + due-soon across all the client's vessels) */}
+      <Box sx={{ mb: 4 }}>
+        <UpcomingServicesWidget />
+      </Box>
 
       {/* Recent Orders */}
       <Reveal variant="fade" timeout={500}>

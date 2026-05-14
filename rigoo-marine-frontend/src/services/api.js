@@ -803,6 +803,76 @@ export const shopApi = {
   },
 };
 
+// ============== MAINTENANCE APIs ==============
+/**
+ * Maintenance service: vessel history, schedule, dossier, engine hours.
+ * Backend at /api/maintenance routed through gateway → maintenance-service.
+ */
+export const maintenanceApi = {
+  /** Full dossier — used by the vessel detail page. */
+  getDossier: async (vesselId) => {
+    const response = await httpClient.get(`/api/maintenance/vessels/${vesselId}/dossier`);
+    return response.data;
+  },
+
+  /** Paged history list. */
+  getHistory: async (vesselId, params = {}) => {
+    const response = await httpClient.get(`/api/maintenance/vessels/${vesselId}/history`, { params });
+    return response.data;
+  },
+
+  /** Log a new service entry. force=true bypasses the engine-hours leap sanity check. */
+  addHistory: async (vesselId, payload, force = false) => {
+    const response = await httpClient.post(`/api/maintenance/vessels/${vesselId}/history`, payload, {
+      params: force ? { force: true } : undefined,
+    });
+    return response.data;
+  },
+
+  deleteHistory: async (id) => {
+    const response = await httpClient.delete(`/api/maintenance/history/${id}`);
+    return response.data;
+  },
+
+  /** Schedule list for a vessel (with urgency classifications). */
+  getSchedule: async (vesselId) => {
+    const response = await httpClient.get(`/api/maintenance/vessels/${vesselId}/schedule`);
+    return response.data;
+  },
+
+  /** Upsert a reminder for a given service type. */
+  upsertSchedule: async (vesselId, serviceType, payload) => {
+    const response = await httpClient.put(`/api/maintenance/vessels/${vesselId}/schedule/${serviceType}`, payload);
+    return response.data;
+  },
+
+  snoozeSchedule: async (vesselId, serviceType, days) => {
+    const response = await httpClient.post(`/api/maintenance/vessels/${vesselId}/schedule/${serviceType}/snooze`, { days });
+    return response.data;
+  },
+
+  pauseSchedule: async (vesselId, serviceType) => {
+    const response = await httpClient.post(`/api/maintenance/vessels/${vesselId}/schedule/${serviceType}/pause`);
+    return response.data;
+  },
+
+  resumeSchedule: async (vesselId, serviceType) => {
+    const response = await httpClient.post(`/api/maintenance/vessels/${vesselId}/schedule/${serviceType}/resume`);
+    return response.data;
+  },
+
+  /** Dashboard widget — overdue + due-soon across all the client's vessels. */
+  getUpcoming: async () => {
+    const response = await httpClient.get('/api/maintenance/upcoming');
+    return response.data;
+  },
+
+  updateEngineHours: async (vesselId, hours, force = false) => {
+    const response = await httpClient.patch(`/api/maintenance/vessels/${vesselId}/engine-hours`, { hours, force });
+    return response.data;
+  },
+};
+
 // ============== TECHNICIAN APIs ==============
 export const technicianApi = {
   // Dashboard
@@ -893,4 +963,5 @@ export default {
   shop: shopApi,
   technician: technicianApi,
   file: fileApi,
+  maintenance: maintenanceApi,
 };

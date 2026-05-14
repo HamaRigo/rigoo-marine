@@ -4,10 +4,12 @@ import {
   Box, Typography, Card, CardContent, Grid, Button, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, CircularProgress
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { vesselApi } from '../../services/api';
 import AddIcon from '@mui/icons-material/Add';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
+import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import toast from 'react-hot-toast';
 
 export default function MyVessels() {
@@ -138,14 +140,20 @@ export default function MyVessels() {
                       <Typography variant="body2">{vessel.model || 'N/A'}</Typography>
                     </Grid>
                   </Grid>
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                    <Button size="small" variant="outlined" fullWidth>
-                      Edit
+                  <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      component={Link}
+                      to={`/dashboard/vessels/${vessel.id}`}
+                      size="small"
+                      variant="contained"
+                      startIcon={<BuildRoundedIcon />}
+                      sx={{ flexGrow: 1, bgcolor: 'primary.main' }}
+                    >
+                      Maintenance
                     </Button>
                     <Button
                       size="small"
                       variant="outlined"
-                      fullWidth
                       color="error"
                       onClick={() => handleDelete(vessel.id)}
                     >

@@ -2,6 +2,8 @@ package com.rigoomarine.vessel.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,6 +41,17 @@ public class Vessel {
     private String hullMaterial;
 
     private String registrationNumber;
+
+    /**
+     * Engine-hour reading driving maintenance-service's hour-based reminders.
+     * Updated transactionally when a client logs a service history record at
+     * a higher hour reading (via maintenance-service's internal endpoint).
+     */
+    @Column(name = "current_engine_hours", precision = 10, scale = 1)
+    private BigDecimal currentEngineHours;
+
+    @Column(name = "engine_hours_updated_at")
+    private Instant engineHoursUpdatedAt;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

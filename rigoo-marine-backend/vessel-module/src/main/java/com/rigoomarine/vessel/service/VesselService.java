@@ -120,6 +120,8 @@ public class VesselService {
             .length(vessel.getLength())
             .hullMaterial(vessel.getHullMaterial())
             .registrationNumber(vessel.getRegistrationNumber())
+            .currentEngineHours(vessel.getCurrentEngineHours())
+            .engineHoursUpdatedAt(vessel.getEngineHoursUpdatedAt())
             .createdAt(vessel.getCreatedAt())
             .build();
     }

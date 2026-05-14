@@ -37,6 +37,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 import DashboardHome from './pages/dashboard/DashboardHome';
 import MyOrders from './pages/dashboard/MyOrders';
 import MyVessels from './pages/dashboard/MyVessels';
+import MyVesselDetail from './pages/dashboard/MyVesselDetail';
 import Invoices from './pages/dashboard/Invoices';
 import Profile from './pages/dashboard/Profile';
 import MyShopOrders from './pages/dashboard/MyShopOrders';
@@ -129,6 +130,7 @@ function App() {
                 <Route path="orders" element={<MyOrders />} />
                 <Route path="shop-orders" element={<MyShopOrders />} />
                 <Route path="vessels" element={<MyVessels />} />
+                <Route path="vessels/:id" element={<MyVesselDetail />} />
                 <Route path="invoices" element={<Invoices />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
