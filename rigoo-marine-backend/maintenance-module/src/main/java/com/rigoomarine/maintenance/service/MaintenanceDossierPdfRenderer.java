@@ -7,13 +7,16 @@ import com.rigoomarine.maintenance.dto.ServiceScheduleDTO;
 import com.rigoomarine.maintenance.dto.VesselMaintenanceSummaryDTO;
 import com.rigoomarine.maintenance.entity.Urgency;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
+import java.util.List;
 
 /**
  * Renders the maintenance dossier as a printable PDF: vessel header, current
@@ -21,11 +24,15 @@ import java.util.Locale;
  * urgency colour-coding. Mirrors the OpenPDF idiom established by
  * {@code invoice-module/QuotationService}.
  *
- * <p>Locale support is plumbed end-to-end (controller param → label set) but
- * Arabic is currently emitted in English with a localised <em>title</em>
- * prefix. A full Arabic render needs a bundled Noto Sans Arabic font plus
- * BiDi-aware run direction on each PdfPTable — tracked separately because the
- * font binary is licensing-sensitive and adds ~280KB to the artifact.
+ * <p>Arabic rendering: when {@code locale="ar"} the renderer looks up an
+ * Arabic-capable TrueType font from {@code app.maintenance.pdf.arabic-font-path}
+ * (defaults to a probe of common system locations on macOS / Linux). If a
+ * font is found, it's loaded once with {@code BaseFont.IDENTITY_H} encoding
+ * and used for every label set. If no font is found the renderer falls back
+ * to Helvetica with a one-time WARN — Arabic glyphs will render as
+ * substitution boxes, but the rest of the report (history table, dates,
+ * numbers) remains correct. Operators can install fonts-noto-core or set
+ * the property to a specific path to enable full rendering.
  */
 @Component
 @Slf4j
@@ -39,6 +46,38 @@ public class MaintenanceDossierPdfRenderer {
     private static final Color DUE_AMBER     = new Color(237, 108, 2);
     private static final Color MUTED         = new Color(120, 120, 120);
 
+    /**
+     * Auto-probe paths if {@code app.maintenance.pdf.arabic-font-path=auto}.
+     * Ordered most-portable-first; first hit wins. Easy to extend without
+     * touching production config.
+     */
+    private static final List<String> ARABIC_FONT_AUTO_PATHS = List.of(
+        // Linux (Debian/Ubuntu) — `apt-get install fonts-noto-core`
+        "/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf",
+        "/usr/share/fonts/noto/NotoSansArabic-Regular.ttf",
+        // Linux Liberation/DejaVu fallbacks
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        // macOS — bundled, no install required
+        "/System/Library/Fonts/Supplemental/GeezaPro.ttc",
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+        // Windows
+        "C:\\Windows\\Fonts\\arial.ttf"
+    );
+
+    /**
+     * Configurable Arabic font path. Set to a specific {@code .ttf} / {@code .ttc}
+     * to skip the auto-probe; "auto" (default) walks {@link #ARABIC_FONT_AUTO_PATHS};
+     * an empty string disables Arabic font loading entirely (forced Helvetica).
+     */
+    @Value("${app.maintenance.pdf.arabic-font-path:auto}")
+    private String arabicFontPath;
+
+    // Resolved on first Arabic render, then cached. Null means "tried, didn't
+    // find anything" — distinguished from "not yet attempted" so we don't
+    // re-probe the filesystem on every PDF.
+    private volatile BaseFont arabicBaseFont;
+    private volatile boolean arabicBaseFontResolved = false;
+
     public byte[] render(VesselMaintenanceSummaryDTO dossier, String vesselName, String locale) {
         if (dossier == null) throw new IllegalArgumentException("dossier required");
         boolean isAr = "ar".equalsIgnoreCase(locale);
@@ -50,14 +89,16 @@ public class MaintenanceDossierPdfRenderer {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Default fonts. Arabic glyphs that fall outside the default
-            // encoding will appear as boxes — see class javadoc for the
-            // bundled-font follow-up.
-            Font titleFont    = new Font(Font.HELVETICA, 20, Font.BOLD,   BRAND_PRIMARY);
-            Font sectionFont  = new Font(Font.HELVETICA, 13, Font.BOLD,   BRAND_DARK);
-            Font normalFont   = new Font(Font.HELVETICA, 10, Font.NORMAL, Color.BLACK);
-            Font mutedFont    = new Font(Font.HELVETICA, 9,  Font.NORMAL, MUTED);
-            Font boldFont     = new Font(Font.HELVETICA, 10, Font.BOLD,   Color.BLACK);
+            // Arabic locale → swap in a Unicode-capable BaseFont for body text
+            // (labels in Labels.AR contain Arabic codepoints). Falls back to
+            // Helvetica when no Arabic font can be located on disk. English
+            // pages always use the default Helvetica family.
+            BaseFont uni = isAr ? resolveArabicBaseFont() : null;
+            Font titleFont    = uni != null ? new Font(uni, 20, Font.BOLD,   BRAND_PRIMARY) : new Font(Font.HELVETICA, 20, Font.BOLD,   BRAND_PRIMARY);
+            Font sectionFont  = uni != null ? new Font(uni, 13, Font.BOLD,   BRAND_DARK)    : new Font(Font.HELVETICA, 13, Font.BOLD,   BRAND_DARK);
+            Font normalFont   = uni != null ? new Font(uni, 10, Font.NORMAL, Color.BLACK)   : new Font(Font.HELVETICA, 10, Font.NORMAL, Color.BLACK);
+            Font mutedFont    = uni != null ? new Font(uni, 9,  Font.NORMAL, MUTED)         : new Font(Font.HELVETICA, 9,  Font.NORMAL, MUTED);
+            Font boldFont     = uni != null ? new Font(uni, 10, Font.BOLD,   Color.BLACK)   : new Font(Font.HELVETICA, 10, Font.BOLD,   Color.BLACK);
 
             renderHeader(document, dossier, vesselName, locale, L, titleFont, mutedFont);
             renderEngineHours(document, dossier, L, sectionFont, normalFont, mutedFont);
@@ -238,6 +279,41 @@ public class MaintenanceDossierPdfRenderer {
 
     private static String safe(String v, String fallback) {
         return (v == null || v.isBlank()) ? fallback : v;
+    }
+
+    /**
+     * Resolves the Arabic-capable BaseFont. Lazy + cached: first Arabic
+     * render pays the file-system probe, every subsequent render is a
+     * direct field read. {@code arabicBaseFontResolved} distinguishes
+     * "haven't tried yet" from "tried, gave up" — we don't re-probe per
+     * request.
+     */
+    private synchronized BaseFont resolveArabicBaseFont() {
+        if (arabicBaseFontResolved) return arabicBaseFont;
+        arabicBaseFontResolved = true;
+        if (arabicFontPath == null || arabicFontPath.isBlank()) {
+            log.info("Arabic PDF font disabled (app.maintenance.pdf.arabic-font-path is empty); Helvetica fallback");
+            return null;
+        }
+
+        List<String> candidates = "auto".equalsIgnoreCase(arabicFontPath)
+            ? ARABIC_FONT_AUTO_PATHS
+            : List.of(arabicFontPath);
+
+        for (String p : candidates) {
+            try {
+                if (!Files.exists(Path.of(p))) continue;
+                BaseFont bf = BaseFont.createFont(p, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                log.info("Loaded Arabic PDF font from {}", p);
+                arabicBaseFont = bf;
+                return bf;
+            } catch (Exception ex) {
+                log.warn("Failed to load Arabic PDF font from {}: {}", p, ex.getMessage());
+            }
+        }
+        log.warn("No Arabic PDF font found (tried {} candidate paths). Arabic dossiers will fall back to Helvetica.",
+            candidates.size());
+        return null;
     }
 
     /**

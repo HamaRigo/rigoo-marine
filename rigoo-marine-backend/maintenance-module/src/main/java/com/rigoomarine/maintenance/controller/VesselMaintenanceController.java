@@ -87,18 +87,16 @@ public class VesselMaintenanceController {
     }
 
     /**
-     * Best-effort vessel name for the PDF header. Falls back to a numeric
-     * placeholder if vessel-service is unreachable — the report is still
-     * useful even without the name.
+     * Best-effort vessel name for the PDF header. Falls back to null (→ the
+     * renderer prints "#42") if vessel-service is unreachable — the report
+     * is still useful even without the name.
      */
     private String resolveVesselName(Long vesselId) {
         try {
-            Map<String, Object> resp = vesselClient.getEngineHours(vesselId);
-            // The internal engine-hours endpoint returns vesselId but not name.
-            // For now, no name resolution — the PDF will render with the
-            // numeric id. Fully populated when vessel-service exposes a name
-            // accessor (separate follow-up).
-            return resp == null ? null : null;
+            Map<String, Object> resp = vesselClient.getVesselSummary(vesselId);
+            if (resp == null) return null;
+            Object name = resp.get("name");
+            return name == null ? null : String.valueOf(name);
         } catch (Exception ignored) {
             return null;
         }

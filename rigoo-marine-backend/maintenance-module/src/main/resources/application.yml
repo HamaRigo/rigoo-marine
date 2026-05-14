@@ -76,3 +76,10 @@ app:
       zone: Asia/Qatar
     kafka:
       topic: maintenance.service-due.v1
+    pdf:
+      # Arabic-capable TrueType font for the dossier PDF. "auto" probes
+      # common system paths (Linux fonts-noto-core, macOS GeezaPro, Windows
+      # Arial); set to a specific path to skip the probe, or leave empty to
+      # disable (Arabic dossiers fall back to Helvetica with substitution
+      # boxes for Arabic codepoints).
+      arabic-font-path: ${MAINTENANCE_PDF_ARABIC_FONT:auto}

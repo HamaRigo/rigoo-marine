@@ -88,6 +88,30 @@ public class VesselClient {
     }
 
     /**
+     * Reads {@code GET /api/internal/vessels/{id}} → returns the minimal
+     * summary {@code {id, name, type, registrationNumber}}. Missing vessel
+     * or vessel-service outage → null (caller falls back to a placeholder
+     * label, e.g. "#42" in the PDF header).
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getVesselSummary(Long vesselId) {
+        String url = BASE + "/api/internal/vessels/" + vesselId;
+        try {
+            ResponseEntity<Map> resp = restTemplate.exchange(
+                url, HttpMethod.GET, new HttpEntity<>(internalHeaders()), Map.class);
+            return resp.getBody();
+        } catch (HttpClientErrorException.NotFound nf) {
+            return null;
+        } catch (HttpStatusCodeException upstream) {
+            log.warn("vessel summary lookup failed: vesselId={} status={}", vesselId, upstream.getStatusCode());
+            return null;
+        } catch (ResourceAccessException network) {
+            log.warn("vessel summary lookup unreachable: vesselId={} cause={}", vesselId, network.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Reads {@code GET /api/internal/vessels/{id}/engine-hours} → returns
      * {@code {hours, updatedAt}}. Missing vessel → null (dossier renders
      * with engineHours unavailable banner).

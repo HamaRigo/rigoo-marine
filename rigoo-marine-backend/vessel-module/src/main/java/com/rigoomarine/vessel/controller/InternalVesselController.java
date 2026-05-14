@@ -56,6 +56,33 @@ public class InternalVesselController {
     }
 
     /**
+     * Returns a minimal vessel summary (id, name, type, registrationNumber) for
+     * cross-service callers — e.g. maintenance-service composing the PDF
+     * dossier header. Deliberately narrow: callers needing full data should
+     * go via the public {@code /api/vessels/{id}} endpoint instead.
+     */
+    @GetMapping("/{vesselId}")
+    public ResponseEntity<Map<String, Object>> summary(
+            @PathVariable Long vesselId,
+            @RequestHeader(value = "X-Internal-Api-Token", required = false) String token
+    ) {
+        if (!expectedToken.equals(token)) {
+            log.warn("internal.vessel.summary rejected — bad token vesselId={}", vesselId);
+            return ResponseEntity.status(401).build();
+        }
+        return vesselRepository.findById(vesselId)
+            .map(v -> {
+                Map<String, Object> body = new HashMap<>();
+                body.put("id", v.getId());
+                body.put("name", v.getName());
+                body.put("type", v.getType());
+                body.put("registrationNumber", v.getRegistrationNumber());
+                return ResponseEntity.ok(body);
+            })
+            .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
      * Returns the vessel's current engine-hours reading plus the timestamp of
      * the last update. {@code hours} is null when the owner hasn't recorded one
      * yet — the maintenance-service uses this to display a banner inviting

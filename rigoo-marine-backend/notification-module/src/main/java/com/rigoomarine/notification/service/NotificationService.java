@@ -67,15 +67,4 @@ public class NotificationService {
         log.debug("markAllRead clientId={} updated={}", clientId, updated);
         return updated;
     }
-
-    /**
-     * Legacy entry point kept for the Kafka consumer that calls it directly
-     * (work-order-events deprecated path). Not used by the new REST surface.
-     */
-    public void processWorkOrderEvent(Object event) {
-        log.debug("processWorkOrderEvent received: {}", event);
-        // Existing behaviour: persists a stub row. The maintenance + shop flows
-        // own real notification creation today; this stays as a no-op-ish
-        // placeholder until the work-order-events consumer is retired.
-    }
 }
