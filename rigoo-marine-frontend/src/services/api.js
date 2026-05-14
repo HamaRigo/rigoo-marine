@@ -908,6 +908,13 @@ export const maintenanceApi = {
     const response = await httpClient.patch(`/api/maintenance/vessels/${vesselId}/engine-hours`, { hours, force });
     return response.data;
   },
+
+  // Admin cross-client view: every OVERDUE + DUE_SOON service across all vessels.
+  // ADMIN role enforced server-side via @PreAuthorize on MaintenanceAdminController.
+  adminGetUpcoming: async (params = {}) => {
+    const response = await httpClient.get('/api/maintenance/admin/upcoming', { params });
+    return response.data; // List<AdminUpcomingDTO>
+  },
 };
 
 // ============== TECHNICIAN APIs ==============

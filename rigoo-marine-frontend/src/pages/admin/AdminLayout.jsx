@@ -17,6 +17,7 @@ import ContactSupportIcon from '@mui/icons-material/ContactSupport';
 import HistoryIcon from '@mui/icons-material/History';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 
 const drawerWidth = 240;
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
   { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
   { name: 'Services', path: '/admin/services', icon: <EngineeringIcon /> },
+  { name: 'Maintenance', path: '/admin/maintenance', icon: <HandymanRoundedIcon /> },
   { name: 'Boats', path: '/admin/boats', icon: <DirectionsBoatIcon /> },
   { name: 'Inquiries', path: '/admin/inquiries', icon: <MarkChatUnreadIcon /> },
   { name: 'Products', path: '/admin/products', icon: <StorefrontIcon /> },

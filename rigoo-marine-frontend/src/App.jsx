@@ -66,6 +66,7 @@ import ProductManagement from './pages/admin/ProductManagement';
 import ProductForm from './pages/admin/ProductForm';
 import ProductInquiryManagement from './pages/admin/ProductInquiryManagement';
 import ShopOrderManagement from './pages/admin/ShopOrderManagement';
+import MaintenanceDashboard from './pages/admin/MaintenanceDashboard';
 
 // Technician Pages
 import TechnicianLayout from './pages/technician/TechnicianLayout';
@@ -151,6 +152,7 @@ function App() {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="audit" element={<AuditLog />} />
                 <Route path="services" element={<ServiceManagement />} />
+                <Route path="maintenance" element={<MaintenanceDashboard />} />
                 <Route path="invoices" element={<InvoiceManagement />} />
                 <Route path="quotations" element={<QuotationManagement />} />
                 <Route path="media" element={<MediaManagement />} />
