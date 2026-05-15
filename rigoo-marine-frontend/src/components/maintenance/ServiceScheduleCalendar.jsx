@@ -9,6 +9,10 @@ import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import { useTranslation } from 'react-i18next';
 import EditScheduleDialog from './EditScheduleDialog';
 import { Reveal } from '../common/Motion';
+import {
+  firstOfMonth, addMonths, sameDay, isInMonth, toISODate, parseISODate,
+  bucketByDate, getFirstDayOfWeek, buildMonthGrid, buildWeekdayLabels,
+} from './calendarMath';
 
 /**
  * Month-grid view of the vessel's service schedule. Renders a fixed 6 × 7 cell
@@ -251,107 +255,4 @@ function ItemChip({ item, onClick, t }) {
   );
 }
 
-/** ─── Date helpers (no external date lib — keeps the bundle lean) ───────── */
-
-/** First-of-month at local-midnight. Avoids the UTC/local trap by passing y/m. */
-function firstOfMonth(d) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function addMonths(date, delta) {
-  return new Date(date.getFullYear(), date.getMonth() + delta, 1);
-}
-
-function sameDay(a, b) {
-  return a.getFullYear() === b.getFullYear()
-      && a.getMonth()    === b.getMonth()
-      && a.getDate()     === b.getDate();
-}
-
-function isInMonth(date, monthStart) {
-  if (!date) return false;
-  return date.getFullYear() === monthStart.getFullYear()
-      && date.getMonth()    === monthStart.getMonth();
-}
-
-/**
- * Format a Date as YYYY-MM-DD in the local timezone. We bucket by local-date
- * because the backend's {@code nextDueDate} is a calendar date with no zone —
- * converting via toISOString() would shift around midnight Asia/Qatar.
- */
-function toISODate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-/** Parse a "YYYY-MM-DD" string into a local-midnight Date. Returns null on bad input. */
-function parseISODate(s) {
-  if (!s || typeof s !== 'string') return null;
-  const [y, m, d] = s.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-}
-
-/** Index schedule items by their nextDueDate. Items without a date are skipped. */
-function bucketByDate(schedule) {
-  const map = new Map();
-  if (!Array.isArray(schedule)) return map;
-  for (const item of schedule) {
-    if (!item.nextDueDate) continue;
-    const arr = map.get(item.nextDueDate) || [];
-    arr.push(item);
-    map.set(item.nextDueDate, arr);
-  }
-  return map;
-}
-
-/**
- * Returns the locale's first day of week as 0–6 (0=Sunday). Uses
- * Intl.Locale.getWeekInfo when supported; falls back to Saturday for Arabic,
- * Sunday for everything else (US convention; safe default for this market).
- */
-function getFirstDayOfWeek(locale) {
-  try {
-    const info = new Intl.Locale(locale).getWeekInfo?.();
-    if (info && typeof info.firstDay === 'number') {
-      // Intl returns 1=Monday … 7=Sunday. Re-normalise to 0=Sunday … 6=Saturday.
-      return info.firstDay % 7;
-    }
-  } catch { /* feature-detect failure → fall through */ }
-  return locale.toLowerCase().startsWith('ar') ? 6 : 0;
-}
-
-/**
- * Build 42 Date cells (6 rows × 7 cols) starting from the first-of-week
- * preceding {@code monthStart}. Trailing days from the previous month and
- * leading days from the next month fill the grid edges.
- */
-function buildMonthGrid(monthStart, firstDayOfWeek) {
-  const offset = (monthStart.getDay() - firstDayOfWeek + 7) % 7;
-  const gridStart = new Date(monthStart);
-  gridStart.setDate(gridStart.getDate() - offset);
-
-  const out = [];
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(gridStart);
-    d.setDate(gridStart.getDate() + i);
-    out.push(d);
-  }
-  return out;
-}
-
-/** Localised short weekday names, rotated so the first one matches firstDayOfWeek. */
-function buildWeekdayLabels(locale, firstDayOfWeek) {
-  const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-  const sundayRef = new Date(2024, 0, 7); // Sunday, Jan 7 2024 — a known anchor
-  const labels = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sundayRef);
-    d.setDate(sundayRef.getDate() + i);
-    labels.push(fmt.format(d));
-  }
-  // labels[0] is Sunday → rotate so labels[0] corresponds to firstDayOfWeek
-  return labels.slice(firstDayOfWeek).concat(labels.slice(0, firstDayOfWeek));
-}
+/** Date helpers moved to ./calendarMath for unit testing without rendering. */

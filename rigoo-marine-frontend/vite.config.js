@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -14,6 +15,21 @@ export default defineConfig({
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@context': path.resolve(__dirname, './src/context'),
       '@assets': path.resolve(__dirname, './src/assets'),
+    },
+  },
+  // Vitest config. JSDOM gives us window/document so React + RTL render
+  // correctly; globals=true means describe/it/expect don't need imports
+  // (matches Jest ergonomics tests usually rely on). setupFiles wires
+  // jest-dom matchers and resets axios/fetch mocks between tests.
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+    css: false, // MUI components ship with a lot of CSS; skip parsing in tests
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      exclude: ['node_modules/', 'dist/', '**/*.test.{js,jsx}', 'src/test/**'],
     },
   },
   server: {
