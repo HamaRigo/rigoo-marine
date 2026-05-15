@@ -99,7 +99,9 @@ public class ServiceDueEventConsumer {
             vars.put("nextDueDate", nextDueDate);
             vars.put("daysUntilDue", daysUntilDue);
             vars.put("customerName", rec.name() == null ? "" : rec.name());
-            emailTemplateService.send("SERVICE_DUE", rec.email(), locale, vars);
+            // Recipient-aware overload: honours notifications_paused and
+            // appends the per-language unsubscribe footer automatically.
+            emailTemplateService.send("SERVICE_DUE", rec, vars);
             notification.setStatus(Notification.NotificationStatus.SENT);
             notification.setSentAt(LocalDateTime.now());
             notificationRepository.save(notification);

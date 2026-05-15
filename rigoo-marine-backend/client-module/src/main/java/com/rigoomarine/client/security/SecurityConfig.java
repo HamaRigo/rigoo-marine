@@ -37,6 +37,9 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(
                     "/api/auth/**",
+                    // Email unsubscribe page + POST — token-authenticated at
+                    // the controller, NOT JWT-gated (clicking from email).
+                    "/unsubscribe",
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll()

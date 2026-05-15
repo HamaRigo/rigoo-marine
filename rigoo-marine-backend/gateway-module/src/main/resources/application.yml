@@ -73,6 +73,12 @@ spring:
             - Path=/auth/**
           filters:
             - RewritePath=/auth/(?<segment>.*), /api/auth/${segment}
+        - id: public-unsubscribe
+          # One-click email unsubscribe — public, token-authenticated at the
+          # controller. No rate limit needed (one click per recipient).
+          uri: lb://client-service
+          predicates:
+            - Path=/unsubscribe
         - id: auth-service
           uri: lb://client-service
           predicates:

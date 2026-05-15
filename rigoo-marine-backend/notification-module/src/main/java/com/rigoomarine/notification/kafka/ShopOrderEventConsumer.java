@@ -65,17 +65,16 @@ public class ShopOrderEventConsumer {
         vars.put("currency", stringOf(event.getOrDefault("currency", "QAR")));
         vars.put("itemCount", stringOf(event.get("itemCount")));
 
-        // Per-recipient locale: resolved from the clients table via RecipientLookup.
-        // Falls back to "en" when the lookup misses (anonymous-ish edge cases —
-        // an order email without a matching client row).
-        String locale = recipientLookup.findByEmail(userEmail)
-            .map(RecipientLookup.Recipient::safeLocale)
-            .orElse("en");
-
-        emailTemplateService.send("ORDER_PAID", userEmail, locale, vars);
+        // Recipient-aware send when we can resolve the user — gives us
+        // paused-check + unsubscribe footer. Falls back to the legacy
+        // signature for the "no matching client row" edge case (genuinely
+        // anonymous-feeling — we still want to confirm the order).
+        recipientLookup.findByEmail(userEmail).ifPresentOrElse(
+            rec -> emailTemplateService.send("ORDER_PAID", rec, vars),
+            () -> emailTemplateService.send("ORDER_PAID", userEmail, "en", vars)
+        );
         metrics.processed("ORDER_PAID").increment();
-        log.info("Sent ORDER_PAID email to {} for {} (locale={})",
-            userEmail, vars.get("orderNumber"), locale);
+        log.info("Sent ORDER_PAID email to {} for {}", userEmail, vars.get("orderNumber"));
     }
 
     private static String stringOf(Object v) {

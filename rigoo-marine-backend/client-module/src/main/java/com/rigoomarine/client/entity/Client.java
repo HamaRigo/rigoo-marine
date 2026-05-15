@@ -64,6 +64,23 @@ public class Client {
     @Column(name = "preferred_language", length = 5, nullable = false)
     private String preferredLanguage;
 
+    /**
+     * Opaque per-user secret carried in every outbound email's unsubscribe
+     * URL. Rotated by the operator to invalidate any in-the-wild links
+     * (key-leak playbook). Generated automatically on insert via
+     * {@link #onCreate()} if not provided.
+     */
+    @Column(name = "unsubscribe_token", length = 64, nullable = false, unique = true)
+    private String unsubscribeToken;
+
+    /**
+     * Soft opt-out flag honoured by notification-module's EmailTemplateService
+     * before any send. In-app notifications continue to fire even when this
+     * is TRUE — users still see the bell badge; they just don't get emails.
+     */
+    @Column(name = "notifications_paused", nullable = false)
+    private Boolean notificationsPaused;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -71,6 +88,8 @@ public class Client {
         if (emailVerified == null) emailVerified = Boolean.FALSE;
         if (passwordChangedAt == null) passwordChangedAt = createdAt;
         if (preferredLanguage == null) preferredLanguage = "en";
+        if (unsubscribeToken == null) unsubscribeToken = java.util.UUID.randomUUID().toString();
+        if (notificationsPaused == null) notificationsPaused = Boolean.FALSE;
     }
 
     @PreUpdate

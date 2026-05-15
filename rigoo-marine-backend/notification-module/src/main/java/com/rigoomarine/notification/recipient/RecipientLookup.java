@@ -14,16 +14,21 @@ import java.util.Optional;
  * for outbound notifications. Uses JdbcTemplate so notification-module does
  * not need a {@code Client} JPA entity duplicated from client-module.
  *
- * <p>Reads the {@code preferred_language} column added in client-module's V8
- * migration. SQL-level COALESCE protects against legacy rows where the column
- * might be NULL despite the NOT NULL constraint — defensive belt because
- * Flyway runs per-module, so this consumer may transiently see the column
- * before the seed default has taken effect.
+ * <p>Reads {@code preferred_language} (V8), {@code unsubscribe_token} (V9),
+ * and {@code notifications_paused} (V9). COALESCE on optional columns is
+ * defensive — Flyway runs per-module so a phased rollout could briefly
+ * leave the client-module columns absent from a maintenance-module probe.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class RecipientLookup {
+
+    private static final String COLUMNS =
+        "id, email, name, " +
+        "COALESCE(preferred_language, 'en') AS lang, " +
+        "unsubscribe_token AS unsub_token, " +
+        "COALESCE(notifications_paused, FALSE) AS paused";
 
     private final JdbcTemplate jdbc;
 
@@ -31,18 +36,8 @@ public class RecipientLookup {
         if (clientId == null) return Optional.empty();
         try {
             return jdbc.query(
-                "SELECT id, email, name, COALESCE(preferred_language, 'en') AS lang FROM clients WHERE id = ?",
-                rs -> {
-                    if (rs.next()) {
-                        return Optional.of(new Recipient(
-                            rs.getLong("id"),
-                            rs.getString("email"),
-                            rs.getString("name"),
-                            rs.getString("lang")
-                        ));
-                    }
-                    return Optional.empty();
-                },
+                "SELECT " + COLUMNS + " FROM clients WHERE id = ?",
+                rs -> rs.next() ? Optional.of(mapRow(rs)) : Optional.empty(),
                 clientId
             );
         } catch (Exception ex) {
@@ -61,18 +56,8 @@ public class RecipientLookup {
         if (email == null || email.isBlank()) return Optional.empty();
         try {
             return jdbc.query(
-                "SELECT id, email, name, COALESCE(preferred_language, 'en') AS lang FROM clients WHERE LOWER(email) = LOWER(?)",
-                rs -> {
-                    if (rs.next()) {
-                        return Optional.of(new Recipient(
-                            rs.getLong("id"),
-                            rs.getString("email"),
-                            rs.getString("name"),
-                            rs.getString("lang")
-                        ));
-                    }
-                    return Optional.empty();
-                },
+                "SELECT " + COLUMNS + " FROM clients WHERE LOWER(email) = LOWER(?)",
+                rs -> rs.next() ? Optional.of(mapRow(rs)) : Optional.empty(),
                 email
             );
         } catch (Exception ex) {
@@ -81,7 +66,25 @@ public class RecipientLookup {
         }
     }
 
-    public record Recipient(Long clientId, String email, String name, String locale) {
+    private static Recipient mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+        return new Recipient(
+            rs.getLong("id"),
+            rs.getString("email"),
+            rs.getString("name"),
+            rs.getString("lang"),
+            rs.getString("unsub_token"),
+            rs.getBoolean("paused")
+        );
+    }
+
+    public record Recipient(
+        Long clientId,
+        String email,
+        String name,
+        String locale,
+        String unsubscribeToken,
+        boolean notificationsPaused
+    ) {
         public String safeLocale() {
             return locale == null ? "en" : locale.toLowerCase(Locale.ROOT);
         }
