@@ -11,6 +11,10 @@
   "pdf": {
     "export": "Export PDF"
   },
+  "chart": {
+    "title": "Engine hours over time",
+    "subtitle": "{{count}} readings logged from service history."
+  },
   "engineHours": {
     "title": "Engine hours",
     "current": "Current reading",
