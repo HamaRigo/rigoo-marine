@@ -1,13 +1,19 @@
 package com.rigoomarine.maintenance.service;
 
 import com.rigoomarine.maintenance.client.VesselClient;
+import com.rigoomarine.maintenance.dto.AddAttachmentRequest;
 import com.rigoomarine.maintenance.dto.CreateServiceHistoryRequest;
+import com.rigoomarine.maintenance.dto.ServiceHistoryAttachmentDTO;
 import com.rigoomarine.maintenance.dto.ServiceHistoryDTO;
+import com.rigoomarine.maintenance.entity.ServiceHistoryAttachment;
 import com.rigoomarine.maintenance.entity.ServiceHistoryRecord;
 import com.rigoomarine.maintenance.entity.ServiceType;
+import com.rigoomarine.maintenance.exception.AttachmentLimitReachedException;
 import com.rigoomarine.maintenance.exception.InvalidEngineHoursException;
 import com.rigoomarine.maintenance.exception.ServiceHistoryNotFoundException;
+import com.rigoomarine.maintenance.exception.UnsupportedAttachmentTypeException;
 import com.rigoomarine.maintenance.exception.VesselLookupUnavailableException;
+import com.rigoomarine.maintenance.repository.ServiceHistoryAttachmentRepository;
 import com.rigoomarine.maintenance.repository.ServiceHistoryRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Writes immutable history rows for completed services. The transactional flow
@@ -48,7 +57,21 @@ public class ServiceHistoryService {
 
     private static final BigDecimal IMPLAUSIBLE_LEAP = BigDecimal.valueOf(2000);
 
+    /**
+     * Per-history attachment cap. Trade-off: low enough to discourage abuse
+     * (no client should need 50 receipt photos on one oil change), high
+     * enough to handle the legitimate "before + after + 3 part photos +
+     * receipt + warranty card" case.
+     */
+    private static final int MAX_ATTACHMENTS_PER_HISTORY = 10;
+
+    private static final Set<String> ALLOWED_ATTACHMENT_CONTENT_TYPES = Set.of(
+        "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic",
+        "application/pdf"
+    );
+
     private final ServiceHistoryRecordRepository historyRepo;
+    private final ServiceHistoryAttachmentRepository attachmentRepo;
     private final ServiceScheduleService scheduleService;
     private final VesselClient vesselClient;
     private final Clock clock;
@@ -170,5 +193,89 @@ public class ServiceHistoryService {
     /** Convenience for tests / consumers that bypass the request validator. */
     public Optional<ServiceHistoryRecord> findById(Long id) {
         return historyRepo.findById(id);
+    }
+
+    // ─── Attachments ─────────────────────────────────────────────────────────
+
+    /**
+     * Attach a file pointer to a history record. The bytes themselves
+     * have already been uploaded via client-module's media pipeline; we
+     * just persist the URL + metadata + the linkage.
+     *
+     * <p>Ownership: a non-owner client gets the same 404-collapse the
+     * regular history endpoints use — we don't leak whether the history
+     * id exists.
+     */
+    public ServiceHistoryAttachmentDTO addAttachment(Long historyId, Long callerClientId,
+                                                     boolean isAdminOrTechnician,
+                                                     AddAttachmentRequest req) {
+        ServiceHistoryRecord record = historyRepo.findById(historyId)
+            .orElseThrow(() -> new ServiceHistoryNotFoundException(historyId));
+        if (!isAdminOrTechnician && !record.getClientId().equals(callerClientId)) {
+            throw new ServiceHistoryNotFoundException(historyId);
+        }
+
+        if (!ALLOWED_ATTACHMENT_CONTENT_TYPES.contains(req.getContentType().toLowerCase())) {
+            throw new UnsupportedAttachmentTypeException(req.getContentType());
+        }
+
+        long existing = attachmentRepo.countByServiceHistoryId(historyId);
+        if (existing >= MAX_ATTACHMENTS_PER_HISTORY) {
+            throw new AttachmentLimitReachedException(historyId, MAX_ATTACHMENTS_PER_HISTORY);
+        }
+
+        ServiceHistoryAttachment a = ServiceHistoryAttachment.builder()
+            .serviceHistoryId(historyId)
+            .clientId(record.getClientId())
+            .url(req.getUrl())
+            .filename(req.getFilename())
+            .contentType(req.getContentType())
+            .sizeBytes(req.getSizeBytes())
+            .build();
+        return ServiceHistoryAttachmentDTO.from(attachmentRepo.save(a));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceHistoryAttachmentDTO> listAttachments(Long historyId, Long callerClientId,
+                                                              boolean isAdminOrTechnician) {
+        ServiceHistoryRecord record = historyRepo.findById(historyId)
+            .orElseThrow(() -> new ServiceHistoryNotFoundException(historyId));
+        if (!isAdminOrTechnician && !record.getClientId().equals(callerClientId)) {
+            throw new ServiceHistoryNotFoundException(historyId);
+        }
+        return attachmentRepo.findByServiceHistoryId(historyId).stream()
+            .map(ServiceHistoryAttachmentDTO::from)
+            .toList();
+    }
+
+    /**
+     * Batch fetch for the dossier read. Returns attachments grouped by
+     * service-history-id; missing ids map to empty lists at the call site.
+     * Single query for any number of history rows — no N+1.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<Long, List<ServiceHistoryAttachmentDTO>> attachmentsByHistoryIds(
+            Collection<Long> historyIds) {
+        if (historyIds == null || historyIds.isEmpty()) return java.util.Map.of();
+        java.util.Map<Long, List<ServiceHistoryAttachmentDTO>> grouped = new java.util.HashMap<>();
+        for (var a : attachmentRepo.findByServiceHistoryIdIn(historyIds)) {
+            grouped.computeIfAbsent(a.getServiceHistoryId(), k -> new java.util.ArrayList<>())
+                .add(ServiceHistoryAttachmentDTO.from(a));
+        }
+        return grouped;
+    }
+
+    public void deleteAttachment(Long attachmentId, Long callerClientId, boolean isAdminOrTechnician) {
+        ServiceHistoryAttachment a = attachmentRepo.findById(attachmentId)
+            .orElseThrow(() -> new ServiceHistoryNotFoundException(attachmentId));
+        if (!isAdminOrTechnician && !a.getClientId().equals(callerClientId)) {
+            // 404-collapse, same as the history record path.
+            throw new ServiceHistoryNotFoundException(attachmentId);
+        }
+        attachmentRepo.delete(a);
+        // File-side cleanup is deliberately not handled here. The bytes
+        // remain in client-module storage; a future orphan-cleanup job
+        // would walk media rows with no inbound references and prune
+        // them. Tracked separately.
     }
 }

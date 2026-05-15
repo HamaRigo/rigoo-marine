@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { Stagger } from '../common/Motion';
 import { maintenanceApi } from '../../services/api';
 import { dossierKey } from '../../hooks/maintenance/useVesselDossier';
+import AttachmentThumbs from './AttachmentThumbs';
 
 const formatDate = (iso) => {
   if (!iso) return '';
@@ -77,6 +78,10 @@ export default function ServiceHistoryTimeline({ vesselId, records }) {
                     {r.notes}
                   </Typography>
                 )}
+                {/* Attachments — dossier endpoint inlines these via batch
+                    fetch (no N+1). Thumbs handle their own delete with
+                    cache-invalidation. */}
+                <AttachmentThumbs attachments={r.attachments} vesselId={vesselId} />
               </Box>
               <Tooltip title={t('history.delete')}>
                 <span>

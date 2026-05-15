@@ -119,6 +119,24 @@
     "VESSEL_LOOKUP_UNAVAILABLE": "خدمة السفن غير متاحة مؤقتاً — حاول مرة أخرى.",
     "SERVICE_HISTORY_NOT_FOUND": "هذا الإدخال لم يعد متاحاً.",
     "SERVICE_SCHEDULE_NOT_FOUND": "هذا التذكير لم يعد موجوداً.",
-    "CONCURRENT_MODIFICATION": "تم حفظ تغيير آخر قبلك — يرجى التحديث."
+    "CONCURRENT_MODIFICATION": "تم حفظ تغيير آخر قبلك — يرجى التحديث.",
+    "ATTACHMENT_LIMIT_REACHED": "وصلت إلى الحد الأقصى للمرفقات لهذا الإدخال.",
+    "UNSUPPORTED_ATTACHMENT_TYPE": "نوع الملف غير مدعوم — استخدم صورة أو PDF."
+  },
+  "attachments": {
+    "title": "المرفقات",
+    "delete": "حذف",
+    "deleted": "تم حذف المرفق.",
+    "deleteConfirm": "حذف هذا المرفق؟",
+    "uploadFailed": "تعذّر رفع {{name}} — حاول مرة أخرى من سجل الخدمة.",
+    "dropzone": {
+      "hint": "اسحب الإيصالات أو الصور هنا، أو انقر لاختيارها.",
+      "limits": "صورة أو PDF. حتى 10 ملفات، 10 ميغابايت لكل ملف."
+    },
+    "rejected": {
+      "max": "تم الوصول إلى الحد.",
+      "type": "نوع الملف غير مدعوم.",
+      "size": "الملف كبير جداً (الحد الأقصى 10 ميغابايت)."
+    }
   }
 }

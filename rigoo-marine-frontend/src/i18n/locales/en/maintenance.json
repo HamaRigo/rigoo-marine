@@ -119,6 +119,24 @@
     "VESSEL_LOOKUP_UNAVAILABLE": "Vessel service is temporarily unavailable — try again shortly.",
     "SERVICE_HISTORY_NOT_FOUND": "That entry is no longer available.",
     "SERVICE_SCHEDULE_NOT_FOUND": "That reminder no longer exists.",
-    "CONCURRENT_MODIFICATION": "Another change reached the server first — please refresh."
+    "CONCURRENT_MODIFICATION": "Another change reached the server first — please refresh.",
+    "ATTACHMENT_LIMIT_REACHED": "You've reached the maximum attachments for this entry.",
+    "UNSUPPORTED_ATTACHMENT_TYPE": "That file type isn't allowed — use an image or PDF."
+  },
+  "attachments": {
+    "title": "Attachments",
+    "delete": "Remove",
+    "deleted": "Attachment removed.",
+    "deleteConfirm": "Remove this attachment?",
+    "uploadFailed": "Could not attach {{name}} — please try again from the history entry.",
+    "dropzone": {
+      "hint": "Drop receipts or photos here, or click to pick.",
+      "limits": "Images or PDF. Up to 10 files, 10 MB each."
+    },
+    "rejected": {
+      "max": "Limit reached.",
+      "type": "Unsupported file type.",
+      "size": "File too large (max 10 MB)."
+    }
   }
 }

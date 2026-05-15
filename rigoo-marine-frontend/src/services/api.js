@@ -871,6 +871,27 @@ export const maintenanceApi = {
     return response.data;
   },
 
+  /**
+   * Attach a file to a history record. Two-step flow:
+   *   1) caller uploads bytes via fileApi.upload (client-module) and
+   *      gets back a URL
+   *   2) caller calls this to LINK that URL to the history row.
+   * Maintenance stores only the pointer + metadata.
+   */
+  addAttachment: async (historyId, attachment) => {
+    const response = await httpClient.post(
+      `/api/maintenance/history/${historyId}/attachments`, attachment);
+    return response.data;
+  },
+  listAttachments: async (historyId) => {
+    const response = await httpClient.get(`/api/maintenance/history/${historyId}/attachments`);
+    return response.data;
+  },
+  deleteAttachment: async (attachmentId) => {
+    const response = await httpClient.delete(`/api/maintenance/attachments/${attachmentId}`);
+    return response.data;
+  },
+
   /** Schedule list for a vessel (with urgency classifications). */
   getSchedule: async (vesselId) => {
     const response = await httpClient.get(`/api/maintenance/vessels/${vesselId}/schedule`);

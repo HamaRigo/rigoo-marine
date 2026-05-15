@@ -50,6 +50,18 @@ public class MaintenanceExceptionHandler extends CommonExceptionHandler {
             .body(error("INVALID_ENGINE_HOURS", ex.getMessage()));
     }
 
+    @ExceptionHandler(AttachmentLimitReachedException.class)
+    public ResponseEntity<ErrorResponse> handleAttachmentLimit(AttachmentLimitReachedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(error("ATTACHMENT_LIMIT_REACHED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnsupportedAttachmentTypeException.class)
+    public ResponseEntity<ErrorResponse> handleUnsupportedAttachment(UnsupportedAttachmentTypeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(error("UNSUPPORTED_ATTACHMENT_TYPE", ex.getMessage()));
+    }
+
     @ExceptionHandler(VesselNotOwnedException.class)
     public ResponseEntity<ErrorResponse> handleVesselNotOwned(VesselNotOwnedException ex) {
         log.warn("vessel ownership denied: {}", ex.getMessage());

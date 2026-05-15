@@ -45,6 +45,17 @@ public class VesselMaintenanceService {
             .map(historyService::toDTO)
             .getContent();
 
+        // Batch-load attachments for every history row on this page in
+        // a single IN-clause query. No N+1; documented in
+        // ServiceHistoryService.attachmentsByHistoryIds.
+        if (!history.isEmpty()) {
+            var historyIds = history.stream().map(ServiceHistoryDTO::getId).toList();
+            var byId = historyService.attachmentsByHistoryIds(historyIds);
+            for (ServiceHistoryDTO h : history) {
+                h.setAttachments(byId.getOrDefault(h.getId(), java.util.List.of()));
+            }
+        }
+
         List<ServiceScheduleDTO> schedule = scheduleRepo.findByVesselId(vesselId).stream()
             .map(item -> scheduleService.toDTO(item, reading.hours))
             .toList();

@@ -28,6 +28,7 @@ class ServiceHistoryServiceTest {
         LocalDate.of(2026, 5, 14).atStartOfDay(QATAR).toInstant(), QATAR);
 
     private ServiceHistoryRecordRepository historyRepo;
+    private com.rigoomarine.maintenance.repository.ServiceHistoryAttachmentRepository attachmentRepo;
     private ServiceScheduleService scheduleService;
     private VesselClient vesselClient;
     private MaintenanceAuditLogger auditLogger;
@@ -36,10 +37,11 @@ class ServiceHistoryServiceTest {
     @BeforeEach
     void setUp() {
         historyRepo = mock(ServiceHistoryRecordRepository.class);
+        attachmentRepo = mock(com.rigoomarine.maintenance.repository.ServiceHistoryAttachmentRepository.class);
         scheduleService = mock(ServiceScheduleService.class);
         vesselClient = mock(VesselClient.class);
         auditLogger = mock(MaintenanceAuditLogger.class);
-        service = new ServiceHistoryService(historyRepo, scheduleService, vesselClient, FIXED, auditLogger);
+        service = new ServiceHistoryService(historyRepo, attachmentRepo, scheduleService, vesselClient, FIXED, auditLogger);
 
         when(historyRepo.save(any(ServiceHistoryRecord.class)))
             .thenAnswer(inv -> {
@@ -156,5 +158,124 @@ class ServiceHistoryServiceTest {
 
         assertThatThrownBy(() -> service.create(42L, 7L, req, false))
             .isInstanceOf(com.rigoomarine.maintenance.exception.VesselLookupUnavailableException.class);
+    }
+
+    // ─── Attachments ─────────────────────────────────────────────────────────
+
+    @org.junit.jupiter.api.Test
+    void addAttachment_persistsRow_whenOwnerAndValidType() {
+        ServiceHistoryRecord rec = ServiceHistoryRecord.builder()
+            .id(100L).vesselId(42L).clientId(7L)
+            .serviceType(ServiceType.OIL_CHANGE)
+            .performedOn(LocalDate.of(2026, 5, 14))
+            .build();
+        when(historyRepo.findById(100L)).thenReturn(java.util.Optional.of(rec));
+        when(attachmentRepo.countByServiceHistoryId(100L)).thenReturn(0L);
+        when(attachmentRepo.save(any())).thenAnswer(inv -> {
+            var a = (com.rigoomarine.maintenance.entity.ServiceHistoryAttachment) inv.getArgument(0);
+            a.setId(1L);
+            return a;
+        });
+
+        var req = com.rigoomarine.maintenance.dto.AddAttachmentRequest.builder()
+            .url("https://storage/r1.jpg")
+            .filename("receipt.jpg")
+            .contentType("image/jpeg")
+            .sizeBytes(200_000L)
+            .build();
+
+        var dto = service.addAttachment(100L, 7L, false, req);
+
+        assertThat(dto.getId()).isEqualTo(1L);
+        assertThat(dto.getContentType()).isEqualTo("image/jpeg");
+        org.mockito.ArgumentCaptor<com.rigoomarine.maintenance.entity.ServiceHistoryAttachment> captor =
+            org.mockito.ArgumentCaptor.forClass(com.rigoomarine.maintenance.entity.ServiceHistoryAttachment.class);
+        verify(attachmentRepo).save(captor.capture());
+        // Denormalised clientId mirrors the parent history row.
+        assertThat(captor.getValue().getClientId()).isEqualTo(7L);
+    }
+
+    @org.junit.jupiter.api.Test
+    void addAttachment_rejectsNonOwner_with404Collapse() {
+        ServiceHistoryRecord rec = ServiceHistoryRecord.builder()
+            .id(100L).vesselId(42L).clientId(7L)
+            .serviceType(ServiceType.OIL_CHANGE).performedOn(LocalDate.of(2026, 5, 14))
+            .build();
+        when(historyRepo.findById(100L)).thenReturn(java.util.Optional.of(rec));
+
+        var req = com.rigoomarine.maintenance.dto.AddAttachmentRequest.builder()
+            .url("https://storage/r1.jpg").contentType("image/jpeg").sizeBytes(1000L).build();
+
+        // Caller is client 999, but the record belongs to client 7 — should
+        // collapse to NotFound, not leak existence as Forbidden.
+        assertThatThrownBy(() -> service.addAttachment(100L, 999L, false, req))
+            .isInstanceOf(com.rigoomarine.maintenance.exception.ServiceHistoryNotFoundException.class);
+        verify(attachmentRepo, never()).save(any());
+    }
+
+    @org.junit.jupiter.api.Test
+    void addAttachment_rejectsUnsupportedContentType() {
+        ServiceHistoryRecord rec = ServiceHistoryRecord.builder()
+            .id(100L).vesselId(42L).clientId(7L)
+            .serviceType(ServiceType.OIL_CHANGE).performedOn(LocalDate.of(2026, 5, 14))
+            .build();
+        when(historyRepo.findById(100L)).thenReturn(java.util.Optional.of(rec));
+
+        var req = com.rigoomarine.maintenance.dto.AddAttachmentRequest.builder()
+            .url("https://storage/x.exe").contentType("application/x-msdownload").sizeBytes(1000L).build();
+
+        assertThatThrownBy(() -> service.addAttachment(100L, 7L, false, req))
+            .isInstanceOf(com.rigoomarine.maintenance.exception.UnsupportedAttachmentTypeException.class);
+        verify(attachmentRepo, never()).save(any());
+    }
+
+    @org.junit.jupiter.api.Test
+    void addAttachment_rejectsWhenLimitReached() {
+        ServiceHistoryRecord rec = ServiceHistoryRecord.builder()
+            .id(100L).vesselId(42L).clientId(7L)
+            .serviceType(ServiceType.OIL_CHANGE).performedOn(LocalDate.of(2026, 5, 14))
+            .build();
+        when(historyRepo.findById(100L)).thenReturn(java.util.Optional.of(rec));
+        when(attachmentRepo.countByServiceHistoryId(100L)).thenReturn(10L);
+
+        var req = com.rigoomarine.maintenance.dto.AddAttachmentRequest.builder()
+            .url("https://storage/r.jpg").contentType("image/jpeg").sizeBytes(1000L).build();
+
+        assertThatThrownBy(() -> service.addAttachment(100L, 7L, false, req))
+            .isInstanceOf(com.rigoomarine.maintenance.exception.AttachmentLimitReachedException.class);
+        verify(attachmentRepo, never()).save(any());
+    }
+
+    @org.junit.jupiter.api.Test
+    void attachmentsByHistoryIds_groupsBatchFetchByParent() {
+        // Verifies the no-N+1 batch path: one repo call, results
+        // grouped by serviceHistoryId for the dossier to stitch in.
+        var a1 = com.rigoomarine.maintenance.entity.ServiceHistoryAttachment.builder()
+            .id(1L).serviceHistoryId(100L).clientId(7L).url("u1").contentType("image/jpeg").sizeBytes(1L).build();
+        var a2 = com.rigoomarine.maintenance.entity.ServiceHistoryAttachment.builder()
+            .id(2L).serviceHistoryId(100L).clientId(7L).url("u2").contentType("image/png").sizeBytes(2L).build();
+        var a3 = com.rigoomarine.maintenance.entity.ServiceHistoryAttachment.builder()
+            .id(3L).serviceHistoryId(101L).clientId(7L).url("u3").contentType("application/pdf").sizeBytes(3L).build();
+
+        when(attachmentRepo.findByServiceHistoryIdIn(java.util.List.of(100L, 101L)))
+            .thenReturn(java.util.List.of(a1, a2, a3));
+
+        var grouped = service.attachmentsByHistoryIds(java.util.List.of(100L, 101L));
+
+        assertThat(grouped).hasSize(2);
+        assertThat(grouped.get(100L)).hasSize(2);
+        assertThat(grouped.get(101L)).hasSize(1);
+        verify(attachmentRepo, times(1)).findByServiceHistoryIdIn(any());
+    }
+
+    @org.junit.jupiter.api.Test
+    void deleteAttachment_collapsesToNotFoundForNonOwner() {
+        var a = com.rigoomarine.maintenance.entity.ServiceHistoryAttachment.builder()
+            .id(99L).serviceHistoryId(100L).clientId(7L).url("u").contentType("image/jpeg").sizeBytes(1L).build();
+        when(attachmentRepo.findById(99L)).thenReturn(java.util.Optional.of(a));
+
+        assertThatThrownBy(() -> service.deleteAttachment(99L, 999L, false))
+            .isInstanceOf(com.rigoomarine.maintenance.exception.ServiceHistoryNotFoundException.class);
+        verify(attachmentRepo, never()).delete(any());
     }
 }

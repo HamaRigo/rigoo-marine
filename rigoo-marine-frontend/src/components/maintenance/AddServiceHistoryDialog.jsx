@@ -2,12 +2,14 @@ import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, MenuItem, TextField, Stack, FormControlLabel, Checkbox, Alert,
+  Box, Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { maintenanceApi } from '../../services/api';
+import { maintenanceApi, fileApi } from '../../services/api';
 import { dossierKey } from '../../hooks/maintenance/useVesselDossier';
+import AttachmentDropzone from './AttachmentDropzone';
 
 const SERVICE_TYPES = [
   'OIL_CHANGE', 'ENGINE_SERVICE', 'HULL_CLEANING', 'ANTIFOULING',
@@ -31,9 +33,13 @@ export default function AddServiceHistoryDialog({ open, onClose, vesselId, sugge
   });
   const [force, setForce] = useState(false);
   const [error, setError] = useState(null);
+  // Pending attachments — local-only until the history row exists, at
+  // which point we upload each in turn and link via maintenanceApi.
+  // Shape: [{ file, uploaded?: bool, error?: string }]
+  const [pending, setPending] = useState([]);
 
   const mutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const payload = { ...form };
       // Empty-string → undefined so backend bean-validation doesn't see "".
       ['engineHoursAtService', 'cost', 'performedBy', 'notes'].forEach((k) => {
@@ -41,7 +47,35 @@ export default function AddServiceHistoryDialog({ open, onClose, vesselId, sugge
       });
       if (payload.engineHoursAtService != null) payload.engineHoursAtService = Number(payload.engineHoursAtService);
       if (payload.cost != null) payload.cost = Number(payload.cost);
-      return maintenanceApi.addHistory(vesselId, payload, force);
+
+      const history = await maintenanceApi.addHistory(vesselId, payload, force);
+
+      // Post-create: upload each pending file, then link. Failures here
+      // are logged + toasted but don't fail the whole mutation — the
+      // history row already landed and the user can re-attach later
+      // from the timeline. (If we made the whole thing transactional
+      // we'd have to either delete the history row on attachment-
+      // failure or keep the bytes orphaned; the current trade-off
+      // favours the user keeping their record.)
+      for (const p of pending) {
+        try {
+          const uploaded = await fileApi.upload(p.file, 'maintenance-history');
+          await maintenanceApi.addAttachment(history.id, {
+            url: uploaded.url,
+            filename: p.file.name,
+            contentType: p.file.type,
+            sizeBytes: p.file.size,
+          });
+        } catch (err) {
+          // We've already saved the history row, so a single attachment
+          // failure shouldn't roll the whole thing back. Surface via
+          // toast and move on.
+          // eslint-disable-next-line no-console
+          console.warn('attachment upload failed', err);
+          toast.error(t('attachments.uploadFailed', { name: p.file.name }));
+        }
+      }
+      return history;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: dossierKey(vesselId) });
@@ -57,6 +91,7 @@ export default function AddServiceHistoryDialog({ open, onClose, vesselId, sugge
   const handleClose = () => {
     setError(null);
     setForce(false);
+    setPending([]);
     setForm({
       serviceType: 'OIL_CHANGE',
       performedOn: today(),
@@ -133,6 +168,21 @@ export default function AddServiceHistoryDialog({ open, onClose, vesselId, sugge
             control={<Checkbox size="small" checked={force} onChange={(e) => setForce(e.target.checked)} />}
             label="Force (override engine-hours sanity check)"
           />
+
+          {/* Attachments — optional. Files are held locally until the
+              history row is created on submit, then uploaded + linked
+              in a post-create pass. */}
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              {t('attachments.title')}
+            </Typography>
+            <AttachmentDropzone
+              pending={pending}
+              onFilesAdded={(files) => setPending((p) => [...p, ...files.map((f) => ({ file: f }))])}
+              onRemove={(idx) => setPending((p) => p.filter((_, i) => i !== idx))}
+              max={10 - (pending?.length || 0) + (pending?.length || 0)}
+            />
+          </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
