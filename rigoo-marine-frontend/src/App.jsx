@@ -44,6 +44,7 @@ import Invoices from './pages/dashboard/Invoices';
 import Profile from './pages/dashboard/Profile';
 import MyShopOrders from './pages/dashboard/MyShopOrders';
 import Notifications from './pages/dashboard/Notifications';
+import MaintenanceAnalytics from './pages/dashboard/MaintenanceAnalytics';
 
 // Work Order Flow
 import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
@@ -152,6 +153,7 @@ function App() {
                 <Route path="vessels" element={<MyVessels />} />
                 <Route path="vessels/:id" element={<MyVesselDetail />} />
                 <Route path="notifications" element={<Notifications />} />
+                <Route path="analytics" element={<MaintenanceAnalytics />} />
                 <Route path="invoices" element={<Invoices />} />
                 <Route path="profile" element={<Profile />} />
               </Route>

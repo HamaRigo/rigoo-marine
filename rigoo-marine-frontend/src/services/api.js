@@ -915,6 +915,18 @@ export const maintenanceApi = {
     const response = await httpClient.get('/api/maintenance/admin/upcoming', { params });
     return response.data; // List<AdminUpcomingDTO>
   },
+
+  /**
+   * Yearly maintenance-cost roll-up for the authenticated client.
+   * Returns: { year, totalQar, recordCount, byServiceType[], byVessel[], byMonth[] }.
+   * Omit year to default to the current year (server resolves).
+   */
+  getCostSummary: async (year) => {
+    const response = await httpClient.get('/api/maintenance/analytics/cost', {
+      params: year ? { year } : {},
+    });
+    return response.data;
+  },
 };
 
 // ============== TECHNICIAN APIs ==============

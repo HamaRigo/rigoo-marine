@@ -13,6 +13,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 import NotificationBell from '../../components/notifications/NotificationBell';
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 
 const drawerWidth = 240;
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { name: 'My Orders', path: '/dashboard/orders', icon: <BuildIcon /> },
   { name: 'Shop Orders', path: '/dashboard/shop-orders', icon: <ShoppingBagOutlinedIcon /> },
   { name: 'My Vessels', path: '/dashboard/vessels', icon: <DirectionsBoatIcon /> },
+  { name: 'Analytics', path: '/dashboard/analytics', icon: <InsightsRoundedIcon /> },
   { name: 'Notifications', path: '/dashboard/notifications', icon: <NotificationsOutlinedIcon /> },
   { name: 'Invoices', path: '/dashboard/invoices', icon: <ReceiptIcon /> },
   { name: 'Profile', path: '/dashboard/profile', icon: <PersonIcon /> },
