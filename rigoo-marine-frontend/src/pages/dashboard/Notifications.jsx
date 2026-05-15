@@ -5,6 +5,8 @@ import {
 } from '@mui/material';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import NotificationsOffRoundedIcon from '@mui/icons-material/NotificationsOffRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotificationsPage, useMarkRead, useMarkAllRead } from '../../hooks/notifications/useNotifications';
 import { Reveal, Stagger } from '../../components/common/Motion';
@@ -107,6 +109,29 @@ export default function Notifications() {
                         }
                         primaryTypographyProps={{ fontWeight: n.read ? 400 : 600 }}
                       />
+                      {/* Book-now CTA. Notifications with an actionUrl are
+                          deep-links into a pre-filled form (e.g. service-
+                          request seeded with vessel + serviceType). The
+                          button is the highest-leverage interaction on the
+                          row — fixed-right + primary-coloured so it doesn't
+                          get lost in the secondary metadata. */}
+                      {n.actionUrl && (
+                        <Button
+                          component={Link}
+                          to={n.actionUrl}
+                          size="small"
+                          variant="contained"
+                          color="primary"
+                          startIcon={<EventAvailableRoundedIcon />}
+                          onClick={(e) => {
+                            e.stopPropagation(); // don't also fire markRead
+                            if (!n.read) markRead.mutate(n.id);
+                          }}
+                          sx={{ flexShrink: 0, ml: 1 }}
+                        >
+                          {t('bookNow')}
+                        </Button>
+                      )}
                     </ListItemButton>
                   </ListItem>
                   {idx < items.length - 1 && <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}

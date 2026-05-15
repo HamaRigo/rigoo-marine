@@ -76,13 +76,18 @@ public class ServiceDueEventConsumer {
         String locale = recOpt.map(RecipientLookup.Recipient::safeLocale).orElse("en");
 
         // 1) In-app row — always persisted so the bell badge surfaces.
+        // actionUrl deep-links into the pre-filled /service-request page;
+        // bell + feed render it as a "Book now" button. This closes the
+        // reminder → work-order loop in one click.
         String title = title(serviceType, urgency, locale);
         String body  = body(serviceType, urgency, nextDueDate, daysUntilDue, locale);
+        String actionUrl = buildBookUrl(vesselId, serviceType);
         Notification notification = Notification.builder()
             .clientId(clientId)
             .type("SERVICE_DUE")
             .title(title)
             .message(body)
+            .actionUrl(actionUrl)
             .status(Notification.NotificationStatus.PENDING)
             .channel("IN_APP+EMAIL")
             .read(false)
@@ -136,6 +141,21 @@ public class ServiceDueEventConsumer {
             dueLine += ar ? " (خلال " + daysUntilDue + " أيام)" : " (in " + daysUntilDue + " days)";
         }
         return dueLine + ".";
+    }
+
+    /**
+     * Frontend-relative URL the bell button links to. Pre-fills the
+     * service-request form so the user only has to add location + a note.
+     * Vessel id + ServiceType travel as query params; the frontend maps
+     * ServiceType → IssueCategory.
+     */
+    private static String buildBookUrl(String vesselId, String serviceType) {
+        if (vesselId == null || vesselId.isEmpty()) return null;
+        String url = "/service-request?vessel=" + vesselId;
+        if (serviceType != null && !serviceType.isEmpty()) {
+            url += "&type=" + serviceType;
+        }
+        return url;
     }
 
     private static String urgencyLabel(String urgency, String locale) {

@@ -6,7 +6,8 @@ import {
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-import { Link } from 'react-router-dom';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUnreadCount, useUnreadList, useMarkRead, useMarkAllRead } from '../../hooks/notifications/useNotifications';
 
@@ -23,6 +24,7 @@ export default function NotificationBell() {
   const { t } = useTranslation('notifications');
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate();
 
   const { data: count = 0 } = useUnreadCount();
   const { data: items, isLoading: listLoading } = useUnreadList(open);
@@ -35,6 +37,10 @@ export default function NotificationBell() {
   const handleRowClick = (item) => {
     markRead.mutate(item.id);
     handleClose();
+    // If the row carries an action URL, take the user there — this is the
+    // happy-path for SERVICE_DUE rows where one click should land on the
+    // pre-filled service-request form.
+    if (item.actionUrl) navigate(item.actionUrl);
   };
 
   return (

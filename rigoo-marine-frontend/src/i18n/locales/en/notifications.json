@@ -10,5 +10,6 @@
     "title": "Notifications",
     "markAll": "Mark all read",
     "empty": "No notifications yet — we'll let you know when there's news."
-  }
+  },
+  "bookNow": "Book now"
 }

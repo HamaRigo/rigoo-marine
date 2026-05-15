@@ -34,6 +34,13 @@ public class Notification {
 
     private String channel;
 
+    /**
+     * Optional deep-link URL surfaced as a "Book now" / "Open" button on the
+     * in-app row. NULL for informational notifications. See V4 migration.
+     */
+    @Column(name = "action_url", length = 500)
+    private String actionUrl;
+
     private Boolean read = false;
 
     @Column(name = "sent_at")

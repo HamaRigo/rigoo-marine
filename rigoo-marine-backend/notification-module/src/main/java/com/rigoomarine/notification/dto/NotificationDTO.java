@@ -20,6 +20,7 @@ public class NotificationDTO {
     private String message;
     private boolean read;
     private String channel;
+    private String actionUrl;
     private LocalDateTime createdAt;
 
     public static NotificationDTO from(Notification n) {
@@ -30,6 +31,7 @@ public class NotificationDTO {
             .message(n.getMessage())
             .read(Boolean.TRUE.equals(n.getRead()))
             .channel(n.getChannel())
+            .actionUrl(n.getActionUrl())
             .createdAt(n.getCreatedAt())
             .build();
     }
