@@ -29,13 +29,15 @@ class ServiceScheduleServiceTest {
 
     private ServiceScheduleItemRepository scheduleRepo;
     private ServiceHistoryRecordRepository historyRepo;
+    private MaintenanceAuditLogger auditLogger;
     private ServiceScheduleService service;
 
     @BeforeEach
     void setUp() {
         scheduleRepo = mock(ServiceScheduleItemRepository.class);
         historyRepo = mock(ServiceHistoryRecordRepository.class);
-        service = new ServiceScheduleService(scheduleRepo, historyRepo, FIXED);
+        auditLogger = mock(MaintenanceAuditLogger.class);
+        service = new ServiceScheduleService(scheduleRepo, historyRepo, FIXED, auditLogger);
         ReflectionTestUtils.setField(service, "lookAheadDays", 14);
         ReflectionTestUtils.setField(service, "hoursTolerance", 10);
 

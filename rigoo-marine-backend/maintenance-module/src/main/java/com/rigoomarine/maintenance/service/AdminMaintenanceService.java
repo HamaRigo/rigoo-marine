@@ -7,6 +7,9 @@ import com.rigoomarine.maintenance.entity.Urgency;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,6 +128,28 @@ public class AdminMaintenanceService {
             .thenComparing(AdminUpcomingDTO::getNextDueDate,
                 Comparator.nullsLast(Comparator.naturalOrder())));
         return filtered;
+    }
+
+    /**
+     * Paged variant for the admin dashboard table. Slices the already-
+     * filtered + sorted list in memory.
+     *
+     * <p>Scale note: the underlying classify-in-Java pass holds the full
+     * result set in memory before pagination. At ~10k vessels with ~15% in
+     * the OVERDUE+DUE_SOON window that's ~1500 rows — comfortable. Past
+     * ~50k vessels we'd push the urgency calculation into SQL (CASE WHEN
+     * against next_due_date / next_due_hours) and LIMIT/OFFSET at the DB
+     * level. Documented here so the next person to refactor sees the
+     * threshold.
+     */
+    public Page<AdminUpcomingDTO> findUpcomingPaged(String urgencyFilter, ServiceType typeFilter,
+                                                     String q, Pageable pageable) {
+        List<AdminUpcomingDTO> all = findUpcoming(urgencyFilter, typeFilter, q);
+        int total = all.size();
+        int offset = (int) Math.min(pageable.getOffset(), total);
+        int end = Math.min(offset + pageable.getPageSize(), total);
+        List<AdminUpcomingDTO> slice = all.subList(offset, end);
+        return new PageImpl<>(slice, pageable, total);
     }
 
     private AdminUpcomingDTO mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {

@@ -37,6 +37,7 @@ public class ServiceScheduleService {
     private final ServiceScheduleItemRepository scheduleRepo;
     private final ServiceHistoryRecordRepository historyRepo;
     private final Clock clock;
+    private final MaintenanceAuditLogger auditLogger;
 
     @Value("${app.maintenance.reminders.look-ahead-days:14}")
     private int lookAheadDays;
@@ -90,6 +91,9 @@ public class ServiceScheduleService {
         item.setLastNotifiedAt(null);
 
         ServiceScheduleItem saved = scheduleRepo.save(item);
+        auditLogger.recordIfAdminActingOnBehalf(
+            "MAINTENANCE_SCHEDULE_EDIT", "SCHEDULE", saved.getId(), saved.getClientId(),
+            "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\"}");
         return toDTO(saved, currentEngineHours);
     }
 
@@ -147,7 +151,11 @@ public class ServiceScheduleService {
         ServiceScheduleItem item = scheduleRepo.findByVesselIdAndServiceType(vesselId, type)
             .orElseThrow(() -> new ServiceScheduleNotFoundException(vesselId, type.name()));
         item.setSnoozedUntil(LocalDate.now(clock).plusDays(days));
-        return toDTO(scheduleRepo.save(item), currentEngineHours);
+        ServiceScheduleItem saved = scheduleRepo.save(item);
+        auditLogger.recordIfAdminActingOnBehalf(
+            "MAINTENANCE_SCHEDULE_SNOOZE", "SCHEDULE", saved.getId(), saved.getClientId(),
+            "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\",\"days\":" + days + "}");
+        return toDTO(saved, currentEngineHours);
     }
 
     public ServiceScheduleDTO setStatus(Long vesselId, ServiceType type, ScheduleStatus status,
@@ -155,7 +163,12 @@ public class ServiceScheduleService {
         ServiceScheduleItem item = scheduleRepo.findByVesselIdAndServiceType(vesselId, type)
             .orElseThrow(() -> new ServiceScheduleNotFoundException(vesselId, type.name()));
         item.setStatus(status);
-        return toDTO(scheduleRepo.save(item), currentEngineHours);
+        ServiceScheduleItem saved = scheduleRepo.save(item);
+        auditLogger.recordIfAdminActingOnBehalf(
+            status == ScheduleStatus.PAUSED ? "MAINTENANCE_SCHEDULE_PAUSE" : "MAINTENANCE_SCHEDULE_RESUME",
+            "SCHEDULE", saved.getId(), saved.getClientId(),
+            "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\"}");
+        return toDTO(saved, currentEngineHours);
     }
 
     public ServiceScheduleDTO toDTO(ServiceScheduleItem item, BigDecimal currentEngineHours) {

@@ -52,6 +52,7 @@ public class ServiceHistoryService {
     private final ServiceScheduleService scheduleService;
     private final VesselClient vesselClient;
     private final Clock clock;
+    private final MaintenanceAuditLogger auditLogger;
 
     public ServiceHistoryDTO create(Long vesselId, Long clientId, CreateServiceHistoryRequest req, boolean force) {
         BigDecimal currentVesselHours = readCurrentEngineHoursTolerant(vesselId);
@@ -104,6 +105,9 @@ public class ServiceHistoryService {
             throw new ServiceHistoryNotFoundException(id);
         }
         historyRepo.delete(record);
+        auditLogger.recordIfAdminActingOnBehalf(
+            "MAINTENANCE_HISTORY_DELETE", "VESSEL", record.getVesselId(), record.getClientId(),
+            "{\"historyId\":" + id + ",\"type\":\"" + record.getServiceType() + "\"}");
         scheduleService.recomputeFromHistory(record.getVesselId(), record.getServiceType());
     }
 

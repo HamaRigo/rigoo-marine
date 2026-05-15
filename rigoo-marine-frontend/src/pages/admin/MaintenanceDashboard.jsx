@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Box, Typography, Card, CardContent, Stack, Chip, TextField, MenuItem,
   Table, TableHead, TableRow, TableCell, TableBody, IconButton, Tooltip,
-  Skeleton, Alert, Button, Link as MuiLink,
+  Skeleton, Alert, Button, Link as MuiLink, Pagination,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
@@ -39,22 +39,31 @@ const formatDate = (iso) => {
  * scan, then click the vessel link to drill into the dossier (where they
  * can edit the schedule, mark services, etc).
  */
+const PAGE_SIZE = 25;
+
 export default function MaintenanceDashboard() {
   const { t } = useTranslation('maintenance');
   const [urgency, setUrgency] = useState('');
   const [type, setType] = useState('');
   const [q, setQ] = useState('');
+  const [page, setPage] = useState(0);
 
-  // Server-side filter params kept narrow: urgency + type only. Free-text q
-  // is sent too because the SQL join is the cheapest place to do it (matches
-  // both client and vessel names). Avoids a second client-side pass.
+  // Server-side filter params kept narrow: urgency + type + free-text q go
+  // through, plus standard Spring page/size. Changing any filter resets the
+  // page to 0 — otherwise an active filter on page 5 could land on an empty
+  // slice.
   const params = useMemo(() => {
-    const p = {};
+    const p = { page, size: PAGE_SIZE };
     if (urgency) p.urgency = urgency;
     if (type) p.type = type;
     if (q.trim()) p.q = q.trim();
     return p;
-  }, [urgency, type, q]);
+  }, [urgency, type, q, page]);
+
+  const onFilterChange = (setter) => (v) => {
+    setter(v);
+    setPage(0);
+  };
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['admin', 'maintenance', 'upcoming', params],
@@ -63,13 +72,17 @@ export default function MaintenanceDashboard() {
     staleTime: 60 * 1000,
   });
 
-  const rows = data || [];
+  // Backend now returns a Spring Page<>. Fall back gracefully for older
+  // staging environments still on the list response shape.
+  const rows = Array.isArray(data) ? data : (data?.content || []);
+  const totalElements = Array.isArray(data) ? data.length : (data?.totalElements ?? 0);
+  const totalPages = Array.isArray(data) ? 1 : (data?.totalPages ?? 0);
 
   return (
     <Box>
       <Stack direction="row" alignItems="center" gap={1} mb={2} flexWrap="wrap">
         <Typography variant="h4">Maintenance</Typography>
-        <Chip label={rows.length} size="small" />
+        <Chip label={totalElements} size="small" />
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Refresh">
           <span>
@@ -88,7 +101,7 @@ export default function MaintenanceDashboard() {
                 select
                 label="Urgency"
                 value={urgency}
-                onChange={(e) => setUrgency(e.target.value)}
+                onChange={(e) => onFilterChange(setUrgency)(e.target.value)}
                 size="small"
                 sx={{ minWidth: 160 }}
               >
@@ -100,7 +113,7 @@ export default function MaintenanceDashboard() {
                 select
                 label="Service"
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => onFilterChange(setType)(e.target.value)}
                 size="small"
                 sx={{ minWidth: 180 }}
               >
@@ -112,7 +125,7 @@ export default function MaintenanceDashboard() {
               <TextField
                 label="Search client or vessel"
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(e) => onFilterChange(setQ)(e.target.value)}
                 size="small"
                 sx={{ flexGrow: 1, minWidth: 220 }}
               />
@@ -228,6 +241,17 @@ export default function MaintenanceDashboard() {
           </Box>
         )}
       </Card>
+
+      {totalPages > 1 && (
+        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page + 1}
+            onChange={(_, v) => setPage(v - 1)}
+            color="primary"
+          />
+        </Stack>
+      )}
     </Box>
   );
 }

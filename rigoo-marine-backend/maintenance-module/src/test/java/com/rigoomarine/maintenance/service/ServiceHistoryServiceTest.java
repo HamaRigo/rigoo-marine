@@ -30,6 +30,7 @@ class ServiceHistoryServiceTest {
     private ServiceHistoryRecordRepository historyRepo;
     private ServiceScheduleService scheduleService;
     private VesselClient vesselClient;
+    private MaintenanceAuditLogger auditLogger;
     private ServiceHistoryService service;
 
     @BeforeEach
@@ -37,7 +38,8 @@ class ServiceHistoryServiceTest {
         historyRepo = mock(ServiceHistoryRecordRepository.class);
         scheduleService = mock(ServiceScheduleService.class);
         vesselClient = mock(VesselClient.class);
-        service = new ServiceHistoryService(historyRepo, scheduleService, vesselClient, FIXED);
+        auditLogger = mock(MaintenanceAuditLogger.class);
+        service = new ServiceHistoryService(historyRepo, scheduleService, vesselClient, FIXED, auditLogger);
 
         when(historyRepo.save(any(ServiceHistoryRecord.class)))
             .thenAnswer(inv -> {
