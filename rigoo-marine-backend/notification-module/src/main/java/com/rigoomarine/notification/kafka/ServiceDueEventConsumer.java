@@ -38,6 +38,7 @@ public class ServiceDueEventConsumer {
     private final EmailTemplateService emailTemplateService;
     private final NotificationRepository notificationRepository;
     private final RecipientLookup recipientLookup;
+    private final EventDedupe eventDedupe;
 
     @KafkaListener(topics = "maintenance.service-due.v1", groupId = "notification-maintenance")
     @Transactional
@@ -46,6 +47,14 @@ public class ServiceDueEventConsumer {
         Long clientId = asLong(event.get("clientId"));
         if (clientId == null) {
             log.warn("ServiceDueEvent missing clientId — skipping");
+            return;
+        }
+        // Redis-backed dedupe — guards against Kafka redelivery duplicating
+        // the Notification row AND the email send. Producer emits a UUID
+        // eventId per fire (see ServiceDuePublisher).
+        String eventId = stringOf(event.get("eventId"));
+        if (!eventDedupe.firstTime(eventId)) {
+            log.info("ServiceDueEvent eventId={} already processed — skipping redelivery", eventId);
             return;
         }
 

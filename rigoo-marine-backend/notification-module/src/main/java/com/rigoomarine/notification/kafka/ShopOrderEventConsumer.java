@@ -26,6 +26,7 @@ public class ShopOrderEventConsumer {
 
     private final EmailTemplateService emailTemplateService;
     private final RecipientLookup recipientLookup;
+    private final EventDedupe eventDedupe;
 
     @KafkaListener(topics = "shop.order.status", groupId = "notification-shop-orders")
     public void onShopOrderEvent(Map<String, Object> event) {
@@ -33,6 +34,15 @@ public class ShopOrderEventConsumer {
         String type = String.valueOf(event.get("type"));
         if (!"ORDER_PAID".equals(type)) {
             log.debug("Ignoring shop order event type {}", type);
+            return;
+        }
+        // Redis-backed dedupe — guards against Kafka redelivery firing the
+        // ORDER_PAID email twice. Shop-module's OrderEventPublisher attaches
+        // a UUID-shaped eventId; missing/blank id falls through (see
+        // EventDedupe javadoc).
+        String eventId = stringOf(event.get("eventId"));
+        if (!eventDedupe.firstTime(eventId)) {
+            log.info("Shop event eventId={} already processed — skipping redelivery", eventId);
             return;
         }
 
