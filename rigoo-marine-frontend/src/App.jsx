@@ -1,5 +1,7 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Box, CircularProgress } from '@mui/material';
 import DirectionProvider from './i18n/DirectionProvider';
 import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -48,25 +50,41 @@ import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
 import ServiceRequest from './pages/workorder/ServiceRequest';
 
 // Admin Pages
+// AdminLayout stays eagerly imported — it owns the whole /admin route shell
+// and is the first chunk any admin loads. The leaf pages below are lazy-
+// loaded so a regular CLIENT user never pays their cost on initial dashboard
+// entry. Each React.lazy() call becomes its own chunk in the Vite output.
 import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import OrderManagement from './pages/admin/OrderManagement';
-import UserManagement from './pages/admin/UserManagement';
-import AuditLog from './pages/admin/AuditLog';
-import ServiceManagement from './pages/admin/ServiceManagement';
-import InvoiceManagement from './pages/admin/InvoiceManagement';
-import QuotationManagement from './pages/admin/QuotationManagement';
-import MediaManagement from './pages/admin/MediaManagement';
-import ContactInfoManagement from './pages/admin/ContactInfoManagement';
-import Settings from './pages/admin/Settings';
-import BoatListingManagement from './pages/admin/BoatListingManagement';
-import BoatListingForm from './pages/admin/BoatListingForm';
-import BoatInquiryManagement from './pages/admin/BoatInquiryManagement';
-import ProductManagement from './pages/admin/ProductManagement';
-import ProductForm from './pages/admin/ProductForm';
-import ProductInquiryManagement from './pages/admin/ProductInquiryManagement';
-import ShopOrderManagement from './pages/admin/ShopOrderManagement';
-import MaintenanceDashboard from './pages/admin/MaintenanceDashboard';
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const OrderManagement = lazy(() => import('./pages/admin/OrderManagement'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
+const ServiceManagement = lazy(() => import('./pages/admin/ServiceManagement'));
+const InvoiceManagement = lazy(() => import('./pages/admin/InvoiceManagement'));
+const QuotationManagement = lazy(() => import('./pages/admin/QuotationManagement'));
+const MediaManagement = lazy(() => import('./pages/admin/MediaManagement'));
+const ContactInfoManagement = lazy(() => import('./pages/admin/ContactInfoManagement'));
+const Settings = lazy(() => import('./pages/admin/Settings'));
+const BoatListingManagement = lazy(() => import('./pages/admin/BoatListingManagement'));
+const BoatListingForm = lazy(() => import('./pages/admin/BoatListingForm'));
+const BoatInquiryManagement = lazy(() => import('./pages/admin/BoatInquiryManagement'));
+const ProductManagement = lazy(() => import('./pages/admin/ProductManagement'));
+const ProductForm = lazy(() => import('./pages/admin/ProductForm'));
+const ProductInquiryManagement = lazy(() => import('./pages/admin/ProductInquiryManagement'));
+const ShopOrderManagement = lazy(() => import('./pages/admin/ShopOrderManagement'));
+const MaintenanceDashboard = lazy(() => import('./pages/admin/MaintenanceDashboard'));
+
+/**
+ * Lightweight spinner the Suspense fallback renders while a chunk loads.
+ * Centered + low-visual-noise so the page swap doesn't flash.
+ */
+function ChunkLoading() {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 240 }}>
+      <CircularProgress size={32} />
+    </Box>
+  );
+}
 
 // Technician Pages
 import TechnicianLayout from './pages/technician/TechnicianLayout';
@@ -143,7 +161,14 @@ function App() {
                 path="/admin"
                 element={
                   <AdminRoute>
-                    <AdminLayout />
+                    {/* Suspense wraps the whole admin shell so any lazy
+                        child route shows the ChunkLoading fallback during
+                        its first navigation. Wrapping inside AdminLayout
+                        would also work but this keeps the Layout chrome
+                        visible while the route content streams. */}
+                    <Suspense fallback={<ChunkLoading />}>
+                      <AdminLayout />
+                    </Suspense>
                   </AdminRoute>
                 }
               >
