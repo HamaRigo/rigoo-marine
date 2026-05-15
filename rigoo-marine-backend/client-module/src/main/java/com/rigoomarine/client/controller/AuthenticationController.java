@@ -280,6 +280,9 @@ public class AuthenticationController {
         if (updates.containsKey("preferredLanguage")) {
             request.setPreferredLanguage(updates.get("preferredLanguage"));
         }
+        if (updates.containsKey("whatsappOptIn")) {
+            request.setWhatsappOptIn(Boolean.parseBoolean(updates.get("whatsappOptIn")));
+        }
 
         ClientDTO updated = clientService.updateClient(client.getId(), request);
         Map<String, Object> response = new HashMap<>();

@@ -21,4 +21,5 @@ public class ClientDTO implements Serializable {
     private Boolean emailVerified;
     private LocalDateTime passwordChangedAt;
     private String preferredLanguage;
+    private Boolean whatsappOptIn;
 }

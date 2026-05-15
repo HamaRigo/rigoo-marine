@@ -81,6 +81,15 @@ public class Client {
     @Column(name = "notifications_paused", nullable = false)
     private Boolean notificationsPaused;
 
+    /**
+     * Explicit opt-in for WhatsApp reminders. Default FALSE — users tick the
+     * toggle in /dashboard/profile. When TRUE and a phone is on file,
+     * ServiceDueEventConsumer adds a WhatsApp send to the email + in-app
+     * fan-out.
+     */
+    @Column(name = "whatsapp_opt_in", nullable = false)
+    private Boolean whatsappOptIn;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -90,6 +99,7 @@ public class Client {
         if (preferredLanguage == null) preferredLanguage = "en";
         if (unsubscribeToken == null) unsubscribeToken = java.util.UUID.randomUUID().toString();
         if (notificationsPaused == null) notificationsPaused = Boolean.FALSE;
+        if (whatsappOptIn == null) whatsappOptIn = Boolean.FALSE;
     }
 
     @PreUpdate

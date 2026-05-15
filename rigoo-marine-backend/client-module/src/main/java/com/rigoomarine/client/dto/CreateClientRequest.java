@@ -34,4 +34,7 @@ public class CreateClientRequest {
      */
     @Size(max = 5, message = "preferredLanguage must be a BCP-47 short tag")
     private String preferredLanguage;
+
+    /** Optional WhatsApp opt-in flag. Profile editor passes this through. */
+    private Boolean whatsappOptIn;
 }

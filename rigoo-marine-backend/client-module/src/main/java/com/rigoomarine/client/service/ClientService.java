@@ -141,6 +141,10 @@ public class ClientService {
         if (request.getPreferredLanguage() != null) {
             client.setPreferredLanguage(normaliseLanguage(request.getPreferredLanguage()));
         }
+        // Same partial-update guard for WhatsApp opt-in.
+        if (request.getWhatsappOptIn() != null) {
+            client.setWhatsappOptIn(request.getWhatsappOptIn());
+        }
 
         Client updated = clientRepository.save(client);
         return toDTO(updated);
@@ -205,6 +209,7 @@ public class ClientService {
             .emailVerified(Boolean.TRUE.equals(client.getEmailVerified()))
             .passwordChangedAt(client.getPasswordChangedAt())
             .preferredLanguage(client.getPreferredLanguage() == null ? "en" : client.getPreferredLanguage())
+            .whatsappOptIn(Boolean.TRUE.equals(client.getWhatsappOptIn()))
             .build();
     }
 }

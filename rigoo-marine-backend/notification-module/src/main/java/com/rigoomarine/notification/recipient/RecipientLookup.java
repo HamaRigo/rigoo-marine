@@ -25,10 +25,11 @@ import java.util.Optional;
 public class RecipientLookup {
 
     private static final String COLUMNS =
-        "id, email, name, " +
+        "id, email, name, phone, " +
         "COALESCE(preferred_language, 'en') AS lang, " +
         "unsubscribe_token AS unsub_token, " +
-        "COALESCE(notifications_paused, FALSE) AS paused";
+        "COALESCE(notifications_paused, FALSE) AS paused, " +
+        "COALESCE(whatsapp_opt_in,    FALSE) AS wa_opt_in";
 
     private final JdbcTemplate jdbc;
 
@@ -71,9 +72,11 @@ public class RecipientLookup {
             rs.getLong("id"),
             rs.getString("email"),
             rs.getString("name"),
+            rs.getString("phone"),
             rs.getString("lang"),
             rs.getString("unsub_token"),
-            rs.getBoolean("paused")
+            rs.getBoolean("paused"),
+            rs.getBoolean("wa_opt_in")
         );
     }
 
@@ -81,9 +84,11 @@ public class RecipientLookup {
         Long clientId,
         String email,
         String name,
+        String phone,
         String locale,
         String unsubscribeToken,
-        boolean notificationsPaused
+        boolean notificationsPaused,
+        boolean whatsappOptIn
     ) {
         public String safeLocale() {
             return locale == null ? "en" : locale.toLowerCase(Locale.ROOT);

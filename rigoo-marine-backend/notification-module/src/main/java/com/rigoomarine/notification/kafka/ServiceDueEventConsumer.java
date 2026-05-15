@@ -4,11 +4,14 @@ import com.rigoomarine.notification.entity.Notification;
 import com.rigoomarine.notification.mail.EmailTemplateService;
 import com.rigoomarine.notification.recipient.RecipientLookup;
 import com.rigoomarine.notification.repository.NotificationRepository;
-import lombok.RequiredArgsConstructor;
+import com.rigoomarine.notification.whatsapp.WhatsAppSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -32,7 +35,6 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ServiceDueEventConsumer {
 
     private static final String TYPE = "SERVICE_DUE";
@@ -42,6 +44,28 @@ public class ServiceDueEventConsumer {
     private final RecipientLookup recipientLookup;
     private final EventDedupe eventDedupe;
     private final NotificationMetrics metrics;
+    /**
+     * Optional — only present when {@code app.whatsapp.enabled=true}. The
+     * @ConditionalOnProperty on WhatsAppSender keeps the bean out of the
+     * context entirely otherwise, so we tolerate its absence here.
+     */
+    private final WhatsAppSender whatsAppSender;
+
+    public ServiceDueEventConsumer(
+            EmailTemplateService emailTemplateService,
+            NotificationRepository notificationRepository,
+            RecipientLookup recipientLookup,
+            EventDedupe eventDedupe,
+            NotificationMetrics metrics,
+            @Autowired(required = false) WhatsAppSender whatsAppSender
+    ) {
+        this.emailTemplateService = emailTemplateService;
+        this.notificationRepository = notificationRepository;
+        this.recipientLookup = recipientLookup;
+        this.eventDedupe = eventDedupe;
+        this.metrics = metrics;
+        this.whatsAppSender = whatsAppSender;
+    }
 
     @KafkaListener(topics = "maintenance.service-due.v1", groupId = "notification-maintenance")
     @Transactional
@@ -110,8 +134,39 @@ public class ServiceDueEventConsumer {
             notification.setStatus(Notification.NotificationStatus.SENT);
             notification.setSentAt(LocalDateTime.now());
             notificationRepository.save(notification);
+
+            // 3) WhatsApp — opt-in only, best-effort. Failures are logged
+            //    (with the sender's own metric counters) and never bubble
+            //    out; the email + in-app row already landed so the user
+            //    isn't deprived of the reminder.
+            if (whatsAppSender != null && rec.whatsappOptIn()
+                    && rec.phone() != null && !rec.phone().isBlank()) {
+                try {
+                    whatsAppSender.send(rec.phone(), waBody(serviceType, urgency, nextDueDate, locale));
+                } catch (Exception ex) {
+                    log.warn("WhatsApp send failed for clientId={}: {}", clientId, ex.getMessage());
+                }
+            }
         }, () -> log.warn("No recipient found for clientId={} — in-app only", clientId));
         metrics.processed(TYPE).increment();
+    }
+
+    /**
+     * Compact WhatsApp body — these channels punish long messages, so
+     * trim to the essentials: service + urgency + date. Localised
+     * just like the in-app row / email subject.
+     */
+    private static String waBody(String serviceType, String urgency, String nextDueDate, String locale) {
+        boolean ar = "ar".equalsIgnoreCase(locale);
+        String svc = humaniseService(serviceType, locale);
+        if ("OVERDUE".equals(urgency)) {
+            return ar
+                ? "تذكير: " + svc + " متأخرة (كانت مستحقة في " + nextDueDate + "). احجز الآن من Rigoo Marine."
+                : "Reminder: " + svc + " is OVERDUE (was due " + nextDueDate + "). Book now via Rigoo Marine.";
+        }
+        return ar
+            ? "تذكير: " + svc + " مستحقة في " + nextDueDate + ". احجز الآن من Rigoo Marine."
+            : "Reminder: " + svc + " is due " + nextDueDate + ". Book now via Rigoo Marine.";
     }
 
     // ─── Locale-aware text builders ─────────────────────────────────────────

@@ -61,6 +61,15 @@ app:
   mail:
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@rigoomarine.qa}
+  # WhatsApp via Twilio. Disabled by default — when enabled the bean is
+  # @ConditionalOnProperty'd into context and ServiceDueEventConsumer fans
+  # WhatsApp messages out to opted-in recipients alongside email + in-app.
+  whatsapp:
+    enabled: ${WHATSAPP_ENABLED:false}
+    twilio:
+      account-sid: ${WHATSAPP_TWILIO_ACCOUNT_SID:}
+      auth-token:  ${WHATSAPP_TWILIO_AUTH_TOKEN:}
+      from:        ${WHATSAPP_TWILIO_FROM:}
 
 # Disable mail health probe — default points at smtp.example.com which would drag /actuator/health DOWN.
 management:

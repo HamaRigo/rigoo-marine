@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, TextField, Button, Grid, Avatar,
   CircularProgress, ToggleButtonGroup, ToggleButton, Divider,
+  FormControlLabel, Switch,
 } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { authApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PersonIcon from '@mui/icons-material/Person';
@@ -27,12 +29,14 @@ export default function Profile() {
   // Locked to the user's stored preference, not the UI language — the two can
   // diverge (a client may browse in EN but want emails in AR while travelling).
   const [preferredLanguage, setPreferredLanguage] = useState(user?.preferredLanguage || 'en');
+  const [whatsappOptIn, setWhatsappOptIn] = useState(Boolean(user?.whatsappOptIn));
 
-  // Keep the local control in sync if AuthContext refreshes the user (e.g.
+  // Keep the local controls in sync if AuthContext refreshes the user (e.g.
   // post-login from a different device with a different preference).
   useEffect(() => {
     if (user?.preferredLanguage) setPreferredLanguage(user.preferredLanguage);
-  }, [user?.preferredLanguage]);
+    if (user) setWhatsappOptIn(Boolean(user.whatsappOptIn));
+  }, [user?.preferredLanguage, user?.whatsappOptIn]);
 
   const updateMutation = useMutation({
     mutationFn: authApi.updateProfile,
@@ -73,6 +77,9 @@ export default function Profile() {
       email: formData.email,
       phone: formData.phone,
       preferredLanguage,
+      // Backend coerces this to a boolean via Boolean.parseBoolean; send the
+      // string form to avoid surprises with JSON serializer defaults.
+      whatsappOptIn: String(whatsappOptIn),
     });
   };
 
@@ -171,6 +178,26 @@ export default function Profile() {
                       <ToggleButton value="en">{t('language.english', 'English')}</ToggleButton>
                       <ToggleButton value="ar">{t('language.arabic', 'العربية')}</ToggleButton>
                     </ToggleButtonGroup>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <WhatsAppIcon fontSize="small" sx={{ color: '#25D366' }} />
+                      <Typography variant="subtitle2">WhatsApp reminders</Typography>
+                    </Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={whatsappOptIn}
+                          onChange={(e) => setWhatsappOptIn(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Typography variant="caption" color="text.secondary">
+                          Send maintenance reminders to my WhatsApp ({user?.phone || 'no number on file'}).
+                        </Typography>
+                      }
+                    />
                   </Grid>
                 </Grid>
                 <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
