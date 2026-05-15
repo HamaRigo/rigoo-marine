@@ -35,18 +35,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ServiceDueEventConsumer {
 
+    private static final String TYPE = "SERVICE_DUE";
+
     private final EmailTemplateService emailTemplateService;
     private final NotificationRepository notificationRepository;
     private final RecipientLookup recipientLookup;
     private final EventDedupe eventDedupe;
+    private final NotificationMetrics metrics;
 
     @KafkaListener(topics = "maintenance.service-due.v1", groupId = "notification-maintenance")
     @Transactional
     public void onServiceDue(Map<String, Object> event) {
         if (event == null) return;
+        metrics.received(TYPE).increment();
         Long clientId = asLong(event.get("clientId"));
         if (clientId == null) {
             log.warn("ServiceDueEvent missing clientId — skipping");
+            metrics.failed(TYPE).increment();
             return;
         }
         // Redis-backed dedupe — guards against Kafka redelivery duplicating
@@ -55,6 +60,7 @@ public class ServiceDueEventConsumer {
         String eventId = stringOf(event.get("eventId"));
         if (!eventDedupe.firstTime(eventId)) {
             log.info("ServiceDueEvent eventId={} already processed — skipping redelivery", eventId);
+            metrics.deduped(TYPE).increment();
             return;
         }
 
@@ -98,6 +104,7 @@ public class ServiceDueEventConsumer {
             notification.setSentAt(LocalDateTime.now());
             notificationRepository.save(notification);
         }, () -> log.warn("No recipient found for clientId={} — in-app only", clientId));
+        metrics.processed(TYPE).increment();
     }
 
     // ─── Locale-aware text builders ─────────────────────────────────────────

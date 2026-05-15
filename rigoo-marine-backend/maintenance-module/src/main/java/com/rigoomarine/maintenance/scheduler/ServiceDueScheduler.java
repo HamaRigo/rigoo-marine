@@ -30,6 +30,7 @@ public class ServiceDueScheduler {
 
     private final ServiceDueDetector detector;
     private final ServiceDuePublisher publisher;
+    private final MaintenanceMetrics metrics;
 
     @Value("${app.maintenance.reminders.enabled:true}")
     private boolean enabled;
@@ -70,8 +71,12 @@ public class ServiceDueScheduler {
             if (publisher.publish(event)) {
                 detector.markNotified(item.item());
                 published++;
+                metrics.publishSuccess(item.urgency() == null ? null : item.urgency().name()).increment();
+            } else {
+                metrics.publishFailure(item.urgency() == null ? null : item.urgency().name()).increment();
             }
         }
+        metrics.recordSweep(due.size(), published);
         log.info("maintenance sweep: {} candidates, {} published", due.size(), published);
     }
 }

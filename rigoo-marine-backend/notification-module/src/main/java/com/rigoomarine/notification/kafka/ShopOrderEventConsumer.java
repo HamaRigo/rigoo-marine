@@ -27,11 +27,16 @@ public class ShopOrderEventConsumer {
     private final EmailTemplateService emailTemplateService;
     private final RecipientLookup recipientLookup;
     private final EventDedupe eventDedupe;
+    private final NotificationMetrics metrics;
 
     @KafkaListener(topics = "shop.order.status", groupId = "notification-shop-orders")
     public void onShopOrderEvent(Map<String, Object> event) {
         if (event == null) return;
         String type = String.valueOf(event.get("type"));
+        // Counter is keyed by the event's own type so non-ORDER_PAID rows
+        // are still visible in the receive count — useful for "are we
+        // dropping types we should be handling?" investigations.
+        metrics.received(type).increment();
         if (!"ORDER_PAID".equals(type)) {
             log.debug("Ignoring shop order event type {}", type);
             return;
@@ -43,12 +48,14 @@ public class ShopOrderEventConsumer {
         String eventId = stringOf(event.get("eventId"));
         if (!eventDedupe.firstTime(eventId)) {
             log.info("Shop event eventId={} already processed — skipping redelivery", eventId);
+            metrics.deduped(type).increment();
             return;
         }
 
         String userEmail = stringOf(event.get("userEmail"));
         if (userEmail == null || userEmail.isBlank()) {
             log.warn("ORDER_PAID event missing userEmail — skipping email send");
+            metrics.failed(type).increment();
             return;
         }
 
@@ -66,6 +73,7 @@ public class ShopOrderEventConsumer {
             .orElse("en");
 
         emailTemplateService.send("ORDER_PAID", userEmail, locale, vars);
+        metrics.processed("ORDER_PAID").increment();
         log.info("Sent ORDER_PAID email to {} for {} (locale={})",
             userEmail, vars.get("orderNumber"), locale);
     }
