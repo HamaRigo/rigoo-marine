@@ -112,12 +112,6 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>7.4</version>
         </dependency>
-        <!-- Invoice Module -->
-        <dependency>
-            <groupId>com.rigoomarine</groupId>
-            <artifactId>invoice-module</artifactId>
-            <version>1.0.0</version>
-        </dependency>
         <!-- Retry for transient failures -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
