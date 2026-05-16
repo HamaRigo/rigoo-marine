@@ -36,7 +36,7 @@ export default function ResetPassword() {
       if (err.response?.status === 400) {
         setError(t('resetPassword.errors.invalidToken'));
       } else {
-        setError(err.response?.data?.error || err.message || t('resetPassword.errors.fallback'));
+        setError(err.response?.data?.message || err.message || t('resetPassword.errors.fallback'));
       }
     } finally {
       setLoading(false);

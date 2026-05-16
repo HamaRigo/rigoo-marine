@@ -52,7 +52,7 @@ export default function ProductInquiryDialog({ open, onClose, productId, default
       setForm({ name: '', email: '', phone: '', message: '', quantity: '', inquiryType: defaultType });
       onClose();
     } catch (err) {
-      error(err?.response?.data?.error || err?.response?.data?.message || t('inquiry.error'));
+      error(err?.response?.data?.message || t('inquiry.error'));
     } finally {
       setSubmitting(false);
     }

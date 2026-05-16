@@ -80,6 +80,12 @@
             <artifactId>common-security</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <!-- Shared ErrorResponse + CommonExceptionHandler (subclassed by GlobalExceptionHandler). -->
+        <dependency>
+            <groupId>com.rigoomarine</groupId>
+            <artifactId>common-exceptions</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- Email (Task #6) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

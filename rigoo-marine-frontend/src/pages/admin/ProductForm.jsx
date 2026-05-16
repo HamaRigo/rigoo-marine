@@ -113,7 +113,7 @@ export default function ProductForm() {
       success(t('admin.saved'));
       navigate('/admin/products');
     } catch (err) {
-      error(err?.response?.data?.error || err?.response?.data?.message || t('admin.saveError'));
+      error(err?.response?.data?.message || t('admin.saveError'));
     } finally {
       setSaving(false);
     }

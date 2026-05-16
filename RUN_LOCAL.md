@@ -24,6 +24,7 @@ mvn clean install -DskipTests
 
 ```bash
 # Build all backend images
+cd rigoo-marine-backend
 docker build -t rigoomarine/api-gateway:latest -f gateway-module/Dockerfile .
 docker build -t rigoomarine/client-service:latest -f client-module/Dockerfile .
 docker build -t rigoomarine/vessel-service:latest -f vessel-module/Dockerfile .

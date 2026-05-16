@@ -235,7 +235,7 @@ export default function ProductDetail() {
                             await addItem.mutateAsync({ productId: product.id, quantity: qty });
                             toastSuccess(t('cart.added'));
                           } catch (err) {
-                            toastError(err?.response?.data?.error || t('cart.addError'));
+                            toastError(err?.response?.data?.message || t('cart.addError'));
                           }
                         }}
                       >

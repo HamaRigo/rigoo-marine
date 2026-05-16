@@ -81,7 +81,7 @@ function PasswordForm() {
       if (err.response?.status === 429) {
         setError(t('login.tooManyAttempts'));
       } else {
-        setError(err.response?.data?.error || err.message || t('login.errorFallback'));
+        setError(err.response?.data?.message || err.message || t('login.errorFallback'));
       }
     } finally {
       setLoading(false);

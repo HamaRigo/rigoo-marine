@@ -1,0 +1,9 @@
+*/target/
+**/.idea/
+**/*.iml
+**/.settings/
+**/.classpath
+**/.project
+**/surefire-reports/
+**/*.class
+.git/

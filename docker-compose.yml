@@ -2,10 +2,17 @@ services:
   # Netflix Eureka - Service Discovery
   discovery-service:
     build:
-      context: ./rigoo-marine-backend/discovery-service
+      context: ./rigoo-marine-backend
+      dockerfile: discovery-service/Dockerfile
     container_name: discovery-service
     ports:
       - "8761:8761"
+    environment:
+      # Was unset — the JVM sized its heap off the whole VM, making Eureka the
+      # fattest OOM target. Cap it and bound the container.
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
+    mem_limit: 420m
+    mem_reservation: 320m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 30s
@@ -18,7 +25,8 @@ services:
   # API Gateway
   api-gateway:
     build:
-      context: ./rigoo-marine-backend/gateway-module
+      context: ./rigoo-marine-backend
+      dockerfile: gateway-module/Dockerfile
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -29,9 +37,11 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    mem_limit: 560m
+    mem_reservation: 420m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -44,7 +54,8 @@ services:
   # Client Service (internal, no exposed port)
   client-service:
     build:
-      context: ./rigoo-marine-backend/client-module
+      context: ./rigoo-marine-backend
+      dockerfile: client-module/Dockerfile
     container_name: client-service
     depends_on:
       discovery-service:
@@ -55,12 +66,14 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    mem_limit: 900m
+    mem_reservation: 700m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -73,7 +86,8 @@ services:
   # Vessel Service (internal, no exposed port)
   vessel-service:
     build:
-      context: ./rigoo-marine-backend/vessel-module
+      context: ./rigoo-marine-backend
+      dockerfile: vessel-module/Dockerfile
     container_name: vessel-service
     depends_on:
       discovery-service:
@@ -98,7 +112,8 @@ services:
   # Service Service (internal, no exposed port)
   service-service:
     build:
-      context: ./rigoo-marine-backend/service-module
+      context: ./rigoo-marine-backend
+      dockerfile: service-module/Dockerfile
     container_name: service-service
     depends_on:
       discovery-service:
@@ -123,7 +138,8 @@ services:
   # Work Order Service (internal, no exposed port)
   work-order-service:
     build:
-      context: ./rigoo-marine-backend/work-order-module
+      context: ./rigoo-marine-backend
+      dockerfile: work-order-module/Dockerfile
     container_name: work-order-service
     depends_on:
       discovery-service:
@@ -151,7 +167,8 @@ services:
   # Technician Service (internal, no exposed port)
   technician-service:
     build:
-      context: ./rigoo-marine-backend/technician-module
+      context: ./rigoo-marine-backend
+      dockerfile: technician-module/Dockerfile
     container_name: technician-service
     depends_on:
       discovery-service:
@@ -176,7 +193,8 @@ services:
   # Invoice Service (internal, no exposed port)
   invoice-service:
     build:
-      context: ./rigoo-marine-backend/invoice-module
+      context: ./rigoo-marine-backend
+      dockerfile: invoice-module/Dockerfile
     container_name: invoice-service
     depends_on:
       discovery-service:
@@ -204,7 +222,8 @@ services:
   # Marketplace Service (internal, no exposed port)
   marketplace-service:
     build:
-      context: ./rigoo-marine-backend/marketplace-module
+      context: ./rigoo-marine-backend
+      dockerfile: marketplace-module/Dockerfile
     container_name: marketplace-service
     depends_on:
       discovery-service:
@@ -229,7 +248,8 @@ services:
   # Shop Service — Parts & Tools catalog + cart + orders (PLAN.md §2 Phases 1+2).
   shop-service:
     build:
-      context: ./rigoo-marine-backend/shop-module
+      context: ./rigoo-marine-backend
+      dockerfile: shop-module/Dockerfile
     container_name: shop-service
     depends_on:
       discovery-service:
@@ -257,7 +277,8 @@ services:
   # Notification Service (internal, no exposed port)
   notification-service:
     build:
-      context: ./rigoo-marine-backend/notification-module
+      context: ./rigoo-marine-backend
+      dockerfile: notification-module/Dockerfile
     container_name: notification-service
     depends_on:
       discovery-service:

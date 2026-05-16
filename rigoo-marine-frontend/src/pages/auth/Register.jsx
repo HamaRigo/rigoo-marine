@@ -49,7 +49,7 @@ export default function Register() {
       const target = location.state?.from?.pathname || defaultPathForRole(newUser?.role);
       navigate(target, { replace: true });
     } catch (err) {
-      const backendMessage = err.response?.data?.message || err.response?.data?.error;
+      const backendMessage = err.response?.data?.message;
       if (err.response?.status === 400 && /already exists/i.test(backendMessage || '')) {
         setDuplicateEmailOpen(true);
       } else {

@@ -1,94 +1,72 @@
 package com.rigoomarine.client.exception;
 
+import com.rigoomarine.common.exceptions.CommonExceptionHandler;
+import com.rigoomarine.common.exceptions.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Client-service exception handlers. Inherits universal mappings (auth,
+ * illegal-state, validation, catch-all) from {@link CommonExceptionHandler}.
+ *
+ * <p>Overrides:
+ * <ul>
+ *   <li>{@code ClientNotFoundException} → 404 with the client-specific code.</li>
+ *   <li>{@code BadCredentialsException} → 401 {@code INVALID_CREDENTIALS}
+ *       (more specific than the inherited {@code UNAUTHENTICATED}).</li>
+ *   <li>{@code AccessDeniedException} → 403 — the parent collapses to 404 for
+ *       leak prevention, which is wrong for client-service auth-flow endpoints
+ *       where the caller has a legitimate need to distinguish "forbidden"
+ *       from "not found".</li>
+ *   <li>{@code IllegalArgumentException} → 400 {@code INVALID_REQUEST}.</li>
+ * </ul>
+ *
+ * <p>Wire-format change vs. the previous {@code Map<String,Object>} shape: the
+ * response now uses {@link ErrorResponse} ({@code errorCode}, {@code message},
+ * {@code timestamp}, {@code fieldErrors}). Frontend callsites that previously
+ * read the {@code error} reason-phrase field have been updated to read
+ * {@code message}.
+ */
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends CommonExceptionHandler {
 
     @ExceptionHandler(ClientNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleClientNotFound(ClientNotFoundException ex) {
-        // Specific 404 path. Declared BEFORE the broader RuntimeException
-        // handler so the typed exception wins Spring's most-specific match.
+    public ResponseEntity<ErrorResponse> handleClientNotFound(ClientNotFoundException ex) {
         log.warn("Client not found: {}", ex.getMessage());
-        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-        log.warn("Runtime exception: {}", ex.getMessage());
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        log.warn("Illegal argument: {}", ex.getMessage());
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(error("CLIENT_NOT_FOUND", ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentialsException(BadCredentialsException ex) {
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         log.warn("Bad credentials: {}", ex.getMessage());
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(error("INVALID_CREDENTIALS", "Invalid email or password"));
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthenticationException(AuthenticationException ex) {
-        log.warn("Authentication failed: {}", ex.getMessage());
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication failed");
-    }
-
+    /**
+     * Override the parent's leak-prevention 404. For client-service auth + admin
+     * endpoints, 403 is the correct semantic; the frontend's axios interceptor
+     * distinguishes 403 (redirect to login) from 404 (toast).
+     */
+    @Override
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
-        log.warn("Access denied: {}", ex.getMessage());
-        return buildResponse(HttpStatus.FORBIDDEN, "Access denied");
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, WebRequest req) {
+        log.warn("Access denied: {} on {}", ex.getMessage(), req.getDescription(false));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(error("FORBIDDEN", "Access denied"));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        log.warn("Validation failed: {}", ex.getMessage());
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", 400);
-        body.put("error", "Validation Failed");
-        body.put("errors", errors);
-
-        return ResponseEntity.badRequest().body(body);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        log.error("Unexpected exception: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
-    }
-
-    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-
-        return new ResponseEntity<>(body, status);
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(error("INVALID_REQUEST", ex.getMessage()));
     }
 }

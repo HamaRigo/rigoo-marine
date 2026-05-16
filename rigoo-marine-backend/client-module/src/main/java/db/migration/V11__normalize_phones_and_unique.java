@@ -26,10 +26,14 @@ import java.util.logging.Logger;
  *
  * Best-effort: rows with un-parseable phones are left unchanged and logged.
  * They'll only block the migration if they collide with another row's phone.
+ *
+ * <p>Versioned V11 (was V4): the V4 slot collided with V4__email_outbox.sql.
+ * This migration only touches clients.phone and has no FK dependents, so
+ * running it last is order-equivalent to running it at V4.
  */
-public class V4__normalize_phones_and_unique extends BaseJavaMigration {
+public class V11__normalize_phones_and_unique extends BaseJavaMigration {
 
-    private static final Logger log = Logger.getLogger(V4__normalize_phones_and_unique.class.getName());
+    private static final Logger log = Logger.getLogger(V11__normalize_phones_and_unique.class.getName());
     private static final String DEFAULT_REGION = "QA";
 
     @Override

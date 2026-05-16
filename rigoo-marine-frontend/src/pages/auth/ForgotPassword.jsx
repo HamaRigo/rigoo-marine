@@ -22,7 +22,7 @@ export default function ForgotPassword() {
       if (err.response?.status === 429) {
         setError(t('forgotPassword.rateLimit'));
       } else {
-        setError(err.response?.data?.error || err.message || t('forgotPassword.errorFallback'));
+        setError(err.response?.data?.message || err.message || t('forgotPassword.errorFallback'));
       }
     } finally {
       setLoading(false);
