@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, CardActionArea, Chip, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, IconButton, MenuItem, ToggleButtonGroup,
-  ToggleButton, Paper, Avatar, Divider, Stack, Alert
+  TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup,
+  ToggleButton, Avatar, IconButton, Tooltip,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -13,23 +12,20 @@ import {
   RequestQuote as QuoteIcon,
   Settings as SettingsIcon,
   Add as AddIcon,
-  Delete as DeleteIcon,
-  TrendingUp as TrendingIcon,
   AttachMoney as MoneyIcon,
   CheckCircle as CheckCircleIcon,
   Pending as PendingIcon,
   Engineering as EngineeringIcon,
   LocalShipping as VesselIcon,
-  Assessment as ReportIcon,
   Refresh as RefreshIcon,
   PhotoLibrary as MediaIcon,
   ContactPhone as ContactInfoIcon,
-  Image as ImageIcon,
-  Business as LogoIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/format';
+import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
 const managementModules = [
   {
@@ -107,21 +103,7 @@ export default function AdminDashboard() {
   const [clients, setClients] = useState([]);
   const [documentType, setDocumentType] = useState('invoice');
   const [createDocumentOpen, setCreateDocumentOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    workOrderId: '',
-    clientId: '',
-    status: 'PENDING',
-    issueDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    notes: '',
-    terms: '',
-    termsArabic: '',
-    logoUrl: '',
-    insertedImages: [],
-  });
-  const [items, setItems] = useState([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -176,98 +158,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleOpenCreateDocument = () => {
-    setCreateDocumentOpen(true);
-  };
-
-  const handleCloseCreateDocument = () => {
-    setCreateDocumentOpen(false);
-    setFormData({
-      workOrderId: '',
-      clientId: '',
-      status: documentType === 'invoice' ? 'PENDING' : 'DRAFT',
-      issueDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      notes: '',
-      terms: '',
-      termsArabic: '',
-      logoUrl: '',
-      insertedImages: [],
-    });
-    setItems([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
-    setNewImageUrl('');
-  };
+  const handleOpenCreateDocument = () => setCreateDocumentOpen(true);
 
   const handleDocumentTypeChange = (event, newType) => {
-    if (newType) {
-      setDocumentType(newType);
-      setFormData({
-        workOrderId: '',
-        clientId: '',
-        status: newType === 'invoice' ? 'PENDING' : 'DRAFT',
-        issueDate: new Date().toISOString().split('T')[0],
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        notes: '',
-        terms: '',
-        termsArabic: '',
-        logoUrl: '',
-        insertedImages: [],
-      });
-      setItems([{ description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
-      setNewImageUrl('');
-    }
-  };
-
-  const handleAddItem = () => {
-    setItems([...items, { description: '', quantity: 1, unitPrice: 0, taxRate: 25 }]);
-  };
-
-  const handleRemoveItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
-  };
-
-  const handleItemChange = (index, field, value) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: field === 'description' ? value : parseFloat(value) || 0 };
-    setItems(newItems);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const payload = {
-        ...formData,
-        workOrderId: documentType === 'invoice' ? parseInt(formData.workOrderId) : undefined,
-        clientId: parseInt(formData.clientId),
-        items: items.map(item => ({
-          ...item,
-          taxRate: item.taxRate || 0,
-        })),
-      };
-      if (documentType === 'invoice') {
-        await adminApi.createInvoice(payload);
-        toast.success('Invoice created successfully');
-      } else {
-        await adminApi.createQuotation(payload);
-        toast.success('Quotation created successfully');
-      }
-      handleCloseCreateDocument();
-      fetchDashboardData();
-    } catch (err) {
-      toast.error(err.response?.data?.message || `Failed to create ${documentType}`);
-    }
-  };
-
-  const handleAddImage = () => {
-    if (newImageUrl && newImageUrl.trim()) {
-      setFormData({ ...formData, insertedImages: [...formData.insertedImages, newImageUrl.trim()] });
-      setNewImageUrl('');
-    }
-  };
-
-  const handleRemoveImage = (index) => {
-    setFormData({ ...formData, insertedImages: formData.insertedImages.filter((_, i) => i !== index) });
+    if (newType) setDocumentType(newType);
   };
 
   const getStatusColor = (status) => {
@@ -533,6 +427,7 @@ export default function AdminDashboard() {
                       <TableCell>Invoice #</TableCell>
                       <TableCell>Amount</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell padding="checkbox" />
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -547,6 +442,13 @@ export default function AdminDashboard() {
                               color={getStatusColor(invoice.status)}
                               size="small"
                             />
+                          </TableCell>
+                          <TableCell padding="checkbox">
+                            <Tooltip title="Edit invoice">
+                              <IconButton size="small" onClick={() => setEditTarget(invoice)}>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       ))
@@ -567,215 +469,23 @@ export default function AdminDashboard() {
         </Grid>
       </Grid>
 
-      {/* Create Document Dialog */}
-      <Dialog open={createDocumentOpen} onClose={handleCloseCreateDocument} maxWidth="md" fullWidth>
-        <DialogTitle>Create {documentType === 'invoice' ? 'Invoice' : 'Quotation'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Work Order ID"
-                type="number"
-                fullWidth
-                required={documentType === 'invoice'}
-                disabled={documentType === 'quotation'}
-                value={formData.workOrderId}
-                onChange={(e) => setFormData({ ...formData, workOrderId: e.target.value })}
-                helperText={documentType === 'quotation' ? 'Not applicable for quotations' : ''}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Client"
-                select
-                fullWidth
-                required
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-              >
-                {clients.map((client) => (
-                  <MenuItem key={client.id} value={client.id}>
-                    {client.name} ({client.email})
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Status"
-                select
-                fullWidth
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                {documentType === 'invoice' ? (
-                  <>
-                    <MenuItem value="DRAFT">Draft</MenuItem>
-                    <MenuItem value="PENDING">Pending</MenuItem>
-                    <MenuItem value="PAID">Paid</MenuItem>
-                    <MenuItem value="OVERDUE">Overdue</MenuItem>
-                    <MenuItem value="CANCELLED">Cancelled</MenuItem>
-                  </>
-                ) : (
-                  <>
-                    <MenuItem value="DRAFT">Draft</MenuItem>
-                    <MenuItem value="PENDING">Pending</MenuItem>
-                    <MenuItem value="ACCEPTED">Accepted</MenuItem>
-                    <MenuItem value="REJECTED">Rejected</MenuItem>
-                    <MenuItem value="EXPIRED">Expired</MenuItem>
-                  </>
-                )}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Issue Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={formData.issueDate}
-                onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label={documentType === 'invoice' ? 'Due Date' : 'Expiry Date'}
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={documentType === 'invoice' ? formData.dueDate : formData.expiryDate}
-                onChange={(e) => setFormData({ ...formData, [documentType === 'invoice' ? 'dueDate' : 'expiryDate']: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                {documentType === 'invoice' ? 'Invoice' : 'Quotation'} Items
-              </Typography>
-              {items.map((item, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 1, p: 2 }}>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <TextField
-                      label="Description"
-                      fullWidth
-                      value={item.description}
-                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                      size="small"
-                    />
-                    <TextField
-                      label="Qty"
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      size="small"
-                      sx={{ width: 80 }}
-                    />
-                    <TextField
-                      label="Price"
-                      type="number"
-                      value={item.unitPrice}
-                      onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
-                      size="small"
-                      sx={{ width: 100 }}
-                    />
-                    <TextField
-                      label="Tax %"
-                      type="number"
-                      value={item.taxRate}
-                      onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
-                      size="small"
-                      sx={{ width: 80 }}
-                    />
-                    <IconButton onClick={() => handleRemoveItem(index)} size="small">
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Card>
-              ))}
-              <Button startIcon={<AddIcon />} onClick={handleAddItem} size="small">
-                Add Item
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Notes"
-                fullWidth
-                multiline
-                rows={2}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Terms & Conditions (English)"
-                fullWidth
-                multiline
-                rows={2}
-                value={formData.terms}
-                onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                helperText="Qatari standard terms"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="الشروط والأحكام (العربية)"
-                fullWidth
-                multiline
-                rows={2}
-                value={formData.termsArabic}
-                onChange={(e) => setFormData({ ...formData, termsArabic: e.target.value })}
-                dir="rtl"
-                helperText="الشروط القياسية القطرية"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Company Logo URL"
-                fullWidth
-                value={formData.logoUrl}
-                onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                placeholder="https://example.com/logo.png"
-                InputProps={{
-                  startAdornment: <LogoIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" gutterBottom>
-                Inserted Images (Work Photos, etc.)
-              </Typography>
-              {formData.insertedImages.map((url, index) => (
-                <Chip
-                  key={index}
-                  label={`Image ${index + 1}`}
-                  onDelete={() => handleRemoveImage(index)}
-                  sx={{ mr: 1, mb: 1 }}
-                  variant="outlined"
-                />
-              ))}
-              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                <TextField
-                  size="small"
-                  placeholder="Image URL"
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddImage()}
-                  sx={{ flex: 1 }}
-                />
-                <Button variant="outlined" startIcon={<ImageIcon />} onClick={handleAddImage}>
-                  Add
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCreateDocument}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={!formData.clientId}>
-            Create {documentType === 'invoice' ? 'Invoice' : 'Quotation'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CreateInvoiceDialog
+        open={createDocumentOpen}
+        onClose={() => setCreateDocumentOpen(false)}
+        clients={clients}
+        type={documentType}
+        onCreated={fetchDashboardData}
+      />
+
+      <CreateInvoiceDialog
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        clients={clients}
+        type="invoice"
+        initialData={editTarget}
+        editId={editTarget?.id}
+        onCreated={fetchDashboardData}
+      />
     </Box>
   );
 }

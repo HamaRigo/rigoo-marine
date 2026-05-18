@@ -69,6 +69,15 @@ public class InvoiceController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<InvoiceDTO> updateInvoice(
+        @PathVariable Long id,
+        @Valid @RequestBody CreateInvoiceRequest request
+    ) {
+        return ResponseEntity.ok(invoiceService.updateInvoice(id, request));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/status")
     public ResponseEntity<InvoiceDTO> updateInvoiceStatus(
         @PathVariable Long id,

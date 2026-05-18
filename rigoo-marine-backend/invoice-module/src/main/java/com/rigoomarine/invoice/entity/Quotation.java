@@ -22,8 +22,22 @@ public class Quotation {
     @Column(nullable = false, unique = true)
     private String quotationNumber;
 
-    @Column(nullable = false)
     private Long clientId;
+
+    @Column(name = "bill_to_name")
+    private String billToName;
+
+    @Column(name = "bill_to_email")
+    private String billToEmail;
+
+    @Column(name = "bill_to_phone")
+    private String billToPhone;
+
+    @Column(name = "bill_to_address")
+    private String billToAddress;
+
+    @Column(name = "bill_to_company")
+    private String billToCompany;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -35,8 +49,7 @@ public class Quotation {
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "quotation_id")
+    @OneToMany(mappedBy = "quotation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<QuotationItem> items = new ArrayList<>();
 

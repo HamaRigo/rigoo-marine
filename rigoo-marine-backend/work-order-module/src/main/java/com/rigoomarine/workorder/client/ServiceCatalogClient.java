@@ -1,6 +1,7 @@
 package com.rigoomarine.workorder.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,7 +41,7 @@ public class ServiceCatalogClient {
 
     private final RestTemplate restTemplate;
 
-    public ServiceCatalogClient(@LoadBalanced RestTemplate restTemplate) {
+    public ServiceCatalogClient(@Qualifier("serviceCatalogRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
@@ -89,7 +90,6 @@ public class ServiceCatalogClient {
     static class RestTemplateConfig {
         @Bean(name = "serviceCatalogRestTemplate")
         @LoadBalanced
-        @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean(RestTemplate.class)
         public RestTemplate serviceCatalogRestTemplate() {
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
             factory.setConnectTimeout(1000);

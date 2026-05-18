@@ -4,6 +4,8 @@ import com.rigoomarine.invoice.entity.Invoice;
 import com.rigoomarine.invoice.entity.Invoice.InvoiceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +16,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     List<Invoice> findByClientId(Long clientId);
     List<Invoice> findByWorkOrderId(Long workOrderId);
     List<Invoice> findByStatus(InvoiceStatus status);
+
+    @Query("SELECT MAX(i.invoiceNumber) FROM Invoice i WHERE i.invoiceNumber LIKE :prefix%")
+    Optional<String> findMaxInvoiceNumberWithPrefix(@Param("prefix") String prefix);
 }

@@ -18,6 +18,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
+import HomeIcon from '@mui/icons-material/Home';
 
 const drawerWidth = 240;
 const navItems = [
@@ -127,6 +128,15 @@ export default function AdminLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Admin'}
           </Typography>
+          <IconButton
+            component={Link}
+            to="/"
+            color="inherit"
+            title="Go to Home"
+            sx={{ ml: 1 }}
+          >
+            <HomeIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
 

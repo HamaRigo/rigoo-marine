@@ -69,6 +69,15 @@ public class QuotationController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<QuotationDTO> updateQuotation(
+        @PathVariable Long id,
+        @Valid @RequestBody CreateQuotationRequest request
+    ) {
+        return ResponseEntity.ok(quotationService.updateQuotation(id, request));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/status")
     public ResponseEntity<QuotationDTO> updateQuotationStatus(
         @PathVariable Long id,

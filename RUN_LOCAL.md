@@ -1,184 +1,151 @@
-# Run Application Locally - Quick Start
+# Run Locally — Minimum Docker (Recommended)
+
+Run only the 4 infrastructure containers in Docker; everything else runs directly
+in IntelliJ or the Node dev server. No JVM images needed, so disk usage stays low.
+
+---
 
 ## Prerequisites
 
-Install these first:
 - Java 17+
 - Node.js 20+
-- Docker & Docker Composec
-- PostgreSQL (or use Docker)
-- Kafka (or use Docker)
+- Docker Desktop (running)
+- IntelliJ IDEA (Community or Ultimate)
+- Maven (or use the IntelliJ built-in)
 
 ---
 
-## Option A: Run Everything with Docker (Recommended)
-
-### Step 1: Build all backend services
+## Step 1 — Start Infrastructure (Docker only)
 
 ```bash
-cd rigoo-marine-backend
-mvn clean install -DskipTests
+docker compose up -d postgres redis zookeeper kafka
 ```
 
-### Step 2: Build Docker images
+This pulls/starts only 4 small images (~300 MB total). Wait ~15 s for Postgres to
+be ready before starting services.
 
-```bash
-# Build all backend images
-cd rigoo-marine-backend
-docker build -t rigoomarine/api-gateway:latest -f gateway-module/Dockerfile .
-docker build -t rigoomarine/client-service:latest -f client-module/Dockerfile .
-docker build -t rigoomarine/vessel-service:latest -f vessel-module/Dockerfile .
-docker build -t rigoomarine/service-service:latest -f service-module/Dockerfile .
-docker build -t rigoomarine/work-order-service:latest -f work-order-module/Dockerfile .
-docker build -t rigoomarine/technician-service:latest -f technician-module/Dockerfile .
-docker build -t rigoomarine/invoice-service:latest -f invoice-module/Dockerfile .
-docker build -t rigoomarine/notification-service:latest -f notification-module/Dockerfile .
-docker build -t rigoomarine/discovery-service:latest -f discovery-service/Dockerfile .
-```
-
-### Step 3: Build frontend image
-
-```bash
-cd rigoo-marine-frontend
-npm install
-npm run build
-docker build -t rigoomarine/marine-frontend:latest .
-```
-
-### Step 4: Start all services
-
-```bash
-cd /Users/hammarigo/Desktop/Rigoomarine
-docker compose up -d
-```
-
-### Step 5: Check status
+Verify:
 
 ```bash
 docker compose ps
-docker compose logs -f
 ```
 
-### Access the app:
-- Frontend: http://localhost
-- API Gateway: http://localhost:8080
-- Eureka Dashboard: http://localhost:8761
+All 4 should show `healthy` or `running`.
 
 ---
 
-## Option B: Run Services Individually (Development)
+## Step 2 — Run Backend Services from IntelliJ
 
-### Step 1: Start Infrastructure (PostgreSQL + Kafka + Zookeeper)
+Open `rigoo-marine-backend/` as a Maven project in IntelliJ.
 
-```bash
-docker run -d --name postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=rigoomarine \
-  -p 5432:5432 \
-  postgres:15-alpine
+Start services **in order** — each one is a Spring Boot run configuration pointing
+to its main class:
 
-docker run -d --name zookeeper \
-  -p 2181:2181 \
-  confluentinc/cp-zookeeper:7.4.0
+| # | Module | Main Class | Port |
+|---|--------|-----------|------|
+| 1 | `discovery-service` | `DiscoveryApplication` | 8761 |
+| 2 | `gateway-module` | `GatewayApplication` | 8080 |
+| 3 | `client-module` | `ClientApplication` | 8081 |
+| 4 | `vessel-module` | `VesselApplication` | 8082 |
+| 5 | `service-module` | `ServiceApplication` | 8083 |
+| 6 | `work-order-module` | `WorkOrderApplication` | 8084 |
+| 7 | `technician-module` | `TechnicianApplication` | 8086 |
+| 8 | `maintenance-module` | `MaintenanceApplication` | 8091 |
+| 9 | `shop-module` | `ShopApplication` | 8089 |
 
-docker run -d --name kafka \
-  -p 9092:9092 \
-  -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 \
-  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
-  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
-  --link zookeeper \
-  confluentinc/cp-kafka:7.4.0
-```
+**Wait ~20 s between discovery-service and the gateway** so the gateway finds Eureka
+before it starts routing.
 
-### Step 2: Start Discovery Service
+### No env vars needed
 
-```bash
-cd rigoo-marine-backend/discovery-service
-mvn spring-boot:run
-```
+All services default to `localhost` for every dependency:
 
-### Step 3: Start API Gateway
+| Setting | Default |
+|---------|---------|
+| PostgreSQL | `localhost:5432 / rigoomarine / postgres / postgres` |
+| Redis | `localhost:6379` |
+| Eureka | `http://localhost:8761/eureka/` |
+| JWT secret | built-in dev key |
+| Mail | disabled (`MAIL_ENABLED=false`) |
 
-```bash
-cd rigoo-marine-backend/gateway-module
-mvn spring-boot:run
-```
+### Optional services (start only if you need them)
 
-### Step 4: Start all microservices (each in separate terminal)
+| Module | Main Class | Port | When needed |
+|--------|-----------|------|-------------|
+| `invoice-module` | `InvoiceApplication` | 8085 | billing / PDF flows |
+| `notification-module` | `NotificationApplication` | 8087 | email / WhatsApp alerts |
+| `marketplace-module` | `MarketplaceApplication` | 8088 | parts marketplace |
 
-```bash
-# Client Service
-cd rigoo-marine-backend/client-module
-mvn spring-boot:run
+---
 
-# Vessel Service
-cd rigoo-marine-backend/vessel-module
-mvn spring-boot:run
-
-# Service Service
-cd rigoo-marine-backend/service-module
-mvn spring-boot:run
-
-# Work Order Service
-cd rigoo-marine-backend/work-order-module
-mvn spring-boot:run
-
-# Technician Service
-cd rigoo-marine-backend/technician-module
-mvn spring-boot:run
-
-# Invoice Service
-cd rigoo-marine-backend/invoice-module
-mvn spring-boot:run
-
-# Notification Service
-cd rigoo-marine-backend/notification-module
-mvn spring-boot:run
-```
-
-### Step 5: Start Frontend
+## Step 3 — Start Frontend Dev Server
 
 ```bash
 cd rigoo-marine-frontend
-npm install
+npm install        # first time only
 npm run dev
 ```
 
-Access:
-- Frontend: http://localhost:5173
-- API Gateway: http://localhost:8080
+Frontend runs on **http://localhost:5173** and proxies API calls to the gateway on
+`http://localhost:8080`.
 
 ---
 
-## Troubleshooting
+## Access Points
 
-### Services won't connect to Eureka
-- Make sure Discovery Service is running first
-- Wait 30 seconds for services to register
-
-### Kafka connection errors
-- The app will still work - Kafka errors are caught and logged
-- Notifications won't be sent, but core functionality works
-
-### Database errors
-- Check PostgreSQL is running: `docker ps | grep postgres`
-- Check connection: `psql -h localhost -U postgres -d rigoomarine`
-
-### Frontend can't connect to API
-- Check VITE_API_BASE_URL in .env
-- Make sure API Gateway is running on port 8080
+| URL | What |
+|-----|------|
+| http://localhost:5173 | Frontend (Vite dev server) |
+| http://localhost:8080 | API Gateway |
+| http://localhost:8761 | Eureka dashboard |
 
 ---
 
 ## Quick Health Check
 
 ```bash
-# Test API Gateway
+# Infra
+docker compose ps
+
+# Gateway
 curl http://localhost:8080/actuator/health
 
-# Test Eureka
-curl http://localhost:8761/actuator/health
-
-# Test services registration
-curl http://localhost:8761/eureka/apps
+# Eureka (lists registered services)
+curl http://localhost:8761/eureka/apps | grep -o '<app>.*</app>'
 ```
+
+---
+
+## Stopping
+
+```bash
+# Stop infrastructure
+docker compose down
+
+# Stop IntelliJ services: use the Stop button in the Run panel
+```
+
+---
+
+## Troubleshooting
+
+**Service won't register with Eureka**
+Make sure discovery-service started first and is healthy (`curl http://localhost:8761/actuator/health`).
+
+**`Could not find artifact com.rigoomarine:common-security`**
+Run a Maven install from the project root before running individual modules:
+```bash
+cd rigoo-marine-backend
+mvn install -DskipTests
+```
+
+**Kafka errors in logs**
+Non-fatal for core flows. Notifications and async events won't fire, but auth /
+vessel / work-order functionality works normally.
+
+**Port already in use**
+Check for stale processes: `lsof -i :<port>` then `kill <PID>`.
+
+**Postgres connection refused**
+Confirm the container is up: `docker compose ps postgres`. If it shows `starting`,
+wait a few more seconds.

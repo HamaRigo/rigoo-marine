@@ -17,7 +17,7 @@ public class InvoiceItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 
     @Column(nullable = false, columnDefinition = "TEXT")

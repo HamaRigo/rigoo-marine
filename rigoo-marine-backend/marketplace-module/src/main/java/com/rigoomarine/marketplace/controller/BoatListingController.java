@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/listings")
@@ -45,6 +46,11 @@ public class BoatListingController {
         return ResponseEntity.ok(service.search(
                 mode, q, boatType, lengthMin, lengthMax, yearMin, yearMax,
                 priceMin, priceMax, location, adminStatus, pageable));
+    }
+
+    @GetMapping("/boat-types")
+    public ResponseEntity<List<String>> getBoatTypes() {
+        return ResponseEntity.ok(service.getDistinctBoatTypes());
     }
 
     @GetMapping("/{id}")

@@ -17,7 +17,7 @@ public class QuotationItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quotation_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "quotation_id", nullable = false)
     private Quotation quotation;
 
     @Column(nullable = false, columnDefinition = "TEXT")

@@ -11,11 +11,17 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateInvoiceRequest {
 
-    @NotNull(message = "Work Order ID is required")
     private Long workOrderId;
 
-    @NotNull(message = "Client ID is required")
     private Long clientId;
+
+    // Free-text bill-to for unregistered clients. At least one of clientId or
+    // billToName must be provided (validated in the service layer).
+    private String billToName;
+    private String billToEmail;
+    private String billToPhone;
+    private String billToAddress;
+    private String billToCompany;
 
     private String status;
     private LocalDateTime issueDate;

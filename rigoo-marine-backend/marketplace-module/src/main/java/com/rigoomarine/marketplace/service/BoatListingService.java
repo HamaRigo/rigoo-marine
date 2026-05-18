@@ -28,6 +28,11 @@ public class BoatListingService {
 
     private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
 
+    @Transactional(readOnly = true)
+    public List<String> getDistinctBoatTypes() {
+        return repository.findDistinctBoatTypes();
+    }
+
     public BoatListingDTO create(BoatListingDTO dto) {
         BoatListing entity = fromDTO(dto, new BoatListing());
         // Slug is NOT NULL — generate before insert so the row is valid in one trip.

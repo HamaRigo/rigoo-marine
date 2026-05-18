@@ -33,31 +33,45 @@ public class QuotationService {
     private final QuotationRepository quotationRepository;
 
     public QuotationDTO createQuotation(CreateQuotationRequest request) {
-        Quotation quotation = Quotation.builder()
-            .quotationNumber(generateQuotationNumber())
-            .clientId(request.getClientId())
-            .status(request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : Quotation.QuotationStatus.DRAFT)
-            .issueDate(request.getIssueDate())
-            .expiryDate(request.getExpiryDate())
-            .items(request.getItems().stream().map(item -> QuotationItem.builder()
+        if (request.getClientId() == null && (request.getBillToName() == null || request.getBillToName().isBlank())) {
+            throw new IllegalArgumentException("Either a registered client or a bill-to name is required");
+        }
+
+        List<QuotationItem> itemEntities = request.getItems().stream()
+            .map(item -> QuotationItem.builder()
                 .description(item.getDescription())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .taxRate(item.getTaxRate() != null ? item.getTaxRate() : BigDecimal.ZERO)
-                .build()).collect(Collectors.toList()))
+                .build())
+            .collect(Collectors.toList());
+
+        Quotation quotation = Quotation.builder()
+            .quotationNumber(generateQuotationNumber())
+            .clientId(request.getClientId())
+            .billToName(request.getBillToName())
+            .billToEmail(request.getBillToEmail())
+            .billToPhone(request.getBillToPhone())
+            .billToAddress(request.getBillToAddress())
+            .billToCompany(request.getBillToCompany())
+            .status(request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : Quotation.QuotationStatus.DRAFT)
+            .issueDate(request.getIssueDate())
+            .expiryDate(request.getExpiryDate())
+            .items(itemEntities)
             .notes(request.getNotes())
             .terms(request.getTerms())
             .termsArabic(request.getTermsArabic())
             .logoUrl(request.getLogoUrl())
-            .insertedImages(request.getInsertedImages() != null ? request.getInsertedImages() : new java.util.ArrayList<>())
+            .insertedImages(request.getInsertedImages() != null ? request.getInsertedImages() : new ArrayList<>())
             .build();
 
-        // Calculate totals
-        BigDecimal subtotal = quotation.getItems().stream()
-            .map(QuotationItem::getAmount)
+        itemEntities.forEach(item -> item.setQuotation(quotation));
+
+        BigDecimal subtotal = itemEntities.stream()
+            .map(item -> item.getUnitPrice().multiply(new BigDecimal(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRate = quotation.getItems().stream()
+        BigDecimal taxRate = itemEntities.stream()
             .map(QuotationItem::getTaxRate)
             .filter(r -> r != null)
             .max(BigDecimal::compareTo)
@@ -71,33 +85,23 @@ public class QuotationService {
         quotation.setTaxAmount(taxAmount);
         quotation.setTotal(total);
 
-        // Set watermark based on status
-        if (quotation.getStatus() == Quotation.QuotationStatus.DRAFT) {
-            quotation.setWatermark("DRAFT");
-        } else if (quotation.getStatus() == Quotation.QuotationStatus.ACCEPTED) {
-            quotation.setWatermark("ACCEPTED");
-        } else if (quotation.getStatus() == Quotation.QuotationStatus.REJECTED) {
-            quotation.setWatermark("REJECTED");
-        } else {
-            quotation.setWatermark("QUOTATION");
-        }
+        Quotation.QuotationStatus st = quotation.getStatus();
+        if (st == Quotation.QuotationStatus.DRAFT)         quotation.setWatermark("DRAFT");
+        else if (st == Quotation.QuotationStatus.ACCEPTED) quotation.setWatermark("ACCEPTED");
+        else if (st == Quotation.QuotationStatus.REJECTED) quotation.setWatermark("REJECTED");
+        else                                               quotation.setWatermark("QUOTATION");
 
-        Quotation saved = quotationRepository.save(quotation);
-        return toDTO(saved);
+        return toDTO(quotationRepository.save(quotation));
     }
 
     @Transactional(readOnly = true)
     public List<QuotationDTO> getQuotationsByClientId(Long clientId) {
-        return quotationRepository.findByClientId(clientId).stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+        return quotationRepository.findByClientId(clientId).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<QuotationDTO> getAllQuotations() {
-        return quotationRepository.findAll().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+        return quotationRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -108,15 +112,12 @@ public class QuotationService {
                 String like = "%" + q.toLowerCase() + "%";
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("quotationNumber")), like),
-                        cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like)
-                ));
+                        cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like)));
             }
-            if (status != null && !status.isBlank()) {
+            if (status != null && !status.isBlank())
                 predicates.add(cb.equal(root.get("status"), Quotation.QuotationStatus.valueOf(status)));
-            }
-            if (clientId != null) {
+            if (clientId != null)
                 predicates.add(cb.equal(root.get("clientId"), clientId));
-            }
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
         return quotationRepository.findAll(spec, pageable).map(this::toDTO);
@@ -124,40 +125,78 @@ public class QuotationService {
 
     @Transactional(readOnly = true)
     public QuotationDTO getQuotationById(Long id) {
-        return quotationRepository.findById(id)
-            .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Quotation not found"));
+        return quotationRepository.findById(id).map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Quotation not found"));
     }
 
     @Transactional(readOnly = true)
     public QuotationDTO getQuotationByNumber(String quotationNumber) {
-        return quotationRepository.findByQuotationNumber(quotationNumber)
-            .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Quotation not found"));
+        return quotationRepository.findByQuotationNumber(quotationNumber).map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Quotation not found"));
     }
 
-    public QuotationDTO updateQuotationStatus(Long id, String status) {
+    public QuotationDTO updateQuotation(Long id, CreateQuotationRequest request) {
         Quotation quotation = quotationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Quotation not found"));
 
+        quotation.setClientId(request.getClientId());
+        quotation.setBillToName(request.getBillToName());
+        quotation.setBillToEmail(request.getBillToEmail());
+        quotation.setBillToPhone(request.getBillToPhone());
+        quotation.setBillToAddress(request.getBillToAddress());
+        quotation.setBillToCompany(request.getBillToCompany());
+        quotation.setStatus(request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : quotation.getStatus());
+        quotation.setIssueDate(request.getIssueDate());
+        quotation.setExpiryDate(request.getExpiryDate());
+        quotation.setNotes(request.getNotes());
+        quotation.setTerms(request.getTerms());
+        quotation.setTermsArabic(request.getTermsArabic());
+        quotation.setLogoUrl(request.getLogoUrl());
+
+        quotation.getItems().clear();
+        List<QuotationItem> newItems = request.getItems().stream()
+            .map(item -> QuotationItem.builder()
+                .description(item.getDescription())
+                .quantity(item.getQuantity())
+                .unitPrice(item.getUnitPrice())
+                .taxRate(item.getTaxRate() != null ? item.getTaxRate() : BigDecimal.ZERO)
+                .quotation(quotation)
+                .build())
+            .collect(Collectors.toList());
+        quotation.getItems().addAll(newItems);
+
+        BigDecimal subtotal = newItems.stream()
+            .map(item -> item.getUnitPrice().multiply(new BigDecimal(item.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal taxRate = newItems.stream()
+            .map(QuotationItem::getTaxRate).filter(r -> r != null)
+            .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        BigDecimal taxAmount = subtotal.multiply(taxRate.divide(new BigDecimal("100")));
+        quotation.setSubtotal(subtotal);
+        quotation.setTaxRate(taxRate);
+        quotation.setTaxAmount(taxAmount);
+        quotation.setTotal(subtotal.add(taxAmount));
+
+        Quotation.QuotationStatus st = quotation.getStatus();
+        if (st == Quotation.QuotationStatus.DRAFT)         quotation.setWatermark("DRAFT");
+        else if (st == Quotation.QuotationStatus.ACCEPTED) quotation.setWatermark("ACCEPTED");
+        else if (st == Quotation.QuotationStatus.REJECTED) quotation.setWatermark("REJECTED");
+        else if (st == Quotation.QuotationStatus.EXPIRED)  quotation.setWatermark("EXPIRED");
+        else                                               quotation.setWatermark("QUOTATION");
+
+        return toDTO(quotationRepository.save(quotation));
+    }
+
+    public QuotationDTO updateQuotationStatus(Long id, String status) {
+        Quotation q = quotationRepository.findById(id).orElseThrow(() -> new RuntimeException("Quotation not found"));
         Quotation.QuotationStatus newStatus = Quotation.QuotationStatus.valueOf(status);
-        quotation.setStatus(newStatus);
-
-        if (newStatus == Quotation.QuotationStatus.ACCEPTED) {
-            quotation.setAcceptedAt(LocalDateTime.now());
-            quotation.setWatermark("ACCEPTED");
-        } else if (newStatus == Quotation.QuotationStatus.REJECTED) {
-            quotation.setWatermark("REJECTED");
-        } else if (newStatus == Quotation.QuotationStatus.DRAFT) {
-            quotation.setWatermark("DRAFT");
-        } else if (newStatus == Quotation.QuotationStatus.EXPIRED) {
-            quotation.setWatermark("EXPIRED");
-        } else {
-            quotation.setWatermark("QUOTATION");
-        }
-
-        Quotation updated = quotationRepository.save(quotation);
-        return toDTO(updated);
+        q.setStatus(newStatus);
+        if (newStatus == Quotation.QuotationStatus.ACCEPTED) { q.setAcceptedAt(LocalDateTime.now()); q.setWatermark("ACCEPTED"); }
+        else if (newStatus == Quotation.QuotationStatus.REJECTED) q.setWatermark("REJECTED");
+        else if (newStatus == Quotation.QuotationStatus.DRAFT)    q.setWatermark("DRAFT");
+        else if (newStatus == Quotation.QuotationStatus.EXPIRED)  q.setWatermark("EXPIRED");
+        else                                                      q.setWatermark("QUOTATION");
+        return toDTO(quotationRepository.save(q));
     }
 
     public void deleteQuotation(Long id) {
@@ -165,20 +204,31 @@ public class QuotationService {
     }
 
     private String generateQuotationNumber() {
-        String year = String.valueOf(LocalDateTime.now().getYear());
-        long count = quotationRepository.count() + 1;
-        return "QUO-" + year + "-" + String.format("%03d", count);
+        String year   = String.valueOf(LocalDateTime.now().getYear());
+        String prefix = "QUO-" + year + "-";
+        long next = quotationRepository.findMaxQuotationNumberWithPrefix(prefix)
+            .map(max -> {
+                try { return Long.parseLong(max.substring(prefix.length())) + 1; }
+                catch (NumberFormatException e) { return 1L; }
+            })
+            .orElse(1L);
+        return prefix + String.format("%03d", next);
     }
 
-    private QuotationDTO toDTO(Quotation quotation) {
+    private QuotationDTO toDTO(Quotation q) {
         return QuotationDTO.builder()
-            .id(quotation.getId())
-            .quotationNumber(quotation.getQuotationNumber())
-            .clientId(quotation.getClientId())
-            .status(quotation.getStatus().name())
-            .issueDate(quotation.getIssueDate())
-            .expiryDate(quotation.getExpiryDate())
-            .items(quotation.getItems().stream().map(item -> QuotationItemDTO.builder()
+            .id(q.getId())
+            .quotationNumber(q.getQuotationNumber())
+            .clientId(q.getClientId())
+            .billToName(q.getBillToName())
+            .billToEmail(q.getBillToEmail())
+            .billToPhone(q.getBillToPhone())
+            .billToAddress(q.getBillToAddress())
+            .billToCompany(q.getBillToCompany())
+            .status(q.getStatus().name())
+            .issueDate(q.getIssueDate())
+            .expiryDate(q.getExpiryDate())
+            .items(q.getItems().stream().map(item -> QuotationItemDTO.builder()
                 .id(item.getId())
                 .description(item.getDescription())
                 .quantity(item.getQuantity())
@@ -186,359 +236,430 @@ public class QuotationService {
                 .taxRate(item.getTaxRate())
                 .amount(item.getAmount())
                 .build()).collect(Collectors.toList()))
-            .subtotal(quotation.getSubtotal())
-            .taxRate(quotation.getTaxRate())
-            .taxAmount(quotation.getTaxAmount())
-            .total(quotation.getTotal())
-            .notes(quotation.getNotes())
-            .terms(quotation.getTerms())
-            .termsArabic(quotation.getTermsArabic())
-            .logoUrl(quotation.getLogoUrl())
-            .insertedImages(quotation.getInsertedImages())
-            .watermark(quotation.getWatermark())
-            .acceptedAt(quotation.getAcceptedAt())
-            .createdAt(quotation.getCreatedAt())
+            .subtotal(q.getSubtotal())
+            .taxRate(q.getTaxRate())
+            .taxAmount(q.getTaxAmount())
+            .total(q.getTotal())
+            .notes(q.getNotes())
+            .terms(q.getTerms())
+            .termsArabic(q.getTermsArabic())
+            .logoUrl(q.getLogoUrl())
+            .insertedImages(q.getInsertedImages())
+            .watermark(q.getWatermark())
+            .acceptedAt(q.getAcceptedAt())
+            .createdAt(q.getCreatedAt())
             .build();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    //  PDF — identical layout to InvoiceService, adapted for Quotation fields
+    // ─────────────────────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public byte[] generateQuotationPdf(Long id) {
         Quotation quotation = quotationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Quotation not found"));
 
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 50, 50, 50, 50);
-            PdfWriter writer = PdfWriter.getInstance(document, byteArrayOutputStream);
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4, 40, 40, 40, 40);
+            PdfWriter pdfWriter = PdfWriter.getInstance(document, out);
+
+            try {
+                BaseFont wmarkBf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                Image wmarkImg = BrandingAssetLoader.loadWatermark();
+                pdfWriter.setPageEvent(new QuotationPageEvent(wmarkImg, wmarkBf));
+            } catch (Exception ignored) {}
+
             document.open();
 
-            // Font definitions
-            Font headerFont = new Font(Font.HELVETICA, 14, Font.BOLD);
-            Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-            Font normalFont = new Font(Font.HELVETICA, 10, Font.NORMAL);
-            Font boldFont = new Font(Font.HELVETICA, 10, Font.BOLD);
-            Font smallFont = new Font(Font.HELVETICA, 9, Font.NORMAL);
-            Font footerFont = new Font(Font.HELVETICA, 8, Font.NORMAL);
+            // ── Colors ───────────────────────────────────────────────────────
+            Color primaryBlue   = new Color(46, 91, 168);
+            Color deepBlue      = new Color(28, 57, 110);
+            Color accentGold    = new Color(180, 148, 75);
+            Color tableHeaderBg = new Color(70, 100, 150);
+            Color billToBg      = new Color(232, 232, 232);
+            Color altRowBg      = new Color(248, 248, 248);
 
-            // ============== HEADER ==============
+            // ── Fonts ────────────────────────────────────────────────────────
+            Font normalFont    = new Font(Font.HELVETICA,  9, Font.NORMAL);
+            Font boldFont      = new Font(Font.HELVETICA,  9, Font.BOLD);
+            Font smallFont     = new Font(Font.HELVETICA,  8, Font.NORMAL);
+            Font tableHdrFont  = new Font(Font.HELVETICA,  9, Font.BOLD, Color.WHITE);
+            Font totalBoldFont = new Font(Font.HELVETICA, 10, Font.BOLD, primaryBlue);
+            Font footerFont    = new Font(Font.HELVETICA,  7, Font.NORMAL);
+            Font titleBig      = new Font(Font.HELVETICA, 34, Font.BOLD, deepBlue);
+            Font labelGray     = new Font(Font.HELVETICA,  8, Font.BOLD, new Color(120, 120, 120));
+
+            // ── Arabic font ───────────────────────────────────────────────────
+            Font arabicFont = smallFont;
+            Font arabicBoldFont = boldFont;
+            try {
+                java.io.InputStream fontStream = BrandingAssetLoader.class.getClassLoader()
+                        .getResourceAsStream("branding/ArialUnicode.ttf");
+                if (fontStream != null) {
+                    byte[] fontBytes = fontStream.readAllBytes();
+                    BaseFont bf = BaseFont.createFont("ArialUnicode.ttf",
+                            BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, fontBytes, null);
+                    arabicFont     = new Font(bf, 8, Font.NORMAL);
+                    arabicBoldFont = new Font(bf, 8, Font.BOLD);
+                }
+            } catch (Exception ignored) {}
+
+            DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance();
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+
+            // ── 1. HEADER: LOGO (left) | QUOTATION TITLE (right) ─────────────
             PdfPTable headerTable = new PdfPTable(2);
             headerTable.setWidthPercentage(100);
-            headerTable.setWidths(new int[]{1, 1});
-            headerTable.setSpacingAfter(15);
-            headerTable.setSpacingBefore(10);
+            headerTable.setWidths(new float[]{12, 88});
+            headerTable.setSpacingAfter(0);
 
-            // Left side - Logo and tagline
-            PdfPCell logoCell = new PdfPCell();
-            logoCell.setBorder(Rectangle.NO_BORDER);
-            logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-            // Logo: per-quotation URL wins; otherwise fall back to classpath:branding/logo.png; otherwise text header.
+            PdfPCell logoHdrCell = new PdfPCell();
+            logoHdrCell.setBackgroundColor(Color.WHITE);
+            logoHdrCell.setBorder(Rectangle.NO_BORDER);
+            logoHdrCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            logoHdrCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            logoHdrCell.setPadding(4);
             Image logoImage = null;
-            if (quotation.getLogoUrl() != null && !quotation.getLogoUrl().isEmpty()) {
-                try {
-                    logoImage = Image.getInstance(quotation.getLogoUrl());
-                } catch (Exception ignored) {
-                }
+            if (quotation.getLogoUrl() != null && !quotation.getLogoUrl().isBlank()) {
+                try { logoImage = Image.getInstance(quotation.getLogoUrl()); } catch (Exception ignored) {}
             }
-            if (logoImage == null) {
-                logoImage = BrandingAssetLoader.loadLogo();
-            }
+            if (logoImage == null) logoImage = BrandingAssetLoader.loadLogo();
             if (logoImage != null) {
-                logoImage.scaleToFit(120, 60);
-                logoCell.addElement(logoImage);
-                logoCell.addElement(Chunk.NEWLINE);
-            } else {
-                Paragraph companyName = new Paragraph("RIGOO MARINE", titleFont);
-                companyName.setSpacingAfter(5);
-                logoCell.addElement(companyName);
+                logoImage.scaleToFit(62, 92);
+                logoImage.setAlignment(Image.ALIGN_CENTER);
+                logoHdrCell.addElement(logoImage);
             }
+            headerTable.addCell(logoHdrCell);
 
-            // Report header / tagline
-            Paragraph tagline = new Paragraph("Professional Marine Services", boldFont);
-            logoCell.addElement(tagline);
+            PdfPCell rightCell = new PdfPCell();
+            rightCell.setBackgroundColor(Color.WHITE);
+            rightCell.setBorder(Rectangle.NO_BORDER);
+            rightCell.setPaddingTop(18);
+            rightCell.setPaddingBottom(14);
+            rightCell.setPaddingLeft(22);
+            rightCell.setPaddingRight(16);
+            rightCell.setVerticalAlignment(Element.ALIGN_TOP);
+            rightCell.addElement(new Paragraph("QUOTATION", titleBig));
 
-            headerTable.addCell(logoCell);
+            PdfPTable accentBar = new PdfPTable(1);
+            accentBar.setWidthPercentage(100);
+            accentBar.setSpacingBefore(4);
+            accentBar.setSpacingAfter(8);
+            PdfPCell accentCell = new PdfPCell(new Phrase(" "));
+            accentCell.setBackgroundColor(accentGold);
+            accentCell.setBorder(Rectangle.NO_BORDER);
+            accentCell.setFixedHeight(2.5f);
+            accentBar.addCell(accentCell);
+            rightCell.addElement(accentBar);
 
-            // Right side - Company address block (Qatar format)
-            PdfPCell addressCell = new PdfPCell();
-            addressCell.setBorder(Rectangle.NO_BORDER);
-            addressCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            addressCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-
-            Paragraph companyAddress = new Paragraph();
-            companyAddress.add(new Chunk("Rigoo Marine W.L.L.\n", boldFont));
-            companyAddress.add(new Chunk("P.O. Box 12345\n"));
-            companyAddress.add(new Chunk("Doha, Qatar\n"));
-            companyAddress.add(new Chunk("VAT: QR1234567890123\n", smallFont));
-            companyAddress.add(new Chunk("info@rigoomarine.com\n", smallFont));
-            addressCell.addElement(companyAddress);
-
-            headerTable.addCell(addressCell);
+            String issueStr = quotation.getIssueDate()  != null ? quotation.getIssueDate().format(dateFmt)  : "-";
+            String expStr   = quotation.getExpiryDate() != null ? quotation.getExpiryDate().format(dateFmt) : "-";
+            PdfPTable detailsGrid = new PdfPTable(2);
+            detailsGrid.setWidthPercentage(100);
+            detailsGrid.setWidths(new float[]{30, 70});
+            for (String[] row : new String[][]{
+                    {"Quotation No.", quotation.getQuotationNumber()},
+                    {"Date",          issueStr},
+                    {"Valid Until",   expStr}}) {
+                PdfPCell lc = new PdfPCell(new Phrase(row[0], labelGray));
+                lc.setBorder(Rectangle.NO_BORDER); lc.setPaddingBottom(3);
+                detailsGrid.addCell(lc);
+                PdfPCell vc = new PdfPCell(new Phrase(row[1], normalFont));
+                vc.setBorder(Rectangle.NO_BORDER); vc.setPaddingBottom(3);
+                detailsGrid.addCell(vc);
+            }
+            rightCell.addElement(detailsGrid);
+            headerTable.addCell(rightCell);
             document.add(headerTable);
 
-            // Striped separator line
-            PdfPTable separatorTable = new PdfPTable(1);
-            separatorTable.setWidthPercentage(100);
-            separatorTable.setSpacingAfter(15);
-            PdfPCell separatorCell = new PdfPCell();
-            separatorCell.setBackgroundColor(new Color(240, 240, 240));
-            separatorCell.setBorder(Rectangle.NO_BORDER);
-            separatorCell.setPadding(3);
-            separatorCell.addElement(new Paragraph("QUOTATION", titleFont));
-            separatorTable.addCell(separatorCell);
-            document.add(separatorTable);
+            // ── 2. CONTACT STRIP ─────────────────────────────────────────────
+            PdfPTable contactStrip = new PdfPTable(3);
+            contactStrip.setWidthPercentage(100);
+            contactStrip.setWidths(new float[]{34, 33, 33});
+            contactStrip.setSpacingBefore(0);
+            contactStrip.setSpacingAfter(10);
+            Color stripBg = new Color(240, 244, 252);
+            for (String item : new String[]{"Qatar, Doha", "+974 709 709 17", "rigoomarine@gmail.com"}) {
+                PdfPCell cc = new PdfPCell(new Phrase(item, smallFont));
+                cc.setBackgroundColor(stripBg);
+                cc.setBorder(Rectangle.NO_BORDER);
+                cc.setPadding(5);
+                cc.setPaddingLeft(10);
+                contactStrip.addCell(cc);
+            }
+            document.add(contactStrip);
 
-            // ============== ADDRESS LAYOUT ==============
-            PdfPTable addressLayout = new PdfPTable(2);
-            addressLayout.setWidthPercentage(100);
-            addressLayout.setWidths(new int[]{1, 1});
-            addressLayout.setSpacingAfter(20);
-
-            // Bill To section
+            // ── 3. BILL TO BAR ────────────────────────────────────────────────
+            String clientDisplay = quotation.getBillToName() != null ? quotation.getBillToName()
+                    : (quotation.getClientId() != null ? "Client #" + quotation.getClientId() : "");
+            PdfPTable billToTable = new PdfPTable(1);
+            billToTable.setWidthPercentage(100);
+            billToTable.setSpacingAfter(10);
             PdfPCell billToCell = new PdfPCell();
+            billToCell.setBackgroundColor(billToBg);
             billToCell.setBorder(Rectangle.NO_BORDER);
-            billToCell.setPaddingBottom(10);
+            billToCell.setPadding(6);
+            billToCell.setPaddingLeft(8);
+            Paragraph billToPara = new Paragraph();
+            billToPara.add(new Chunk("Bill To : ", boldFont));
+            billToPara.add(new Chunk(clientDisplay, boldFont));
+            billToCell.addElement(billToPara);
+            billToTable.addCell(billToCell);
+            document.add(billToTable);
 
-            Paragraph billToTitle = new Paragraph("Quotation For:", boldFont);
-            billToTitle.setSpacingAfter(5);
-            billToCell.addElement(billToTitle);
-
-            Paragraph clientInfo = new Paragraph();
-            clientInfo.add(new Chunk("Client ID: " + quotation.getClientId() + "\n", smallFont));
-            billToCell.addElement(clientInfo);
-
-            addressLayout.addCell(billToCell);
-
-            // Quotation Info section
-            PdfPCell quotationInfoCell = new PdfPCell();
-            quotationInfoCell.setBorder(Rectangle.NO_BORDER);
-            quotationInfoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            quotationInfoCell.setPaddingBottom(10);
-
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            Paragraph quotationInfo = new Paragraph();
-            quotationInfo.add(new Chunk("Quotation No: " + quotation.getQuotationNumber() + "\n", smallFont));
-            quotationInfo.add(new Chunk("Issue Date: " + quotation.getIssueDate().format(dateFormatter) + "\n", smallFont));
-            quotationInfo.add(new Chunk("Valid Until: " + quotation.getExpiryDate().format(dateFormatter) + "\n", smallFont));
-            if (quotation.getAcceptedAt() != null) {
-                quotationInfo.add(new Chunk("Accepted: " + quotation.getAcceptedAt().format(dateFormatter) + "\n", smallFont));
-            }
-            quotationInfoCell.addElement(quotationInfo);
-
-            addressLayout.addCell(quotationInfoCell);
-            document.add(addressLayout);
-
-            // ============== QUOTATION ITEMS TABLE ==============
-            PdfPTable itemsTable = new PdfPTable(5);
+            // ── 4. LINE ITEMS TABLE ───────────────────────────────────────────
+            PdfPTable itemsTable = new PdfPTable(4);
             itemsTable.setWidthPercentage(100);
-            itemsTable.setWidths(new int[]{40, 15, 15, 15, 15});
-            itemsTable.setSpacingAfter(15);
-
-            // Table header with striped background
-            String[] headers = {"Description", "Quantity", "Unit Price", "Tax %", "Amount"};
-            for (String header : headers) {
-                PdfPCell headerCell = new PdfPCell(new Phrase(header, boldFont));
-                headerCell.setBackgroundColor(new Color(240, 240, 240));
-                headerCell.setBorder(Rectangle.NO_BORDER);
-                headerCell.setPadding(8);
-                headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                itemsTable.addCell(headerCell);
+            itemsTable.setWidths(new float[]{46, 10, 22, 22});
+            itemsTable.setSpacingAfter(14);
+            for (String h : new String[]{"Description", "Qty", "Unit Price", "Amount"}) {
+                PdfPCell hc = new PdfPCell(new Phrase(h, tableHdrFont));
+                hc.setBackgroundColor(tableHeaderBg);
+                hc.setBorder(Rectangle.NO_BORDER);
+                hc.setPadding(6);
+                hc.setHorizontalAlignment(h.equals("Description") ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
+                itemsTable.addCell(hc);
             }
-
-            // Alternating row colors (striped effect)
-            boolean evenRow = true;
+            boolean alt = false;
             for (QuotationItem item : quotation.getItems()) {
-                Color rowColor = evenRow ? Color.WHITE : new Color(250, 250, 250);
-
-                PdfPCell descCell = new PdfPCell(new Phrase(item.getDescription(), normalFont));
-                descCell.setBackgroundColor(rowColor);
-                descCell.setBorder(Rectangle.NO_BORDER);
-                descCell.setPadding(6);
-                itemsTable.addCell(descCell);
-
-                PdfPCell qtyCell = new PdfPCell(new Phrase(String.valueOf(item.getQuantity()), normalFont));
-                qtyCell.setBackgroundColor(rowColor);
-                qtyCell.setBorder(Rectangle.NO_BORDER);
-                qtyCell.setPadding(6);
-                qtyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                itemsTable.addCell(qtyCell);
-
-                PdfPCell priceCell = new PdfPCell(new Phrase("$" + item.getUnitPrice().toString(), normalFont));
-                priceCell.setBackgroundColor(rowColor);
-                priceCell.setBorder(Rectangle.NO_BORDER);
-                priceCell.setPadding(6);
-                priceCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                itemsTable.addCell(priceCell);
-
-                PdfPCell taxCell = new PdfPCell(new Phrase(item.getTaxRate() + "%", normalFont));
-                taxCell.setBackgroundColor(rowColor);
-                taxCell.setBorder(Rectangle.NO_BORDER);
-                taxCell.setPadding(6);
-                taxCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                itemsTable.addCell(taxCell);
-
-                PdfPCell amountCell = new PdfPCell(new Phrase("$" + item.getAmount().toString(), normalFont));
-                amountCell.setBackgroundColor(rowColor);
-                amountCell.setBorder(Rectangle.NO_BORDER);
-                amountCell.setPadding(6);
-                amountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                itemsTable.addCell(amountCell);
-
-                evenRow = !evenRow;
+                Color rowBg = alt ? altRowBg : Color.WHITE;
+                pdfItemCell(itemsTable, item.getDescription(), normalFont, rowBg, Element.ALIGN_LEFT);
+                pdfItemCell(itemsTable, String.valueOf(item.getQuantity()), normalFont, rowBg, Element.ALIGN_RIGHT);
+                pdfItemCell(itemsTable, "QAR " + nf.format(item.getUnitPrice()), normalFont, rowBg, Element.ALIGN_RIGHT);
+                pdfItemCell(itemsTable, "QAR " + nf.format(item.getAmount()), normalFont, rowBg, Element.ALIGN_RIGHT);
+                alt = !alt;
             }
-
             document.add(itemsTable);
 
-            // ============== TOTALS SECTION ==============
-            PdfPTable totalsTable = new PdfPTable(2);
-            totalsTable.setWidthPercentage(50);
-            totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totalsTable.setSpacingAfter(15);
+            // ── 5. BOTTOM: TERMS | EMPTY | TOTALS ────────────────────────────
+            PdfPTable bottomTable = new PdfPTable(3);
+            bottomTable.setWidthPercentage(100);
+            bottomTable.setWidths(new float[]{38, 24, 38});
+            bottomTable.setSpacingAfter(8);
 
-            // Subtotal
-            totalsTable.addCell(createTotalsCell("Subtotal:", normalFont, Rectangle.NO_BORDER));
-            totalsTable.addCell(createTotalsCell("$" + quotation.getSubtotal().toString(), normalFont, Rectangle.NO_BORDER));
-
-            // Tax
-            totalsTable.addCell(createTotalsCell("Tax (" + quotation.getTaxRate() + "%):", normalFont, Rectangle.NO_BORDER));
-            totalsTable.addCell(createTotalsCell("$" + quotation.getTaxAmount().toString(), normalFont, Rectangle.NO_BORDER));
-
-            // Total - with top border
-            PdfPCell totalLabelCell = createTotalsCell("Total:", boldFont, Rectangle.NO_BORDER);
-            totalLabelCell.setBorder(Rectangle.TOP);
-            totalLabelCell.setBorderWidthTop(2);
-            totalsTable.addCell(totalLabelCell);
-
-            PdfPCell totalValueCell = createTotalsCell("$" + quotation.getTotal().toString(), boldFont, Rectangle.NO_BORDER);
-            totalValueCell.setBorder(Rectangle.TOP);
-            totalValueCell.setBorderWidthTop(2);
-            totalsTable.addCell(totalValueCell);
-
-            document.add(totalsTable);
-
-            // ============== INSERTED IMAGES ==============
-            if (quotation.getInsertedImages() != null && !quotation.getInsertedImages().isEmpty()) {
-                PdfPTable imagesTable = new PdfPTable(2);
-                imagesTable.setWidthPercentage(100);
-                imagesTable.setWidths(new int[]{1, 1});
-                imagesTable.setSpacingBefore(15);
-                imagesTable.setSpacingAfter(15);
-
-                for (String imageUrl : quotation.getInsertedImages()) {
-                    try {
-                        Image img = Image.getInstance(imageUrl);
-                        img.scaleToFit(250, 180);
-                        img.setAlignment(Image.ALIGN_CENTER);
-                        PdfPCell imgCell = new PdfPCell();
-                        imgCell.setBorder(Rectangle.NO_BORDER);
-                        imgCell.setPadding(5);
-                        imgCell.addElement(img);
-                        imagesTable.addCell(imgCell);
-                    } catch (Exception e) {
-                        // Skip invalid images
-                    }
+            PdfPCell termsCell = new PdfPCell();
+            termsCell.setBorder(Rectangle.NO_BORDER);
+            termsCell.setPadding(4);
+            Paragraph termsPara = new Paragraph();
+            termsPara.add(new Chunk("Payment Terms\n", boldFont));
+            if (quotation.getTerms() != null && !quotation.getTerms().isBlank()) {
+                termsPara.add(new Chunk("Important Notes\n", boldFont));
+                for (String line : quotation.getTerms().split("\n")) {
+                    if (!line.isBlank()) termsPara.add(new Chunk(line.trim() + "\n", smallFont));
                 }
-                document.add(imagesTable);
             }
-
-            // ============== NOTES AND TERMS (Qatari - English & Arabic) ==============
-            if (quotation.getNotes() != null && !quotation.getNotes().isEmpty()) {
-                PdfPTable notesTable = new PdfPTable(1);
-                notesTable.setWidthPercentage(100);
-                notesTable.setSpacingBefore(10);
-                PdfPCell notesCell = new PdfPCell();
-                notesCell.setBackgroundColor(new Color(250, 250, 250));
-                notesCell.setBorder(Rectangle.NO_BORDER);
-                notesCell.setPadding(8);
-                notesCell.addElement(new Paragraph("Notes:", boldFont));
-                notesCell.addElement(new Paragraph(quotation.getNotes(), smallFont));
-                notesTable.addCell(notesCell);
-                document.add(notesTable);
+            termsCell.addElement(termsPara);
+            if (quotation.getTermsArabic() != null && !quotation.getTermsArabic().isBlank()) {
+                PdfPTable arabicWrapper = new PdfPTable(1);
+                arabicWrapper.setWidthPercentage(100);
+                arabicWrapper.setSpacingBefore(4);
+                PdfPCell arabicInner = new PdfPCell();
+                arabicInner.setBorder(Rectangle.NO_BORDER);
+                arabicInner.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+                arabicInner.setPadding(0);
+                arabicInner.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                Paragraph arPara = new Paragraph();
+                arPara.setAlignment(Element.ALIGN_RIGHT);
+                arPara.add(new Chunk("ملاحظات هامة\n", arabicBoldFont));
+                for (String line : quotation.getTermsArabic().split("\n")) {
+                    if (!line.isBlank()) arPara.add(new Chunk(line.trim() + "\n", arabicFont));
+                }
+                arabicInner.addElement(arPara);
+                arabicWrapper.addCell(arabicInner);
+                termsCell.addElement(arabicWrapper);
             }
+            bottomTable.addCell(termsCell);
 
-            // English Terms
-            if (quotation.getTerms() != null && !quotation.getTerms().isEmpty()) {
-                PdfPTable termsTable = new PdfPTable(1);
-                termsTable.setWidthPercentage(100);
-                termsTable.setSpacingBefore(10);
-                PdfPCell termsCell = new PdfPCell();
-                termsCell.setBackgroundColor(new Color(250, 250, 250));
-                termsCell.setBorder(Rectangle.NO_BORDER);
-                termsCell.setPadding(8);
-                termsCell.addElement(new Paragraph("Terms & Conditions (English):", boldFont));
-                termsCell.addElement(new Paragraph(quotation.getTerms(), smallFont));
-                termsTable.addCell(termsCell);
-                document.add(termsTable);
+            PdfPCell emptyCenter = new PdfPCell();
+            emptyCenter.setBorder(Rectangle.NO_BORDER);
+            bottomTable.addCell(emptyCenter);
+
+            PdfPCell totalsOuterCell = new PdfPCell();
+            totalsOuterCell.setBorder(Rectangle.NO_BORDER);
+            totalsOuterCell.setPadding(2);
+            PdfPTable totalsInner = new PdfPTable(2);
+            totalsInner.setWidthPercentage(100);
+            addTotalsRow(totalsInner, "Subtotal",              "QAR " + nf.format(quotation.getSubtotal()),  normalFont, normalFont);
+            addTotalsRow(totalsInner, "Subtotal less Discount","QAR " + nf.format(quotation.getSubtotal()),  normalFont, normalFont);
+            addTotalsRow(totalsInner, "Tax Rate",               quotation.getTaxRate() + "%",                  normalFont, normalFont);
+            addTotalsRow(totalsInner, "Total Tax",             "QAR " + nf.format(quotation.getTaxAmount()), normalFont, normalFont);
+            PdfPCell tlLabel = new PdfPCell(new Phrase("Total", boldFont));
+            tlLabel.setBorder(Rectangle.TOP); tlLabel.setBorderWidthTop(1.5f);
+            tlLabel.setPadding(5); tlLabel.setHorizontalAlignment(Element.ALIGN_LEFT);
+            totalsInner.addCell(tlLabel);
+            PdfPCell tlValue = new PdfPCell(new Phrase("QAR " + nf.format(quotation.getTotal()), totalBoldFont));
+            tlValue.setBorder(Rectangle.TOP); tlValue.setBorderWidthTop(1.5f);
+            tlValue.setPadding(5); tlValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            totalsInner.addCell(tlValue);
+            totalsOuterCell.addElement(totalsInner);
+            bottomTable.addCell(totalsOuterCell);
+            document.add(bottomTable);
+
+            // ── 6. AUTHORIZED SIGNATURE ───────────────────────────────────────
+            PdfPTable sigTable = new PdfPTable(1);
+            sigTable.setWidthPercentage(35);
+            sigTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            sigTable.setSpacingBefore(16);
+            sigTable.setSpacingAfter(14);
+            PdfPCell sc = new PdfPCell();
+            sc.setBorder(Rectangle.NO_BORDER);
+            sc.setPadding(6);
+            sc.setPaddingTop(20);
+            sc.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Image sigStamp = BrandingAssetLoader.loadStamp();
+            if (sigStamp != null) {
+                sigStamp.scaleToFit(75, 75);
+                sc.setCellEvent(new StampBackground(sigStamp));
             }
+            sc.addElement(new Paragraph("Authorized Signature", smallFont));
+            sigTable.addCell(sc);
+            document.add(sigTable);
 
-            // Arabic Terms (Qatari)
-            if (quotation.getTermsArabic() != null && !quotation.getTermsArabic().isEmpty()) {
-                PdfPTable termsArabicTable = new PdfPTable(1);
-                termsArabicTable.setWidthPercentage(100);
-                termsArabicTable.setSpacingBefore(10);
-                PdfPCell termsArabicCell = new PdfPCell();
-                termsArabicCell.setBackgroundColor(new Color(250, 250, 250));
-                termsArabicCell.setBorder(Rectangle.NO_BORDER);
-                termsArabicCell.setPadding(8);
-                termsArabicCell.addElement(new Paragraph("الشروط والأحكام (العربية):", boldFont));
-                termsArabicCell.addElement(new Paragraph(quotation.getTermsArabic(), smallFont));
-                termsArabicTable.addCell(termsArabicCell);
-                document.add(termsArabicTable);
-            }
+            // ── 7. BILINGUAL FOOTER (compliance note always shown + optional user notes) ──
+            Font noteFont   = new Font(Font.HELVETICA, 7, Font.ITALIC, new Color(120, 100, 40));
+            Font noteArabic = new Font(arabicFont.getBaseFont(), 7, Font.NORMAL, new Color(120, 100, 40));
 
-            // ============== COMPANY STAMP (right-aligned, above the footer) ==============
-            // Loads classpath:branding/stamp.png; silently skipped if not present.
-            Image stampImage = BrandingAssetLoader.loadStamp();
-            if (stampImage != null) {
-                stampImage.scaleToFit(120, 120);
-                PdfPTable stampTable = new PdfPTable(1);
-                stampTable.setWidthPercentage(100);
-                stampTable.setSpacingBefore(15);
-                PdfPCell stampCell = new PdfPCell();
-                stampCell.setBorder(Rectangle.NO_BORDER);
-                stampCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                stampImage.setAlignment(Image.ALIGN_RIGHT);
-                stampCell.addElement(stampImage);
-                stampTable.addCell(stampCell);
-                document.add(stampTable);
-            }
-
-            // ============== FOOTER ==============
-            document.add(new Paragraph("\n"));
-
-            PdfPTable footerTable = new PdfPTable(1);
+            PdfPTable footerTable = new PdfPTable(2);
             footerTable.setWidthPercentage(100);
-            footerTable.setTotalWidth(new float[]{450});
-            footerTable.setLockedWidth(true);
+            footerTable.setWidths(new float[]{50, 50});
+            footerTable.setSpacingBefore(4);
 
-            PdfPCell footerCell = new PdfPCell();
-            footerCell.setBorder(Rectangle.TOP);
-            footerCell.setBorderWidthTop(1);
-            footerCell.setBorderColorTop(Color.LIGHT_GRAY);
-            footerCell.setPadding(5);
-            footerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            PdfPCell engCell = new PdfPCell();
+            engCell.setBorder(Rectangle.TOP);
+            engCell.setBorderWidthTop(0.5f);
+            engCell.setBorderColorTop(new Color(180, 148, 75));
+            engCell.setPadding(5);
+            engCell.setPaddingLeft(4);
+            engCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            Paragraph engPara = new Paragraph(
+                "This quotation is issued in two languages (Arabic & English) per Qatari customs and commercial requirements.",
+                noteFont);
+            engPara.setAlignment(Element.ALIGN_LEFT);
+            engCell.addElement(engPara);
+            footerTable.addCell(engCell);
 
-            footerCell.addElement(new Paragraph("This quotation is valid for 14 days from the issue date.", footerFont));
-            footerCell.addElement(new Paragraph("Thank you for your interest in our services!", footerFont));
-
-            Paragraph pageNumPara = new Paragraph("Page 1 / 1", footerFont);
-            pageNumPara.setSpacingBefore(5);
-            footerCell.addElement(pageNumPara);
-
-            footerTable.addCell(footerCell);
+            PdfPCell arCell = new PdfPCell();
+            arCell.setBorder(Rectangle.TOP);
+            arCell.setBorderWidthTop(0.5f);
+            arCell.setBorderColorTop(new Color(180, 148, 75));
+            arCell.setPadding(5);
+            arCell.setPaddingRight(4);
+            arCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            arCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            Paragraph arPara = new Paragraph(
+                "يُصدر هذا العرض باللغتين العربية والإنجليزية وفقاً للأعراف والمتطلبات التجارية القطرية.",
+                noteArabic);
+            arPara.setAlignment(Element.ALIGN_RIGHT);
+            arCell.addElement(arPara);
+            footerTable.addCell(arCell);
             document.add(footerTable);
 
             document.close();
-            return byteArrayOutputStream.toByteArray();
+            return out.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate PDF", e);
         }
     }
 
-    private PdfPCell createTotalsCell(String text, Font font, int border) {
-        PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setBorder(border);
+    private static void pdfItemCell(PdfPTable table, String text, Font font, Color bg, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "", font));
+        cell.setBackgroundColor(bg);
+        cell.setBorder(Rectangle.NO_BORDER);
         cell.setPadding(6);
-        cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        return cell;
+        cell.setHorizontalAlignment(align);
+        table.addCell(cell);
+    }
+
+    private static void addTotalsRow(PdfPTable table, String label, String value, Font lf, Font vf) {
+        PdfPCell lc = new PdfPCell(new Phrase(label, lf));
+        lc.setBorder(Rectangle.NO_BORDER); lc.setPadding(4); lc.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.addCell(lc);
+        PdfPCell vc = new PdfPCell(new Phrase(value, vf));
+        vc.setBorder(Rectangle.NO_BORDER); vc.setPadding(4); vc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(vc);
+    }
+
+    private static boolean containsArabic(String text) {
+        return text.chars().anyMatch(c -> c >= 0x0600 && c <= 0x06FF);
+    }
+
+    private static class StampBackground implements PdfPCellEvent {
+        private final Image stamp;
+        StampBackground(Image stamp) { this.stamp = stamp; }
+
+        @Override
+        public void cellLayout(PdfPCell cell, Rectangle pos, PdfContentByte[] canvases) {
+            try {
+                PdfContentByte cb = canvases[PdfPTable.BACKGROUNDCANVAS];
+                float x = pos.getLeft()   + (pos.getWidth()  - stamp.getScaledWidth())  / 2f;
+                float y = pos.getBottom() + (pos.getHeight() - stamp.getScaledHeight()) / 2f;
+                stamp.setAbsolutePosition(x, y);
+                cb.addImage(stamp);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private static class QuotationPageEvent extends PdfPageEventHelper {
+        private final Image watermarkImage;
+        private final BaseFont bf;
+        private PdfTemplate pageCountTemplate;
+
+        QuotationPageEvent(Image watermarkImage, BaseFont bf) {
+            this.watermarkImage = watermarkImage;
+            this.bf = bf;
+        }
+
+        @Override
+        public void onOpenDocument(PdfWriter writer, Document doc) {
+            pageCountTemplate = writer.getDirectContent().createTemplate(30, 12);
+        }
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document doc) {
+            Rectangle ps = doc.getPageSize();
+            if (watermarkImage != null) {
+                try {
+                    PdfContentByte cbUnder = writer.getDirectContentUnder();
+                    cbUnder.saveState();
+                    PdfGState gs = new PdfGState();
+                    gs.setFillOpacity(0.09f);
+                    gs.setBlendMode(PdfGState.BM_NORMAL);
+                    cbUnder.setGState(gs);
+                    float maxW = ps.getWidth()  * 0.60f;
+                    float maxH = ps.getHeight() * 0.60f;
+                    float scale = Math.min(maxW / watermarkImage.getWidth(), maxH / watermarkImage.getHeight());
+                    float w = watermarkImage.getWidth()  * scale;
+                    float h = watermarkImage.getHeight() * scale;
+                    watermarkImage.setAbsolutePosition((ps.getWidth() - w) / 2f, (ps.getHeight() - h) / 2f);
+                    watermarkImage.scaleAbsolute(w, h);
+                    cbUnder.addImage(watermarkImage);
+                    cbUnder.restoreState();
+                } catch (Exception ignored) {}
+            }
+            PdfContentByte cbOver = writer.getDirectContent();
+            String pageLabel = "Page " + writer.getPageNumber() + " / ";
+            float labelWidth = bf.getWidthPoint(pageLabel, 7f);
+            float numX = ps.getRight() - 40f;
+            float numY = ps.getBottom() + 18f;
+            cbOver.saveState();
+            cbOver.beginText();
+            cbOver.setFontAndSize(bf, 7);
+            cbOver.setColorFill(new Color(120, 120, 120));
+            cbOver.setTextMatrix(numX - labelWidth, numY);
+            cbOver.showText(pageLabel);
+            cbOver.endText();
+            cbOver.addTemplate(pageCountTemplate, numX, numY);
+            cbOver.restoreState();
+        }
+
+        @Override
+        public void onCloseDocument(PdfWriter writer, Document doc) {
+            ColumnText.showTextAligned(pageCountTemplate, Element.ALIGN_LEFT,
+                    new Phrase(String.valueOf(writer.getPageNumber() - 1),
+                            new Font(bf, 7, Font.NORMAL, new Color(120, 120, 120))),
+                    0, 2, 0);
+        }
     }
 }

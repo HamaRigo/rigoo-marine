@@ -3,6 +3,7 @@ package com.rigoomarine.workorder.client;
 import com.rigoomarine.workorder.exception.VesselLookupUnavailableException;
 import com.rigoomarine.workorder.exception.VesselNotOwnedException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +48,7 @@ public class VesselOwnershipClient {
     private final String internalToken;
 
     public VesselOwnershipClient(
-            @LoadBalanced RestTemplate restTemplate,
+            @Qualifier("vesselOwnershipRestTemplate") RestTemplate restTemplate,
             @Value("${internal.api-token:rigoo-internal-token-change-in-production}") String internalToken
     ) {
         this.restTemplate = restTemplate;

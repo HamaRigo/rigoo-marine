@@ -14,6 +14,11 @@ public class InvoiceDTO {
     private String invoiceNumber;
     private Long workOrderId;
     private Long clientId;
+    private String billToName;
+    private String billToEmail;
+    private String billToPhone;
+    private String billToAddress;
+    private String billToCompany;
     private String status;
     private LocalDateTime issueDate;
     private LocalDateTime dueDate;

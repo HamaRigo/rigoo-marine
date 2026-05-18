@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Box, Container, Typography, Grid, Card, CardContent, CircularProgress, Slide, Fade } from '@mui/material';
+import { Box, Container, Typography, Grid, Card, CardContent, CircularProgress, Slide, Fade, CardMedia, Chip, Dialog, DialogContent, IconButton, Zoom } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '../../services/api';
 import { Reveal, Stagger } from '../../components/common/Motion';
@@ -10,10 +11,23 @@ const VALUE_EMOJIS = { quality: '🎯', transparency: '💬', efficiency: '⏱�
 
 const TEAM_KEYS = ['founder', 'manager', 'senior'];
 
+const GALLERY_ITEMS = [
+  { slug: 'engine-rebuild',      category: 'Mechanical' },
+  { slug: 'hull-restoration',    category: 'Structural' },
+  { slug: 'gel-coat-polish',     category: 'Finishing' },
+  { slug: 'bottom-paint',        category: 'Finishing' },
+  { slug: 'propeller-repair',    category: 'Mechanical' },
+  { slug: 'transom-replacement', category: 'Structural' },
+].map((item) => ({ ...item, image: `/gallery/${item.slug}.jpg` }));
+
+const GALLERY_CATEGORIES = ['All', 'Mechanical', 'Structural', 'Finishing'];
+
 export default function About() {
-  const { t } = useTranslation('public');
+  const { t, i18n } = useTranslation('public');
   const [contactInfo, setContactInfo] = useState({});
   const [loading, setLoading] = useState(true);
+  const [galleryCat, setGalleryCat] = useState('All');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchContactInfo = async () => {
@@ -91,19 +105,24 @@ export default function About() {
           </Grid>
           <Grid item xs={12} md={6}>
             <Reveal variant="slide" direction="left" timeout={620}>
-              <Box
-                component="img"
-                src="/gallery/about-workshop.jpg"
-                alt={t('about.story.title')}
-                loading="lazy"
-                sx={{
-                  width: '100%',
-                  borderRadius: 3,
-                  boxShadow: '0 16px 40px rgba(15,23,42,0.15)',
-                  transition: 'transform 360ms cubic-bezier(0.2,0,0,1)',
-                  '&:hover': { transform: 'scale(1.02)' },
-                }}
-              />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {[0, 1].map((page) => (
+                  <Box
+                    key={page}
+                    component="img"
+                    src={`/flyers/rigoo-services-${i18n.language.startsWith('ar') ? 'ar' : 'en'}-${page}.jpg`}
+                    alt={`${t('about.flyer.title')} ${page + 1}`}
+                    loading="lazy"
+                    sx={{
+                      width: '50%',
+                      borderRadius: 2,
+                      boxShadow: '0 12px 36px rgba(15,23,42,0.18)',
+                      transition: 'transform 360ms cubic-bezier(0.2,0,0,1)',
+                      '&:hover': { transform: 'scale(1.03)' },
+                    }}
+                  />
+                ))}
+              </Box>
             </Reveal>
           </Grid>
         </Grid>
@@ -151,6 +170,83 @@ export default function About() {
         </Container>
       </Box>
 
+      {/* Gallery Section */}
+      <Box sx={{ py: { xs: 5, md: 8 }, px: { xs: 2, sm: 3 } }}>
+        <Container maxWidth="lg">
+          <Reveal variant="fade">
+            <Typography variant="h4" textAlign="center" gutterBottom>
+              {t('gallery.header.title')}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 4 }}>
+              {t('gallery.header.subtitle')}
+            </Typography>
+          </Reveal>
+
+          <Reveal variant="fade" delay={80}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {GALLERY_CATEGORIES.map((cat) => (
+                <Chip
+                  key={cat}
+                  label={t(`gallery.categories.${cat === 'All' ? 'all' : cat}`)}
+                  onClick={() => setGalleryCat(cat)}
+                  color={galleryCat === cat ? 'primary' : 'default'}
+                  variant={galleryCat === cat ? 'filled' : 'outlined'}
+                  sx={{ px: 2, fontWeight: 600 }}
+                />
+              ))}
+            </Box>
+          </Reveal>
+
+          <Stagger
+            key={galleryCat}
+            variant="grow"
+            step={80}
+            timeout={520}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+              gap: 3,
+            }}
+          >
+            {(galleryCat === 'All' ? GALLERY_ITEMS : GALLERY_ITEMS.filter((i) => i.category === galleryCat)).map((item) => (
+              <Card
+                key={item.slug}
+                sx={{
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  '& .gallery-img': { transition: 'transform 480ms cubic-bezier(0.2,0,0,1)' },
+                  '&:hover .gallery-img': { transform: 'scale(1.06)' },
+                }}
+                onClick={() => setSelectedImage(item)}
+              >
+                <Box sx={{ overflow: 'hidden' }}>
+                  <CardMedia
+                    component="img"
+                    className="gallery-img"
+                    height="220"
+                    image={item.image}
+                    alt={t(`gallery.items.${item.slug}`)}
+                    loading="lazy"
+                  />
+                </Box>
+                <Box sx={{ p: 2 }}>
+                  <Chip
+                    label={t(`gallery.categories.${item.category}`)}
+                    size="small"
+                    sx={{ mb: 1 }}
+                    color="primary"
+                    variant="outlined"
+                  />
+                  <Typography variant="body1" fontWeight="600">
+                    {t(`gallery.items.${item.slug}`)}
+                  </Typography>
+                </Box>
+              </Card>
+            ))}
+          </Stagger>
+        </Container>
+      </Box>
+
       {/* Team */}
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 }, px: { xs: 2, sm: 3 } }}>
         <Reveal variant="fade">
@@ -185,7 +281,43 @@ export default function About() {
         </Stagger>
       </Container>
 
-      {/* Contact CTA */}
+      {/* Gallery lightbox */}
+      <Dialog
+        open={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+        maxWidth="md"
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={{ enter: 320, exit: 220 }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setSelectedImage(null)}
+            sx={{
+              position: 'absolute', top: 8, right: 8,
+              bgcolor: 'rgba(0,0,0,0.5)', color: 'white',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          {selectedImage && (
+            <Box>
+              <img
+                src={selectedImage.image}
+                alt={t(`gallery.items.${selectedImage.slug}`)}
+                style={{ width: '100%', maxHeight: '80vh', objectFit: 'cover' }}
+              />
+              <Box sx={{ p: 3 }}>
+                <Typography variant="h6">{t(`gallery.items.${selectedImage.slug}`)}</Typography>
+                <Typography color="text.secondary">{t(`gallery.categories.${selectedImage.category}`)}</Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+{/* Contact CTA */}
       <Reveal variant="slide" direction="up" timeout={620}>
         <Box
           sx={{

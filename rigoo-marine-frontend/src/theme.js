@@ -62,6 +62,12 @@ const baseOptions = {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-8px)' },
         },
+        '@keyframes rmWave': {
+          '0%, 100%': { transform: 'translateY(0px)   rotate(0deg)  translateX(0px)'  },
+          '25%':      { transform: 'translateY(-10px) rotate(-2deg) translateX(4px)'  },
+          '50%':      { transform: 'translateY(0px)   rotate(0deg)  translateX(0px)'  },
+          '75%':      { transform: 'translateY(-10px) rotate(2deg)  translateX(-4px)' },
+        },
         '@keyframes rmShimmer': {
           '0%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },

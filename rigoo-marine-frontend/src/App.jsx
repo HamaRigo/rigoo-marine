@@ -19,7 +19,6 @@ import DashboardLayout from './pages/dashboard/DashboardLayout';
 // Public Pages
 import Home from './pages/public/Home';
 import Services from './pages/public/Services';
-import Gallery from './pages/public/Gallery';
 import About from './pages/public/About';
 import BoatGallery from './pages/public/marketplace/BoatGallery';
 import BoatDetail from './pages/public/marketplace/BoatDetail';
@@ -107,7 +106,6 @@ function App() {
               {/* Public Routes with Main Layout */}
               <Route path="/" element={<MainLayout><Home /></MainLayout>} />
               <Route path="/services" element={<MainLayout><Services /></MainLayout>} />
-              <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
               <Route path="/about" element={<MainLayout><About /></MainLayout>} />
               <Route path="/boats" element={<MainLayout><BoatGallery /></MainLayout>} />
               <Route path="/boats/:slug" element={<MainLayout><BoatDetail /></MainLayout>} />

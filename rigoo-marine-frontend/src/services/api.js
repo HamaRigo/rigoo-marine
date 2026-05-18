@@ -383,6 +383,10 @@ export const invoiceApi = {
     const response = await httpClient.post(`/api/invoices/${id}/pay`, { paymentMethod });
     return response.data;
   },
+
+  deleteInvoice: async (id) => {
+    await httpClient.delete(`/api/invoices/${id}`);
+  },
 };
 
 // ============== DASHBOARD APIs ==============
@@ -518,6 +522,11 @@ export const adminApi = {
     return response.data;
   },
 
+  updateInvoice: async (invoiceId, invoiceData) => {
+    const response = await httpClient.put(`/api/invoices/${invoiceId}`, invoiceData);
+    return response.data;
+  },
+
   updateInvoiceStatus: async (invoiceId, status) => {
     const response = await httpClient.put(`/api/invoices/${invoiceId}/status`, null, {
       params: { status },
@@ -536,6 +545,11 @@ export const adminApi = {
     return response.data;
   },
 
+  updateQuotation: async (quotationId, quotationData) => {
+    const response = await httpClient.put(`/api/quotations/${quotationId}`, quotationData);
+    return response.data;
+  },
+
   updateQuotationStatus: async (quotationId, status) => {
     const response = await httpClient.put(`/api/quotations/${quotationId}/status`, null, {
       params: { status },
@@ -548,6 +562,10 @@ export const adminApi = {
       responseType: 'blob',
     });
     return response.data;
+  },
+
+  deleteQuotation: async (id) => {
+    await httpClient.delete(`/api/quotations/${id}`);
   },
 
   // Media Management
@@ -637,6 +655,11 @@ export const marketplaceApi = {
   },
 
   /** Public detail by SEO slug — preferred from the gallery. */
+  getBoatTypes: async () => {
+    const response = await httpClient.get('/api/listings/boat-types');
+    return response.data;
+  },
+
   getListingBySlug: async (slug) => {
     const response = await httpClient.get(`/api/listings/by-slug/${slug}`);
     return response.data;

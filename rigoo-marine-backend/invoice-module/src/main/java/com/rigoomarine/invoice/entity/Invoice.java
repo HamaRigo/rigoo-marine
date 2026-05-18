@@ -22,24 +22,34 @@ public class Invoice {
     @Column(nullable = false, unique = true)
     private String invoiceNumber;
 
-    @Column(nullable = false)
     private Long workOrderId;
 
-    @Column(nullable = false)
     private Long clientId;
+
+    @Column(name = "bill_to_name")
+    private String billToName;
+
+    @Column(name = "bill_to_email")
+    private String billToEmail;
+
+    @Column(name = "bill_to_phone")
+    private String billToPhone;
+
+    @Column(name = "bill_to_address")
+    private String billToAddress;
+
+    @Column(name = "bill_to_company")
+    private String billToCompany;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
 
-    @Column(nullable = false)
     private LocalDateTime issueDate;
 
-    @Column(nullable = false)
     private LocalDateTime dueDate;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "invoice_id")
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<InvoiceItem> items = new ArrayList<>();
 

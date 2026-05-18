@@ -13,6 +13,11 @@ public class QuotationDTO {
     private Long id;
     private String quotationNumber;
     private Long clientId;
+    private String billToName;
+    private String billToEmail;
+    private String billToPhone;
+    private String billToAddress;
+    private String billToCompany;
     private String status;
     private LocalDateTime issueDate;
     private LocalDateTime expiryDate;

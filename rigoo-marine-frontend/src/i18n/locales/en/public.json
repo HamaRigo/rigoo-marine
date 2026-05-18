@@ -27,21 +27,40 @@
       "all": "All",
       "Mechanical": "Mechanical",
       "Structural": "Structural",
-      "Finishing": "Finishing"
+      "Finishing": "Finishing",
+      "Renovation": "Renovation",
+      "Specialized": "Specialized",
+      "Overview": "General"
     },
     "items": {
-      "engineDiagnostic": { "name": "Engine Diagnostic", "description": "Complete engine analysis and troubleshooting" },
-      "engineRepair":     { "name": "Engine Repair", "description": "Full engine repair and rebuild services" },
-      "oilChange":        { "name": "Oil Change", "description": "Regular oil change and filter replacement" },
-      "hullRepair":       { "name": "Hull Repair", "description": "Fiberglass repair and hull restoration" },
-      "gelCoat":          { "name": "Gel Coat Restoration", "description": "Professional gel coat polishing and restoration" },
-      "bottomPaint":      { "name": "Bottom Paint", "description": "Anti-fouling bottom paint application" },
-      "propellerRepair":  { "name": "Propeller Repair", "description": "Propeller straightening and repair" },
-      "transomRepair":    { "name": "Transom Repair", "description": "Transom reinforcement and replacement" }
+      "overview": {
+        "name": "Complete Marine Services",
+        "description": "Rigoo Marine delivers end-to-end vessel care — from routine maintenance and mechanical repairs to full structural overhauls and cosmetic restorations, all under one roof in Qatar."
+      },
+      "mechanical": {
+        "name": "Mechanical & Engine Services",
+        "description": "Engine diagnostics, repair, and overhauls. Oil changes, fuel system servicing, propeller and drive system repairs to keep your vessel running at peak performance."
+      },
+      "structural": {
+        "name": "Structural Repair",
+        "description": "Hull repair, transom reinforcement, fiberglass lamination, and deck restoration. We restore structural integrity with precision and durability."
+      },
+      "cosmetic": {
+        "name": "Cosmetic & Finishing",
+        "description": "Gel coat polishing, anti-fouling bottom paint, teak refinishing, and exterior detailing. We bring back the shine and protect your investment."
+      },
+      "renovation": {
+        "name": "Full Vessel Renovation",
+        "description": "Complete interior and exterior renovations tailored to your vision — upholstery, electrical upgrades, custom carpentry, and full system refreshes."
+      },
+      "specialized": {
+        "name": "Specialized Services",
+        "description": "Survey preparations, warranty work, custom fabrication, and emergency repairs. Specialist expertise for demanding jobs that require advanced technical skills."
+      }
     },
-    "fromPrice": "From {{price}}",
     "request": "Request Service",
     "learnMore": "Learn More",
+    "showLess": "Show Less",
     "cta": {
       "title": "Don't see what you need?",
       "button": "Request a Custom Quote"
@@ -94,6 +113,10 @@
         "manager": { "name": "Sarah Johnson", "role": "Service Manager", "bio": "Certified in fiberglass and structural repair" },
         "senior":  { "name": "Mike Davis", "role": "Senior Technician", "bio": "Specialist in electrical systems and diagnostics" }
       }
+    },
+    "flyer": {
+      "title": "Our Services Brochure",
+      "subtitle": "Everything you need to know about Rigoo Marine's services"
     },
     "cta": {
       "title": "Have Questions?",

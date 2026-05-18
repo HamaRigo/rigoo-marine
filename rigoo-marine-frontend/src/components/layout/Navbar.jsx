@@ -9,10 +9,11 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import { useCart } from '../../hooks/useCart';
 import CartDrawer from '../shop/CartDrawer';
+import { WAVE_DELAY } from '../../utils/waveSync';
 
 function BrandMark({ size = 44, animated = false }) {
   const [broken, setBroken] = useState(false);
-  const animationSx = animated ? { animation: 'rmFloat 4.5s ease-in-out infinite' } : {};
+  const animationSx = animated ? { animation: `rmWave 5s ease-in-out ${WAVE_DELAY} infinite` } : {};
   if (broken) {
     return (
       <Box
@@ -25,10 +26,7 @@ function BrandMark({ size = 44, animated = false }) {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'white',
-          borderRadius: '50%',
-          color: 'primary.main',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+          color: 'white',
           ...animationSx,
         }}
       >
@@ -38,33 +36,19 @@ function BrandMark({ size = 44, animated = false }) {
   }
   return (
     <Box
+      component="img"
+      src="/brand/logo.PNG"
+      alt="Rigoo Marine"
+      onError={() => setBroken(true)}
       sx={{
-        width: size,
         height: size,
-        bgcolor: 'white',
-        borderRadius: '50%',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: '4px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        width: 'auto',
+        objectFit: 'contain',
+        display: 'block',
         flexShrink: 0,
         ...animationSx,
       }}
-    >
-      <Box
-        component="img"
-        src="/brand/logo.png"
-        alt="Rigoo Marine"
-        onError={() => setBroken(true)}
-        sx={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
-    </Box>
+    />
   );
 }
 
@@ -121,7 +105,6 @@ export default function Navbar() {
     { key: 'services', path: '/services' },
     { key: 'marketplace', path: '/boats' },
     { key: 'shop', path: '/shop' },
-    { key: 'gallery', path: '/gallery' },
     { key: 'about', path: '/about' },
   ];
 
@@ -207,33 +190,55 @@ export default function Navbar() {
         elevation={0}
         sx={{
           background: elevated
-            ? 'rgba(0,66,99,0.92)'
-            : 'linear-gradient(135deg, #006994 0%, #004263 100%)',
-          backdropFilter: elevated ? 'saturate(180%) blur(10px)' : 'none',
-          boxShadow: elevated ? '0 6px 22px rgba(0,40,60,0.25)' : 'none',
+            ? 'rgba(6, 12, 24, 0.96)'
+            : 'linear-gradient(135deg, #0A1628 0%, #060C18 100%)',
+          backdropFilter: elevated ? 'saturate(180%) blur(12px)' : 'none',
+          boxShadow: elevated ? '0 4px 24px rgba(0,0,0,0.45)' : 'none',
         }}
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ minHeight: { xs: 72, md: 84 } }}>
-            <Typography
-              variant="h6"
+            <Box
               component={Link}
               to="/"
               sx={{
                 flexGrow: 1,
                 textDecoration: 'none',
-                color: 'inherit',
-                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 0.5,
-                transition: 'transform 200ms cubic-bezier(0.2,0,0,1), letter-spacing 200ms',
-                '&:hover': { transform: 'translateX(2px)', letterSpacing: '0.02em' },
+                gap: 1.5,
+                transition: 'opacity 200ms ease',
+                '&:hover': { opacity: 0.88 },
               }}
             >
-              <BrandMark size={48} animated />
-              {t('navbar:brand')}
-            </Typography>
+              <BrandMark size={58} animated />
+              <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+                <Typography
+                  sx={{
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '1.05rem',
+                    letterSpacing: '0.12em',
+                    lineHeight: 1.15,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Rigoo
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'rgba(180,148,75,0.92)',
+                    fontWeight: 400,
+                    fontSize: '0.58rem',
+                    letterSpacing: '0.32em',
+                    lineHeight: 1.3,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Marine
+                </Typography>
+              </Box>
+            </Box>
 
             {/* Desktop Navigation */}
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>

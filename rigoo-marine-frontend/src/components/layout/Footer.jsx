@@ -1,57 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Container, Typography, Link as MuiLink, Divider } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Reveal } from '../common/Motion';
+import { WAVE_DELAY } from '../../utils/waveSync';
+import { adminApi } from '../../services/api';
 
-function FooterBrandMark({ size = 40 }) {
-  const [broken, setBroken] = useState(false);
-  if (broken) {
-    return (
-      <Box
-        component="span"
-        sx={{
-          fontSize: size * 0.7,
-          lineHeight: 1,
-          width: size,
-          height: size,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: 'white',
-          color: 'primary.main',
-          borderRadius: '50%',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-          animation: 'rmFloat 4.5s ease-in-out infinite',
-        }}
-      >
-        ⚓
-      </Box>
-    );
-  }
+function FooterBrandMark({ size = 48 }) {
   return (
     <Box
+      component="span"
       sx={{
-        width: size,
-        height: size,
-        bgcolor: 'white',
-        borderRadius: '50%',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: '4px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-        flexShrink: 0,
-        animation: 'rmFloat 4.5s ease-in-out infinite',
+        fontSize: size * 0.7,
+        lineHeight: 1,
+        color: 'white',
+        animation: `rmWave 5s ease-in-out ${WAVE_DELAY} infinite`,
       }}
     >
-      <Box
-        component="img"
-        src="/brand/logo.png"
-        alt="Rigoo Marine"
-        onError={() => setBroken(true)}
-        sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-      />
+      ⚓
     </Box>
   );
 }
@@ -59,6 +25,18 @@ function FooterBrandMark({ size = 40 }) {
 export default function Footer() {
   const { t, i18n } = useTranslation(['public', 'navbar']);
   const flyerHref = i18n.language === 'ar' ? '/flyers/rigoo-services-ar.pdf' : '/flyers/rigoo-services-en.pdf';
+  const [contact, setContact] = useState({ email: 'rigoomarine@gmail.com', phone: '+974 709 709 17' });
+
+  useEffect(() => {
+    adminApi.getAllContactInfo().then((data) => {
+      if (!Array.isArray(data)) return;
+      const map = Object.fromEntries(data.map((d) => [d.keyName, d.value]));
+      setContact({
+        email: map.email_general || 'rigoomarine@gmail.com',
+        phone: map.phone_primary || '+974 709 709 17',
+      });
+    }).catch(() => {});
+  }, []);
   return (
     <Box
       component="footer"
@@ -90,10 +68,35 @@ export default function Footer() {
             }}
           >
             <Box sx={{ maxWidth: 320 }}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                <FooterBrandMark size={40} />
-                {t('navbar:brand')}
-              </Typography>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <FooterBrandMark size={48} />
+                <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+                  <Typography
+                    sx={{
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '1.05rem',
+                      letterSpacing: '0.12em',
+                      lineHeight: 1.15,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Rigoo
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: 'rgba(180,148,75,0.92)',
+                      fontWeight: 400,
+                      fontSize: '0.58rem',
+                      letterSpacing: '0.32em',
+                      lineHeight: 1.3,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Marine
+                  </Typography>
+                </Box>
+              </Box>
               <Typography variant="body2" sx={{ opacity: 0.85 }}>
                 {t('public:footer.tagline')}
               </Typography>
@@ -129,9 +132,6 @@ export default function Footer() {
                 <MuiLink component={Link} to="/services" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
                   {t('public:footer.links.services')}
                 </MuiLink>
-                <MuiLink component={Link} to="/gallery" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
-                  {t('public:footer.links.gallery')}
-                </MuiLink>
                 <MuiLink component={Link} to="/about" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
                   {t('public:footer.links.about')}
                 </MuiLink>
@@ -143,10 +143,10 @@ export default function Footer() {
                 {t('public:footer.contact.title')}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                {t('public:footer.contact.emailLabel')}: <bdi>info@rigoomarine.com</bdi>
+                {t('public:footer.contact.emailLabel')}: <bdi>{contact.email}</bdi>
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                {t('public:footer.contact.phoneLabel')}: <bdi>+974 5012 3456</bdi>
+                {t('public:footer.contact.phoneLabel')}: <bdi>{contact.phone}</bdi>
               </Typography>
             </Box>
           </Box>

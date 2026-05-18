@@ -182,6 +182,16 @@ spring:
                 redis-rate-limiter.replenishRate: 5
                 redis-rate-limiter.burstCapacity: 10
                 key-resolver: "#{@userKeyResolver}"
+        - id: quotation-service
+          uri: lb://invoice-service
+          predicates:
+            - Path=/api/quotations/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
         # Stripe webhooks — public, signature-authenticated. Generous IP-keyed limit
         # to absorb event bursts without dropping (Stripe retries on 5xx anyway).
         - id: payments-stripe-webhook

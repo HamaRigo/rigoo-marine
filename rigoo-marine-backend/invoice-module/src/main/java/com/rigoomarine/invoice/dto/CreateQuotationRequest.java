@@ -11,8 +11,12 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateQuotationRequest {
 
-    @NotNull(message = "Client ID is required")
     private Long clientId;
+    private String billToName;
+    private String billToEmail;
+    private String billToPhone;
+    private String billToAddress;
+    private String billToCompany;
 
     private String status;
     private LocalDateTime issueDate;
