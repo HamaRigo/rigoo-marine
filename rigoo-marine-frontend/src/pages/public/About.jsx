@@ -50,8 +50,8 @@ export default function About() {
     fetchContactInfo();
   }, []);
 
-  const email = contactInfo.email_general || 'info@rigoomarine.com';
-  const phoneRaw = contactInfo.phone_primary || '+97450123456';
+  const email = contactInfo.email_general || 'rigoomarine@gmail.com';
+  const phoneRaw = contactInfo.phone_primary || '+97470970917';
   const phone = formatPhone(phoneRaw);
 
   if (loading) {
