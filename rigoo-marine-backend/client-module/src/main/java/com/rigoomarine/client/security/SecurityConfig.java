@@ -34,6 +34,9 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(
                     "/api/auth/**",
+                    // Team requests are open to guests (no JWT required).
+                    // Auth is optional: if a JWT is present it's read for clientId.
+                    "/api/team-requests",
                     // Email unsubscribe page + POST — token-authenticated at
                     // the controller, NOT JWT-gated (clicking from email).
                     "/unsubscribe",

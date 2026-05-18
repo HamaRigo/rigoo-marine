@@ -6,10 +6,12 @@ import EngineRepairIcon from '@mui/icons-material/Build';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import StarIcon from '@mui/icons-material/Star';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useAuth } from '../../context/AuthContext';
 import { Reveal, Stagger } from '../../components/common/Motion';
+import RequestTeamDialog from '../../components/public/RequestTeamDialog';
 
 const HERO_SERVICES = ['mechanical', 'structural', 'finishing'];
 
@@ -45,6 +47,7 @@ export default function Home() {
   const { t } = useTranslation('home');
   const [heroIn, setHeroIn] = useState(false);
   const [slide, setSlide] = useState(0);
+  const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [serviceIdx, setServiceIdx] = useState(0);
   const [svcVisible, setSvcVisible] = useState(true);
   const timerRef = useRef(null);
@@ -255,6 +258,22 @@ export default function Home() {
               }}
             >
               {t('hero.browseServices')}
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<GroupsIcon />}
+              onClick={() => setTeamDialogOpen(true)}
+              sx={{
+                color: 'white',
+                borderColor: 'rgba(255,255,255,0.7)',
+                px: { xs: 3, sm: 4 },
+                py: 1.4,
+                backdropFilter: 'blur(4px)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)', borderColor: 'white' },
+              }}
+            >
+              {t('hero.requestTeam')}
             </Button>
             {!isAuthenticated && (
               <Button
@@ -575,6 +594,8 @@ export default function Home() {
           </Box>
         </Reveal>
       )}
+
+      <RequestTeamDialog open={teamDialogOpen} onClose={() => setTeamDialogOpen(false)} />
     </Box>
   );
 }

@@ -1051,6 +1051,47 @@ export const fileApi = {
   },
 };
 
+// ============== TEAM REQUEST APIs ==============
+export const teamRequestApi = {
+  /**
+   * Submit a team request (guest or authenticated).
+   * @param {{ category, description, location, phone, whatsapp, files: File[] }} data
+   */
+  create: async ({ category, description, location, phone, whatsapp, files }) => {
+    const form = new FormData();
+    form.append('category', category);
+    form.append('description', description);
+    if (location) form.append('location', location);
+    form.append('contactPhone', phone);
+    form.append('whatsapp', String(whatsapp));
+    (files || []).forEach(f => form.append('files', f));
+    const response = await httpClient.post('/api/team-requests', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  /** Admin: list requests, optionally filtered by status. */
+  list: async ({ status, page = 0, size = 20 } = {}) => {
+    const params = { page, size };
+    if (status) params.status = status;
+    const response = await httpClient.get('/api/admin/team-requests', { params });
+    return response.data;
+  },
+
+  /** Admin: approve / reject / dispatch / complete a request. */
+  updateStatus: async (id, status, adminNotes) => {
+    const response = await httpClient.patch(`/api/admin/team-requests/${id}/status`, { status, adminNotes });
+    return response.data;
+  },
+
+  /** Admin: pending count for dashboard badge. */
+  stats: async () => {
+    const response = await httpClient.get('/api/admin/team-requests/stats');
+    return response.data;
+  },
+};
+
 export default {
   auth: authApi,
   public: publicApi,

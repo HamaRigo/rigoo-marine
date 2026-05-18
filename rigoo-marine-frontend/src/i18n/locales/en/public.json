@@ -122,5 +122,45 @@
       "title": "Have Questions?",
       "subtitle": "Contact us today to discuss your marine service needs"
     }
+  },
+  "requestTeam": {
+    "title": "Request On-Site Team",
+    "step1": {
+      "hint": "What type of issue are you facing?",
+      "suggestions": "Quick suggestions:",
+      "descLabel": "Describe the issue",
+      "descPlaceholder": "Describe what's wrong with your vessel..."
+    },
+    "step2": {
+      "hint": "Where is the vessel and any photos/videos?",
+      "locationLabel": "Vessel location",
+      "locationPlaceholder": "Marina name, berth number, or GPS coordinates",
+      "uploadHint": "Tap to upload photos or videos",
+      "uploadSub": "Up to {{max}} files · Max {{mb}} MB each · Photos & videos"
+    },
+    "step3": {
+      "hint": "How should we reach you?",
+      "phoneLabel": "Phone number",
+      "phoneHelper": "Include country code, e.g. +974 5X XXX XXX",
+      "phoneFromProfile": "Using your registered phone number",
+      "whatsapp": "Contact via WhatsApp",
+      "whatsappSub": "Preferred for faster responses"
+    },
+    "categories": {
+      "mechanical":  "Mechanical",
+      "structural":  "Structural",
+      "electrical":  "Electrical",
+      "cosmetic":    "Cosmetic",
+      "renovation":  "Renovation",
+      "emergency":   "Emergency"
+    },
+    "next": "Next",
+    "submit": "Submit Request",
+    "successTitle": "Request Sent!",
+    "successBody": "Our team will review your request and contact you shortly.",
+    "statusPending": "Pending Review",
+    "close": "Close",
+    "submitError": "Failed to submit. Please try again.",
+    "rateLimitError": "You have submitted too many requests. Please wait 24 hours."
   }
 }

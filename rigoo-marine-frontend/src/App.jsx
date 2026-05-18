@@ -73,6 +73,7 @@ const ProductForm = lazy(() => import('./pages/admin/ProductForm'));
 const ProductInquiryManagement = lazy(() => import('./pages/admin/ProductInquiryManagement'));
 const ShopOrderManagement = lazy(() => import('./pages/admin/ShopOrderManagement'));
 const MaintenanceDashboard = lazy(() => import('./pages/admin/MaintenanceDashboard'));
+const TeamRequestManagement = lazy(() => import('./pages/admin/TeamRequestManagement'));
 
 /**
  * Lightweight spinner the Suspense fallback renders while a chunk loads.
@@ -191,6 +192,7 @@ function App() {
                 <Route path="products/:id/edit" element={<ProductForm />} />
                 <Route path="shop-inquiries" element={<ProductInquiryManagement />} />
                 <Route path="shop-orders" element={<ShopOrderManagement />} />
+                <Route path="team-requests" element={<TeamRequestManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

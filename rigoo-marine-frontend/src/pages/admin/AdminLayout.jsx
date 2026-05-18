@@ -19,6 +19,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import HomeIcon from '@mui/icons-material/Home';
+import GroupsIcon from '@mui/icons-material/Groups';
 
 const drawerWidth = 240;
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
   { name: 'Products', path: '/admin/products', icon: <StorefrontIcon /> },
   { name: 'Shop orders', path: '/admin/shop-orders', icon: <ReceiptLongIcon /> },
   { name: 'Shop inquiries', path: '/admin/shop-inquiries', icon: <ContactSupportIcon /> },
+  { name: 'Team Requests', path: '/admin/team-requests', icon: <GroupsIcon /> },
   { name: 'Audit log', path: '/admin/audit', icon: <HistoryIcon /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];
