@@ -41,7 +41,7 @@ public class TeamRequest {
 
     @Column(name = "whatsapp_opt_in", nullable = false)
     @Builder.Default
-    private Boolean whatsappOptIn = false;
+    private boolean whatsappOptIn = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
