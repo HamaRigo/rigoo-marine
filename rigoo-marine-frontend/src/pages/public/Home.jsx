@@ -275,23 +275,6 @@ export default function Home() {
             >
               {t('hero.requestTeam')}
             </Button>
-            {!isAuthenticated && (
-              <Button
-                component={Link}
-                to="/register"
-                variant="outlined"
-                size="large"
-                sx={{
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.7)',
-                  px: { xs: 3, sm: 4 },
-                  py: 1.4,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.12)', borderColor: 'white' },
-                }}
-              >
-                {t('hero.getStarted')}
-              </Button>
-            )}
           </Box>
         </Fade>
 
