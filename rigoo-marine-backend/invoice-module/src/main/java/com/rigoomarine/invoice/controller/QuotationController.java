@@ -23,7 +23,7 @@ public class QuotationController {
 
     private final QuotationService quotationService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PostMapping
     public ResponseEntity<QuotationDTO> createQuotation(@Valid @RequestBody CreateQuotationRequest request) {
         return ResponseEntity.ok(quotationService.createQuotation(request));
@@ -34,7 +34,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.getQuotationsByClientId(clientId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @GetMapping
     public ResponseEntity<Page<QuotationDTO>> searchQuotations(
             @RequestParam(required = false) String q,
@@ -52,7 +52,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.searchPaged(q, status, clientId, pageable));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @GetMapping("/all")
     public ResponseEntity<List<QuotationDTO>> getAllQuotations() {
         return ResponseEntity.ok(quotationService.getAllQuotations());
@@ -68,7 +68,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.getQuotationByNumber(quotationNumber));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PutMapping("/{id}")
     public ResponseEntity<QuotationDTO> updateQuotation(
         @PathVariable Long id,
@@ -77,7 +77,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.updateQuotation(id, request));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PutMapping("/{id}/status")
     public ResponseEntity<QuotationDTO> updateQuotationStatus(
         @PathVariable Long id,
@@ -86,7 +86,7 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.updateQuotationStatus(id, status));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQuotation(@PathVariable Long id) {
         quotationService.deleteQuotation(id);

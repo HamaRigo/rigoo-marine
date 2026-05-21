@@ -23,7 +23,7 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PostMapping
     public ResponseEntity<InvoiceDTO> createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
         return ResponseEntity.ok(invoiceService.createInvoice(request));
@@ -34,7 +34,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getInvoicesByClientId(clientId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @GetMapping
     public ResponseEntity<Page<InvoiceDTO>> searchInvoices(
             @RequestParam(required = false) String q,
@@ -52,7 +52,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.searchPaged(q, status, clientId, pageable));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @GetMapping("/all")
     public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
         return ResponseEntity.ok(invoiceService.getAllInvoices());
@@ -68,7 +68,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getInvoiceByNumber(invoiceNumber));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PutMapping("/{id}")
     public ResponseEntity<InvoiceDTO> updateInvoice(
         @PathVariable Long id,
@@ -77,7 +77,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.updateInvoice(id, request));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     @PutMapping("/{id}/status")
     public ResponseEntity<InvoiceDTO> updateInvoiceStatus(
         @PathVariable Long id,

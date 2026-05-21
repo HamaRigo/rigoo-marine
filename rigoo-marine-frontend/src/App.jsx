@@ -89,6 +89,17 @@ import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import WorkOrderQueue from './pages/technician/WorkOrderQueue';
 import WorkOrderDetail from './pages/technician/WorkOrderDetail';
 
+// Team Lead Pages
+import TeamLeadLayout from './pages/team-lead/TeamLeadLayout';
+import TeamLeadDashboard from './pages/team-lead/TeamLeadDashboard';
+import TeamLeadOrders from './pages/team-lead/TeamLeadOrders';
+import TeamLeadOrderDetail from './pages/team-lead/TeamLeadOrderDetail';
+import TeamLeadTeamRequests from './pages/team-lead/TeamLeadTeamRequests';
+import TeamLeadInvoices from './pages/team-lead/TeamLeadInvoices';
+import TeamLeadQuotations from './pages/team-lead/TeamLeadQuotations';
+import TeamLeadHistory from './pages/team-lead/TeamLeadHistory';
+import TeamLeadTechnicians from './pages/team-lead/TeamLeadTechnicians';
+
 // Error Pages
 import NotFound from './pages/error/NotFound';
 
@@ -209,17 +220,24 @@ function App() {
                 <Route path="history" element={<div>Work Order History - Coming Soon</div>} />
               </Route>
 
-              {/* Team Lead Routes (TEAM_LEAD role — Phase 3) */}
+              {/* Team Lead Routes (TEAM_LEAD role) */}
               <Route
                 path="/team-lead"
                 element={
                   <TeamLeadRoute>
-                    <Suspense fallback={<ChunkLoading />}>
-                      <div style={{ padding: 40, textAlign: 'center' }}>Team Lead Dashboard — Coming Soon</div>
-                    </Suspense>
+                    <TeamLeadLayout />
                   </TeamLeadRoute>
                 }
-              />
+              >
+                <Route index                  element={<TeamLeadDashboard />} />
+                <Route path="orders"          element={<TeamLeadOrders />} />
+                <Route path="orders/:id"      element={<TeamLeadOrderDetail />} />
+                <Route path="team-requests"   element={<TeamLeadTeamRequests />} />
+                <Route path="invoices"        element={<TeamLeadInvoices />} />
+                <Route path="quotations"      element={<TeamLeadQuotations />} />
+                <Route path="history"         element={<TeamLeadHistory />} />
+                <Route path="technicians"     element={<TeamLeadTechnicians />} />
+              </Route>
 
               {/* Delivery Routes (DELIVERY role — Phase 4/5) */}
               <Route

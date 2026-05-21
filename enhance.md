@@ -159,7 +159,7 @@ Use a configurable font path; do not bundle a binary.
 
 ---
 
-### 2.2 — Team Lead `[ ]`
+### 2.2 — Team Lead `[x]`
 
 **Responsibilities**: field supervisor. Manages technicians, handles client-facing job communication, generates billing documents for jobs under their supervision. No access to platform admin (users, audit log, settings, marketing).
 
