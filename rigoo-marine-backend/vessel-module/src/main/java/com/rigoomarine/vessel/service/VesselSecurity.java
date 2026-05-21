@@ -5,7 +5,9 @@ import com.rigoomarine.common.security.AuthenticatedUser;
 import com.rigoomarine.common.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +43,13 @@ public class VesselSecurity {
             return false;
         }
         return vesselRepository.existsByIdAndClientId(vesselId, clientId);
+    }
+
+    /** Throws 404 (leak-proof) if the caller cannot access the vessel. */
+    public void assertCanAccess(Long vesselId) {
+        if (!canAccess(vesselId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vessel not found: " + vesselId);
+        }
     }
 
     public boolean isOwner(Long vesselId) {

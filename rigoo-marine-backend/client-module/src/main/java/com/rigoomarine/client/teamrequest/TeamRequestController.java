@@ -1,6 +1,5 @@
 package com.rigoomarine.client.teamrequest;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -8,8 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,9 +24,12 @@ public class TeamRequestController {
     // ── Public: submit ────────────────────────────────────────────────────────
 
     /**
-     * Open to guests and authenticated clients. Auth is optional — if a valid
-     * JWT is present the filter sets a principal; controller uses it to attach
-     * the clientId. Guests pass their phone in the form body.
+     * Open to guests and authenticated clients. The JWT filter sets the principal
+     * as the caller's email (String) when a valid token is present.
+     *
+     * For authenticated users, contactPhone is IGNORED and replaced with the phone
+     * stored on their account — preventing callers from spoofing another user's phone
+     * to poison the duplicate-pending guard.
      */
     @PostMapping("/api/team-requests")
     public ResponseEntity<TeamRequestDTO> create(
@@ -38,7 +39,7 @@ public class TeamRequestController {
             @RequestParam("contactPhone")         String contactPhone,
             @RequestParam(value = "whatsapp", defaultValue = "false") boolean whatsapp,
             @RequestParam(value = "files",    required = false) List<MultipartFile> files,
-            @AuthenticationPrincipal User principal) {
+            Authentication authentication) {
 
         if (category == null || category.isBlank())
             return ResponseEntity.badRequest().build();
@@ -47,15 +48,33 @@ public class TeamRequestController {
         if (contactPhone == null || contactPhone.isBlank())
             return ResponseEntity.badRequest().build();
 
-        Long clientId = null;
-        if (principal != null) {
-            try { clientId = Long.parseLong(principal.getUsername()); }
-            catch (NumberFormatException ignored) {}
-        }
+        // JWT filter puts the caller's email (String) as the principal.
+        // We resolve it in the service to get clientId and canonical phone.
+        String callerEmail = resolveEmail(authentication);
 
-        TeamRequestDTO dto = service.create(clientId, contactPhone, category,
+        TeamRequestDTO dto = service.create(callerEmail, contactPhone, category,
                                             description, location, whatsapp, files);
         return ResponseEntity.ok(dto);
+    }
+
+    // ── Client: own requests ──────────────────────────────────────────────────
+
+    /**
+     * Returns the authenticated caller's own team requests (all statuses).
+     * Matches on both clientId and contactPhone so pre-login guest submissions
+     * surface after the guest creates an account with the same phone number.
+     */
+    @GetMapping("/api/clients/me/team-requests")
+    public ResponseEntity<Page<TeamRequestDTO>> myRequests(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+
+        String callerEmail = resolveEmail(authentication);
+        if (callerEmail == null) return ResponseEntity.status(401).build();
+
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(service.listForCaller(callerEmail, pr));
     }
 
     // ── Admin ─────────────────────────────────────────────────────────────────
@@ -98,5 +117,14 @@ public class TeamRequestController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Long>> stats() {
         return ResponseEntity.ok(Map.of("pending", service.countPending()));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static String resolveEmail(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) return null;
+        Object principal = auth.getPrincipal();
+        // JWT filter stores the subject (email) as a raw String principal.
+        return principal instanceof String s ? s : null;
     }
 }

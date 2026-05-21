@@ -1,0 +1,212 @@
+{
+  "nav": {
+    "fleet": "My Fleet",
+    "account": "Account",
+    "profile": "Profile",
+    "returnHome": "Return Home",
+    "home": "Home",
+    "signOut": "Sign Out",
+    "signedInAs": "Signed in as {{email}}",
+    "language": "Language"
+  },
+  "vessels": {
+    "title": "My Fleet",
+    "count_one": "{{count}} vessel",
+    "count_other": "{{count}} vessels",
+    "addVessel": "Add Vessel",
+    "addFirst": "Add Your First Vessel",
+    "addOne": "Add one",
+    "noVessels": "No vessels yet",
+    "noVesselsYet": "No vessels yet",
+    "noVesselsHint": "Add your first vessel to get started.",
+    "editTooltip": "Edit",
+    "deleteTooltip": "Delete",
+    "exportPdf": "Export PDF",
+    "addService": "+ Service",
+    "engineHours": "{{hours}} engine hours",
+    "selectPrompt": "Select a vessel",
+    "selectHint": "Choose a vessel from your fleet to view its full dossier, or add a new one.",
+    "form": {
+      "addTitle": "Add Vessel",
+      "editTitle": "Edit Vessel",
+      "nameRequired": "Vessel name is required",
+      "name": "Vessel Name *",
+      "type": "Type",
+      "brand": "Brand",
+      "model": "Model",
+      "year": "Year",
+      "length": "Length (ft)",
+      "engineType": "Engine Type",
+      "hullMaterial": "Hull Material",
+      "registration": "Registration #",
+      "status": "Status",
+      "photoUrl": "Photo URL",
+      "photoUrlPlaceholder": "https://example.com/boat.jpg",
+      "none": "None",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "add": "Add Vessel",
+      "sectionBasic": "Basic Information",
+      "sectionSpecs": "Technical Specs",
+      "sectionDetails": "Status & Photo"
+    },
+    "deleteDialog": {
+      "title": "Delete Vessel",
+      "confirm": "Permanently delete \"{{name}}\"? All maintenance records, documents, and fuel logs will be removed.",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "maintenance": "Maintenance",
+      "schedule": "Schedule",
+      "team": "Team",
+      "documents": "Documents",
+      "fuelLog": "Fuel Log"
+    },
+    "infoLabels": {
+      "type": "Type",
+      "brand": "Brand",
+      "model": "Model",
+      "year": "Year",
+      "length": "Length",
+      "engine": "Engine",
+      "hull": "Hull",
+      "reg": "Reg #",
+      "ft": "ft"
+    },
+    "schedule": {
+      "listView": "List",
+      "calendarView": "Calendar"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "MAINTENANCE": "Maintenance",
+      "LAID_UP": "Laid Up",
+      "SOLD": "Sold"
+    },
+    "overview": {
+      "engineHours": "Engine Hours",
+      "maintCost": "Maint. Cost YTD",
+      "fuelYtd": "Fuel YTD",
+      "nextService": "Next Service",
+      "overdue": "Overdue",
+      "dueSoon": "Due Soon",
+      "onSchedule": "On Schedule",
+      "costChart": "Maintenance Cost · {{year}}",
+      "hoursChart": "Engine Hours Trend",
+      "fuelChart": "Fuel Consumption · {{year}}",
+      "serviceChart": "Service Distribution",
+      "services": "services",
+      "upcomingTitle": "Upcoming Services",
+      "specsTitle": "Vessel Specs",
+      "allOnSchedule": "All services on schedule",
+      "noData": "Not enough data yet",
+      "noFuelData": "No fuel logs yet"
+    },
+    "toast": {
+      "added": "Vessel added",
+      "updated": "Vessel updated",
+      "deleted": "Vessel deleted",
+      "addFailed": "Failed to add vessel",
+      "updateFailed": "Failed to update vessel",
+      "deleteFailed": "Failed to delete vessel"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information and preferences",
+    "personalInfo": "Personal Information",
+    "commSection": "Communication",
+    "security": "Security",
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "saveChanges": "Save Changes",
+    "reset": "Reset",
+    "saving": "Saving…",
+    "savedSuccess": "Profile updated",
+    "saveFailed": "Failed to update profile",
+    "passwordChanged": "Password changed",
+    "passwordFailed": "Failed to change password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "commLanguage": "Preferred Language",
+    "commLanguageHint": "Emails and reminders will be sent in this language.",
+    "whatsapp": "WhatsApp Reminders",
+    "whatsappHint": "Send maintenance reminders to my WhatsApp:",
+    "noPhone": "no number on file",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "updatePassword": "Update Password",
+    "cancelEdit": "Cancel",
+    "editPassword": "Edit",
+    "statsVessels": "Vessels",
+    "statsActiveOrders": "Active Orders"
+  },
+  "account": {
+    "title": "My Account",
+    "subtitle": "Track your service orders, shop purchases, and invoices in one place.",
+    "statsTotal": "Total Orders",
+    "statsActive": "Active",
+    "statsBilled": "Total Billed",
+    "tabs": {
+      "serviceOrders": "Service Orders",
+      "shopOrders": "Shop Orders",
+      "invoices": "Invoices"
+    },
+    "serviceOrders": {
+      "newRequest": "New Service Request",
+      "noOrders": "No service orders yet",
+      "noOrdersHint": "Create a service request to get started",
+      "newRequestShort": "New Request",
+      "orderCancelled": "Order Cancelled",
+      "waitingParts": "Waiting for Parts",
+      "rejectionReason": "Rejection reason",
+      "vessel": "Vessel #{{id}}",
+      "preferred": "Preferred: {{date}}",
+      "status": {
+        "PENDING_APPROVAL": "Awaiting Approval",
+        "PENDING": "Pending",
+        "IN_PROGRESS": "In Progress",
+        "WAITING_PARTS": "Waiting for Parts",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "shopOrders": {
+      "noOrders": "No shop orders yet",
+      "noOrdersHint": "Browse our shop to place an order",
+      "showLess": "Show less",
+      "moreItems": "+{{count}} more",
+      "placed": "Placed {{date}}",
+      "item_one": "{{count}} item",
+      "item_other": "{{count}} items",
+      "status": {
+        "PENDING_PAYMENT": "Pending Payment",
+        "PAID": "Paid",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded"
+      }
+    },
+    "invoices": {
+      "noInvoices": "No invoices yet",
+      "noInvoicesHint": "Invoices appear once service orders are completed",
+      "loadError": "Failed to load invoices",
+      "pdfError": "Failed to load PDF",
+      "preview": "Preview",
+      "download": "Download",
+      "dialogTitle": "Invoice {{number}}",
+      "columns": {
+        "invoiceNo": "Invoice #",
+        "orderNo": "Order #",
+        "date": "Date",
+        "dueDate": "Due Date",
+        "amount": "Amount",
+        "status": "Status"
+      }
+    }
+  }
+}

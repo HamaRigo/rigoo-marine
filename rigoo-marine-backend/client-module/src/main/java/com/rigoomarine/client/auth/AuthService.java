@@ -66,9 +66,13 @@ public class AuthService {
         if (rawToken == null || rawToken.isBlank()) return false;
         String hash = tokenService.hash(rawToken);
         return clientRepository.findByEmailVerificationTokenHash(hash)
-                .filter(c -> c.getEmailVerificationExpiresAt() != null
-                        && c.getEmailVerificationExpiresAt().isAfter(LocalDateTime.now()))
                 .map(c -> {
+                    // Already verified (token cleared on first use) — idempotent success.
+                    if (Boolean.TRUE.equals(c.getEmailVerified())) return true;
+                    if (c.getEmailVerificationExpiresAt() == null
+                            || c.getEmailVerificationExpiresAt().isBefore(LocalDateTime.now())) {
+                        return false;
+                    }
                     c.setEmailVerified(true);
                     c.setEmailVerificationTokenHash(null);
                     c.setEmailVerificationExpiresAt(null);

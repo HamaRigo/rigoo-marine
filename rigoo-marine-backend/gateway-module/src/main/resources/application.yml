@@ -99,6 +99,12 @@ spring:
           uri: lb://client-service
           predicates:
             - Path=/unsubscribe
+        - id: public-info
+          # Public read-only data served by client-service — no rate limit needed
+          # (responses are small + cached; contact info page loads are idempotent).
+          uri: lb://client-service
+          predicates:
+            - Path=/api/public/**
         - id: auth-service
           uri: lb://client-service
           predicates:
@@ -299,6 +305,31 @@ spring:
           uri: lb://shop-service
           predicates:
             - Path=/api/admin/orders/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        # Team requests — public POST (guest + auth'd clients). Strict IP-keyed rate
+        # limit mirrors marketplace inquiry: 1 rps burst-3 to block form spammers.
+        - id: team-requests-submit-ratelimit
+          uri: lb://client-service
+          predicates:
+            - Path=/api/team-requests
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 3
+                key-resolver: "#{@ipKeyResolver}"
+        # Team requests admin — list, status updates, stats. ADMIN role enforced at
+        # controller via @PreAuthorize; user-keyed limit for normal admin traffic.
+        - id: team-requests-admin
+          uri: lb://client-service
+          predicates:
+            - Path=/api/admin/team-requests/**
           filters:
             - name: RequestRateLimiter
               args:

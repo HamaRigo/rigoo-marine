@@ -2,7 +2,8 @@
   "tabs": {
     "info": "المعلومات",
     "history": "سجل الخدمة",
-    "schedule": "تقويم الصيانة"
+    "schedule": "تقويم الصيانة",
+    "teamRequests": "طلبات الفريق"
   },
   "page": {
     "title": "{{name}} — ملف الصيانة",
@@ -112,6 +113,37 @@
     "BATTERY": "البطارية",
     "INSPECTION": "فحص",
     "OTHER": "أخرى"
+  },
+  "teamRequests": {
+    "scopeNote": "عرض جميع طلباتك عبر السفن",
+    "empty": "لا توجد طلبات فريق حتى الآن",
+    "emptyHint": "استخدم زر \"طلب فريق\" في الصفحة الرئيسية لجدولة زيارة ميدانية.",
+    "submitted": "تم التقديم",
+    "location": "الموقع",
+    "attachmentsCount": "{{count}} مرفق(ات)",
+    "adminNotes": "ملاحظات من فريقنا",
+    "whatsapp": "متابعة عبر واتساب",
+    "categories": {
+      "mechanical": "ميكانيكي",
+      "structural": "هيكلي",
+      "electrical": "كهربائي",
+      "cosmetic": "تجميلي",
+      "renovation": "ترميم",
+      "emergency": "طارئ"
+    },
+    "status": {
+      "PENDING":    "قيد المراجعة",
+      "APPROVED":   "تمت الموافقة",
+      "REJECTED":   "مرفوض",
+      "DISPATCHED": "الفريق في الطريق",
+      "COMPLETED":  "مكتمل"
+    },
+    "steps": {
+      "PENDING":    "تقديم الطلب",
+      "APPROVED":   "الموافقة",
+      "DISPATCHED": "إرسال الفريق",
+      "COMPLETED":  "الإتمام"
+    }
   },
   "errors": {
     "INVALID_ENGINE_HOURS": "قراءة ساعات المحرك غير منطقية — تحقق من الرقم أو استخدم وضع التجاوز.",

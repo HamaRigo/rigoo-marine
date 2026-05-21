@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Container, Paper, Typography, Button, CircularProgress, Stack } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,15 +9,15 @@ export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [state, setState] = useState(token ? 'verifying' : 'missing');
+  const calledRef = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
+    if (!token || calledRef.current) return;
+    calledRef.current = true;
     authApi
       .verifyEmail(token)
-      .then(() => { if (!cancelled) setState('success'); })
-      .catch(() => { if (!cancelled) setState('error'); });
-    return () => { cancelled = true; };
+      .then(() => setState('success'))
+      .catch(() => setState('error'));
   }, [token]);
 
   return (

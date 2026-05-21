@@ -1,5 +1,6 @@
 package com.rigoomarine.vessel.dto;
 
+import com.rigoomarine.vessel.entity.VesselStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -15,6 +16,8 @@ public class VesselDTO {
     private Long clientId;
     private String name;
     private String type;
+    private VesselStatus status;
+    private String photoUrl;
     private String engineType;
     private String brand;
     private String model;

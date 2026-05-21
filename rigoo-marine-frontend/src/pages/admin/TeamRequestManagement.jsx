@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Chip, IconButton, Select, MenuItem, FormControl,
-  InputLabel, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, CircularProgress, Alert, Tooltip, Stack, Avatar,
+  TableHead, TableRow, TablePagination, Chip, IconButton, Select, MenuItem,
+  FormControl, InputLabel, Button, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, CircularProgress, Alert, Tooltip, Stack,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -39,13 +39,15 @@ const TRANSITIONS = [
 export default function TeamRequestManagement() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage]                 = useState(0);
+  const [rowsPerPage, setRowsPerPage]   = useState(20);
   const [selected, setSelected]         = useState(null);
-  const [actionTarget, setActionTarget] = useState(null); // { req, toStatus }
+  const [actionTarget, setActionTarget] = useState(null);
   const [adminNotes, setAdminNotes]     = useState('');
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['team-requests', statusFilter],
-    queryFn: () => teamRequestApi.list({ status: statusFilter || undefined }),
+    queryKey: ['team-requests', statusFilter, page, rowsPerPage],
+    queryFn: () => teamRequestApi.list({ status: statusFilter || undefined, page, size: rowsPerPage }),
   });
 
   const mutation = useMutation({
@@ -66,7 +68,8 @@ export default function TeamRequestManagement() {
     mutation.mutate({ id: actionTarget.req.id, status: actionTarget.toStatus, notes: adminNotes });
   };
 
-  const rows = data?.content ?? [];
+  const rows        = data?.content       ?? [];
+  const totalCount  = data?.totalElements ?? 0;
 
   return (
     <Box>
@@ -75,7 +78,7 @@ export default function TeamRequestManagement() {
           <Typography variant="h5" fontWeight={700}>Team Requests</Typography>
           <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Status filter</InputLabel>
-            <Select value={statusFilter} label="Status filter" onChange={e => setStatusFilter(e.target.value)}>
+            <Select value={statusFilter} label="Status filter" onChange={e => { setStatusFilter(e.target.value); setPage(0); }}>
               <MenuItem value="">All</MenuItem>
               {Object.keys(STATUS_COLORS).map(s => (
                 <MenuItem key={s} value={s}>{s}</MenuItem>
@@ -180,6 +183,15 @@ export default function TeamRequestManagement() {
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            component="div"
+            count={totalCount}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+            rowsPerPageOptions={[10, 20, 50]}
+          />
         </TableContainer>
       )}
 

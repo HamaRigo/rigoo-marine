@@ -2,7 +2,8 @@
   "tabs": {
     "info": "Info",
     "history": "Service history",
-    "schedule": "Service calendar"
+    "schedule": "Service calendar",
+    "teamRequests": "Team Requests"
   },
   "page": {
     "title": "{{name}} — maintenance dossier",
@@ -112,6 +113,37 @@
     "BATTERY": "Battery",
     "INSPECTION": "Inspection",
     "OTHER": "Other"
+  },
+  "teamRequests": {
+    "scopeNote": "Showing all your team requests across vessels",
+    "empty": "No team requests yet",
+    "emptyHint": "Use the \"Request Team\" button on the home page to schedule an on-site visit.",
+    "submitted": "Submitted",
+    "location": "Location",
+    "attachmentsCount": "{{count}} attachment(s)",
+    "adminNotes": "Notes from our team",
+    "whatsapp": "WhatsApp follow-up",
+    "categories": {
+      "mechanical": "Mechanical",
+      "structural": "Structural",
+      "electrical": "Electrical",
+      "cosmetic": "Cosmetic",
+      "renovation": "Renovation",
+      "emergency": "Emergency"
+    },
+    "status": {
+      "PENDING":    "Pending review",
+      "APPROVED":   "Approved",
+      "REJECTED":   "Rejected",
+      "DISPATCHED": "Team dispatched",
+      "COMPLETED":  "Completed"
+    },
+    "steps": {
+      "PENDING":    "Submitted",
+      "APPROVED":   "Approved",
+      "DISPATCHED": "Dispatched",
+      "COMPLETED":  "Completed"
+    }
   },
   "errors": {
     "INVALID_ENGINE_HOURS": "That engine-hours reading doesn't look right — check the number or use force mode.",

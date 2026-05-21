@@ -23,22 +23,19 @@ export function setupInterceptors() {
   httpClient.interceptors.response.use(
     (response) => response,
     (error) => {
-      // 401 - Unauthorized: Token expired or invalid
-      if (error.response?.status === 401) {
+      // 401 - Unauthorized: Token expired or invalid.
+      // Skip the auto-logout for requests that set skipAuthRedirect (e.g. resend-verification)
+      // so callers can handle the 401 themselves with a toast instead of a hard redirect.
+      if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
         // Clear auth storage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('tokenExpiresAt');
 
         // Redirect to login (only if not already there)
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }
-      }
-
-      // 403 - Forbidden: Access denied
-      if (error.response?.status === 403) {
-        console.warn('Access denied:', error.response.data?.message);
-        // Could trigger a toast notification here
       }
 
       // 500 - Server Error

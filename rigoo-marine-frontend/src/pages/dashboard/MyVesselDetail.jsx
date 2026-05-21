@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Tabs, Tab, Button, Stack, Skeleton, Alert, Card, CardContent, Grid,
-  ToggleButtonGroup, ToggleButton,
+  ToggleButtonGroup, ToggleButton, Chip, Avatar,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
@@ -20,7 +20,13 @@ import ServiceHistoryTimeline from '../../components/maintenance/ServiceHistoryT
 import ServiceScheduleList from '../../components/maintenance/ServiceScheduleList';
 import ServiceScheduleCalendar from '../../components/maintenance/ServiceScheduleCalendar';
 import AddServiceHistoryDialog from '../../components/maintenance/AddServiceHistoryDialog';
+import DocumentVault from '../../components/vessel/DocumentVault';
+import FuelLogPanel from '../../components/vessel/FuelLogPanel';
 import { Reveal } from '../../components/common/Motion';
+import TeamRequestTracker from '../../components/client/TeamRequestTracker';
+import GroupsIcon from '@mui/icons-material/Groups';
+import FolderSpecialRoundedIcon from '@mui/icons-material/FolderSpecialRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 
 /**
  * Tabbed dossier page for one vessel. Info tab pulls the vessel-service DTO;
@@ -149,15 +155,66 @@ export default function MyVesselDetail() {
         value={tab}
         onChange={(_, v) => setTab(v)}
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+        variant="scrollable"
+        scrollButtons="auto"
       >
         <Tab label={t('tabs.info')} />
         <Tab label={t('tabs.history')} />
         <Tab label={t('tabs.schedule')} />
+        <Tab
+          label={t('tabs.teamRequests')}
+          icon={<GroupsIcon sx={{ fontSize: 16 }} />}
+          iconPosition="start"
+          sx={{ minHeight: 48 }}
+        />
+        <Tab
+          label="Documents"
+          icon={<FolderSpecialRoundedIcon sx={{ fontSize: 16 }} />}
+          iconPosition="start"
+          sx={{ minHeight: 48 }}
+        />
+        <Tab
+          label="Fuel Log"
+          icon={<LocalGasStationRoundedIcon sx={{ fontSize: 16 }} />}
+          iconPosition="start"
+          sx={{ minHeight: 48 }}
+        />
       </Tabs>
 
       {tab === 0 && vessel && (
         <Card>
           <CardContent>
+            {/* Status + photo row */}
+            <Stack direction="row" alignItems="center" spacing={2} mb={2.5}>
+              {vessel.photoUrl ? (
+                <Avatar
+                  src={vessel.photoUrl}
+                  alt={vessel.name}
+                  sx={{ width: 64, height: 64, borderRadius: 2 }}
+                />
+              ) : (
+                <Avatar sx={{ width: 64, height: 64, borderRadius: 2, bgcolor: 'primary.main' }}>
+                  <DirectionsBoatIcon />
+                </Avatar>
+              )}
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>{vessel.name}</Typography>
+                {vessel.status && (
+                  <Chip
+                    size="small"
+                    label={vessel.status.replace('_', ' ')}
+                    color={
+                      vessel.status === 'ACTIVE' ? 'success'
+                      : vessel.status === 'MAINTENANCE' ? 'warning'
+                      : vessel.status === 'LAID_UP' ? 'default'
+                      : 'error'
+                    }
+                    sx={{ mt: 0.5, fontWeight: 600, fontSize: '0.68rem' }}
+                  />
+                )}
+              </Box>
+            </Stack>
+
             <Grid container spacing={2}>
               {[
                 ['Type', vessel.type],
@@ -165,7 +222,7 @@ export default function MyVesselDetail() {
                 ['Brand', vessel.brand],
                 ['Model', vessel.model],
                 ['Year', vessel.year],
-                ['Length', vessel.length],
+                ['Length', vessel.length ? `${vessel.length} ft` : null],
                 ['Hull', vessel.hullMaterial],
                 ['Reg #', vessel.registrationNumber],
               ].map(([label, value]) => (
@@ -210,6 +267,18 @@ export default function MyVesselDetail() {
             ? <ServiceScheduleList vesselId={vesselId} schedule={d.schedule} />
             : <ServiceScheduleCalendar vesselId={vesselId} schedule={d.schedule} />}
         </Box>
+      )}
+
+      {tab === 3 && (
+        <TeamRequestTracker active={tab === 3} />
+      )}
+
+      {tab === 4 && (
+        <DocumentVault vesselId={vesselId} />
+      )}
+
+      {tab === 5 && (
+        <FuelLogPanel vesselId={vesselId} />
       )}
 
       <AddServiceHistoryDialog

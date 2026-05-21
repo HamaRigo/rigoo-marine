@@ -1,6 +1,7 @@
 package com.rigoomarine.vessel.service;
 
 import com.rigoomarine.vessel.entity.Vessel;
+import com.rigoomarine.vessel.entity.VesselStatus;
 import com.rigoomarine.vessel.exception.VesselNotFoundException;
 import com.rigoomarine.vessel.repository.VesselRepository;
 import com.rigoomarine.vessel.dto.VesselDTO;
@@ -44,6 +45,8 @@ public class VesselService {
             .length(request.getLength())
             .hullMaterial(request.getHullMaterial())
             .registrationNumber(request.getRegistrationNumber())
+            .status(request.getStatus() != null ? request.getStatus() : VesselStatus.ACTIVE)
+            .photoUrl(request.getPhotoUrl())
             .build();
 
         Vessel saved = vesselRepository.save(vessel);
@@ -86,6 +89,8 @@ public class VesselService {
         vessel.setLength(request.getLength());
         vessel.setHullMaterial(request.getHullMaterial());
         vessel.setRegistrationNumber(request.getRegistrationNumber());
+        if (request.getStatus() != null) vessel.setStatus(request.getStatus());
+        if (request.getPhotoUrl() != null) vessel.setPhotoUrl(request.getPhotoUrl());
 
         Vessel updated = vesselRepository.save(vessel);
         return toDTO(updated);
@@ -122,6 +127,8 @@ public class VesselService {
             .registrationNumber(vessel.getRegistrationNumber())
             .currentEngineHours(vessel.getCurrentEngineHours())
             .engineHoursUpdatedAt(vessel.getEngineHoursUpdatedAt())
+            .status(vessel.getStatus())
+            .photoUrl(vessel.getPhotoUrl())
             .createdAt(vessel.getCreatedAt())
             .build();
     }

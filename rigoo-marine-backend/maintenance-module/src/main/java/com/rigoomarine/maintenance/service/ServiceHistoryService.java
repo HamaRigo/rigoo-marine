@@ -73,6 +73,7 @@ public class ServiceHistoryService {
     private final ServiceHistoryRecordRepository historyRepo;
     private final ServiceHistoryAttachmentRepository attachmentRepo;
     private final ServiceScheduleService scheduleService;
+    private final DossierCacheService dossierCache;
     private final VesselClient vesselClient;
     private final Clock clock;
     private final MaintenanceAuditLogger auditLogger;
@@ -112,6 +113,7 @@ public class ServiceHistoryService {
         scheduleService.advanceAfterService(vesselId, req.getServiceType(),
             req.getPerformedOn(), newReading, newReading != null ? newReading : currentVesselHours);
 
+        dossierCache.evict(vesselId);
         return toDTO(saved);
     }
 
@@ -127,11 +129,13 @@ public class ServiceHistoryService {
         if (!isAdminOrTechnician && !record.getClientId().equals(callerClientId)) {
             throw new ServiceHistoryNotFoundException(id);
         }
+        Long vesselId = record.getVesselId();
         historyRepo.delete(record);
         auditLogger.recordIfAdminActingOnBehalf(
-            "MAINTENANCE_HISTORY_DELETE", "VESSEL", record.getVesselId(), record.getClientId(),
+            "MAINTENANCE_HISTORY_DELETE", "VESSEL", vesselId, record.getClientId(),
             "{\"historyId\":" + id + ",\"type\":\"" + record.getServiceType() + "\"}");
-        scheduleService.recomputeFromHistory(record.getVesselId(), record.getServiceType());
+        scheduleService.recomputeFromHistory(vesselId, record.getServiceType());
+        dossierCache.evict(vesselId);
     }
 
     private void validateHours(CreateServiceHistoryRequest req, BigDecimal currentVesselHours, boolean force) {

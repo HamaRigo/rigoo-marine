@@ -5,6 +5,10 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import DirectionsBoatRoundedIcon from '@mui/icons-material/DirectionsBoatRounded';
@@ -219,62 +223,33 @@ function KpiTile({ icon: Icon, label, value, subValue }) {
   );
 }
 
-/** ─── Monthly bar chart (pure SVG) ─────────────────────────────────────── */
+/** ─── Monthly bar chart (recharts) ─────────────────────────────────────── */
 
 function MonthlyBarChart({ data, locale }) {
-  const dims = { width: 640, height: 200, padding: 28 };
-  const maxVal = Math.max(...data.map((m) => Number(m.totalQar) || 0), 1);
-  const plotW = dims.width - dims.padding * 2;
-  const plotH = dims.height - dims.padding * 2;
-  const barW = plotW / data.length - 6;
+  const chartData = data.map(m => ({
+    month: MONTH_LABELS[m.month - 1],
+    cost:  Math.round(Number(m.totalQar) || 0),
+  }));
 
   return (
-    <Box sx={{ overflowX: 'auto' }}>
-      <svg
-        viewBox={`0 0 ${dims.width} ${dims.height}`}
-        role="img"
-        aria-label="monthly cost"
-        style={{ width: '100%', height: 'auto', display: 'block' }}
-      >
-        {/* Y-axis baseline */}
-        <line
-          x1={dims.padding}
-          y1={dims.height - dims.padding}
-          x2={dims.width - dims.padding}
-          y2={dims.height - dims.padding}
-          stroke="rgba(0,0,0,0.12)"
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+        <defs>
+          <linearGradient id="analyticsCostGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#006994" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="#006994" stopOpacity={0.45} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#78909C' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#78909C' }} axisLine={false} tickLine={false} />
+        <Tooltip
+          formatter={(v) => [`${v.toLocaleString()} QAR`, 'Cost']}
+          contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
         />
-        {data.map((m, i) => {
-          const v = Number(m.totalQar) || 0;
-          const h = (v / maxVal) * plotH;
-          const x = dims.padding + (plotW / data.length) * i + 3;
-          const y = dims.height - dims.padding - h;
-          return (
-            <g key={m.month}>
-              <rect
-                x={x}
-                y={y}
-                width={barW}
-                height={h}
-                fill="#006994"
-                rx="2"
-              >
-                <title>{MONTH_LABELS[m.month - 1]} · {fmtQar(v, locale)}</title>
-              </rect>
-              <text
-                x={x + barW / 2}
-                y={dims.height - dims.padding + 14}
-                fontSize="10"
-                fill="rgba(0,0,0,0.55)"
-                textAnchor="middle"
-              >
-                {MONTH_LABELS[m.month - 1]}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </Box>
+        <Bar dataKey="cost" fill="url(#analyticsCostGrad)" radius={[4, 4, 0, 0]} maxBarSize={44} />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 

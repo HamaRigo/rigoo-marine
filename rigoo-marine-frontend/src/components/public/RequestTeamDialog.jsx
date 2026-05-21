@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogTitle, Box, Typography, IconButton,
   Button, TextField, Chip, CircularProgress, Fade, Zoom, Stack,
@@ -43,21 +43,30 @@ const MAX_MB    = 20;
 
 const RATE_LIMIT_KEY = 'rm_team_req_ts';
 const RATE_LIMIT_MS  = 24 * 60 * 60 * 1000;
-const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_MAX = 10;
 
-// ── Rate-limit helper (localStorage) ─────────────────────────────────────
+// ── Rate-limit helpers (localStorage) ────────────────────────────────────
+// Check and record are intentionally split: we only record AFTER a successful
+// API call so a network error does not consume one of the user's slots.
 
-function checkRateLimit() {
+function isRateLimited() {
+  try {
+    const raw = localStorage.getItem(RATE_LIMIT_KEY);
+    const timestamps = raw ? JSON.parse(raw) : [];
+    const cutoff = Date.now() - RATE_LIMIT_MS;
+    return timestamps.filter(t => t > cutoff).length >= RATE_LIMIT_MAX;
+  } catch { return false; }
+}
+
+function recordRateLimitSlot() {
   try {
     const raw = localStorage.getItem(RATE_LIMIT_KEY);
     const timestamps = raw ? JSON.parse(raw) : [];
     const cutoff = Date.now() - RATE_LIMIT_MS;
     const recent = timestamps.filter(t => t > cutoff);
-    if (recent.length >= RATE_LIMIT_MAX) return false;
     recent.push(Date.now());
     localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(recent));
-    return true;
-  } catch { return true; }
+  } catch { /* ignore */ }
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────
@@ -82,7 +91,18 @@ function StepIndicator({ step, total }) {
 
 function FilePreview({ file, onRemove }) {
   const isVideo = file.type.startsWith('video/');
-  const url = URL.createObjectURL(file);
+  const [url, setUrl] = useState('');
+
+  // Create the blob URL once per file instance and revoke it on unmount to
+  // prevent accumulating unreleased memory (each createObjectURL holds the
+  // File in memory until explicitly revoked or the page navigates away).
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  if (!url) return null;
   return (
     <Box
       sx={{
@@ -195,7 +215,7 @@ export default function RequestTeamDialog({ open, onClose }) {
 
   // Submit
   const submit = async () => {
-    if (!checkRateLimit()) {
+    if (isRateLimited()) {
       setError(t('requestTeam.rateLimitError'));
       return;
     }
@@ -203,6 +223,8 @@ export default function RequestTeamDialog({ open, onClose }) {
     setError('');
     try {
       await teamRequestApi.create({ category, description, location, phone, whatsapp, files });
+      // Record the slot AFTER success so a network/server error does not waste a slot.
+      recordRateLimitSlot();
       setDone(true);
     } catch (e) {
       const msg = e?.response?.data?.message || e.message || t('requestTeam.submitError');

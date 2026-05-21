@@ -27,6 +27,14 @@ public class ContactInfoService {
                 .collect(Collectors.toList());
     }
 
+    /** Used by the public endpoint — active entries only, ordered for display. */
+    @Transactional(readOnly = true)
+    public List<ContactInfoDTO> getActiveContactInfo() {
+        return contactInfoRepository.findAllByActiveTrueOrderByDisplayOrder().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public List<ContactInfoDTO> getContactInfoByCategory(String category) {
         return contactInfoRepository.findByCategoryAndActiveTrueOrderByDisplayOrder(category).stream()

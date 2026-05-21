@@ -21,7 +21,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -244,10 +243,10 @@ public class AuthenticationController {
      */
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(
-            @AuthenticationPrincipal User userDetails
+            @AuthenticationPrincipal String email
     ) {
-        if (userDetails != null) {
-            ClientDTO client = clientService.getClientByEmail(userDetails.getUsername());
+        if (email != null) {
+            ClientDTO client = clientService.getClientByEmail(email);
             Map<String, Object> response = new HashMap<>();
             response.put("user", client);
             return ResponseEntity.ok(response);
@@ -260,14 +259,14 @@ public class AuthenticationController {
      */
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(
-            @AuthenticationPrincipal User userDetails,
+            @AuthenticationPrincipal String email,
             @RequestBody Map<String, String> updates
     ) {
-        if (userDetails == null) {
+        if (email == null) {
             return ResponseEntity.status(401).build();
         }
 
-        ClientDTO client = clientService.getClientByEmail(userDetails.getUsername());
+        ClientDTO client = clientService.getClientByEmail(email);
 
         CreateClientRequest request = new CreateClientRequest();
         request.setName(updates.getOrDefault("name", client.getName()));
@@ -295,10 +294,10 @@ public class AuthenticationController {
      */
     @PutMapping("/password")
     public ResponseEntity<Map<String, String>> updatePassword(
-            @AuthenticationPrincipal User userDetails,
+            @AuthenticationPrincipal String email,
             @RequestBody Map<String, String> passwordData
     ) {
-        if (userDetails == null) {
+        if (email == null) {
             return ResponseEntity.status(401).build();
         }
 
@@ -313,13 +312,13 @@ public class AuthenticationController {
         try {
             // Verify current password
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userDetails.getUsername(), currentPassword)
+                    new UsernamePasswordAuthenticationToken(email, currentPassword)
             );
 
             // Update password. Pass the RAW newPassword: ClientService.updateClientWithPassword
             // is the sole encoder. Encoding here in addition would persist bcrypt(bcrypt(p)),
             // which the login authenticator can never match — locking the user out.
-            ClientDTO client = clientService.getClientByEmail(userDetails.getUsername());
+            ClientDTO client = clientService.getClientByEmail(email);
             CreateClientRequest request = new CreateClientRequest();
             request.setName(client.getName());
             request.setEmail(client.getEmail());
@@ -434,11 +433,11 @@ public class AuthenticationController {
      */
     @PostMapping("/resend-verification")
     public ResponseEntity<Map<String, String>> resendVerification(
-            @AuthenticationPrincipal User userDetails,
+            @AuthenticationPrincipal String email,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
-        if (userDetails == null) return ResponseEntity.status(401).build();
-        authService.issueVerificationToken(userDetails.getUsername(), preferredLocale(acceptLanguage));
+        if (email == null) return ResponseEntity.status(401).build();
+        authService.issueVerificationToken(email, preferredLocale(acceptLanguage));
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 }

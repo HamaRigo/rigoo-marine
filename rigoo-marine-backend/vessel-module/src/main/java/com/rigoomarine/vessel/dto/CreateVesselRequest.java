@@ -1,5 +1,6 @@
 package com.rigoomarine.vessel.dto;
 
+import com.rigoomarine.vessel.entity.VesselStatus;
 import lombok.*;
 import jakarta.validation.constraints.*;
 
@@ -9,8 +10,14 @@ import jakarta.validation.constraints.*;
 @Builder
 public class CreateVesselRequest {
 
-    @NotNull(message = "Client ID is required")
+    // clientId is derived from the JWT principal in VesselService.
+    // Only used as a fallback for admin data-import calls; must not be @NotNull.
     private Long clientId;
+
+    private VesselStatus status;
+
+    @Size(max = 1024)
+    private String photoUrl;
 
     @NotBlank(message = "Vessel name is required")
     private String name;

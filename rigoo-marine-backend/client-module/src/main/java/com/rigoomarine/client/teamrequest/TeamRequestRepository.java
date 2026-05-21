@@ -19,11 +19,27 @@ public interface TeamRequestRepository extends JpaRepository<TeamRequest, Long> 
     @Query("""
         SELECT r FROM TeamRequest r
         WHERE r.contactPhone = :phone
-          AND r.status = 'PENDING'
+          AND r.status = com.rigoomarine.client.teamrequest.TeamRequestStatus.PENDING
           AND r.createdAt > :since
         """)
     Optional<TeamRequest> findPendingByPhone(@Param("phone") String phone,
                                              @Param("since") LocalDateTime since);
 
     long countByStatus(TeamRequestStatus status);
+
+    /**
+     * Client-facing list: match by clientId (authenticated) OR phone (legacy guest
+     * submissions made before clientId resolution was fixed). Either condition
+     * surfaces the full account history after login.
+     */
+    @Query("""
+        SELECT r FROM TeamRequest r
+        WHERE r.clientId = :clientId
+           OR r.contactPhone = :phone
+        ORDER BY r.createdAt DESC
+        """)
+    Page<TeamRequest> findByClientIdOrContactPhone(
+        @Param("clientId") Long clientId,
+        @Param("phone")    String phone,
+        Pageable pageable);
 }

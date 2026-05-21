@@ -12,4 +12,5 @@ public interface ContactInfoRepository extends JpaRepository<ContactInfo, Long> 
     Optional<ContactInfo> findByKeyName(String keyName);
     List<ContactInfo> findByCategoryOrderByDisplayOrder(String category);
     List<ContactInfo> findByCategoryAndActiveTrueOrderByDisplayOrder(String category);
+    List<ContactInfo> findAllByActiveTrueOrderByDisplayOrder();
 }

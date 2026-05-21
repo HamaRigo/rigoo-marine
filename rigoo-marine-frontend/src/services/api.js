@@ -102,7 +102,9 @@ export const authApi = {
    * @returns {Promise<{message: string}>}
    */
   resendVerification: async () => {
-    const response = await httpClient.post('/auth/resend-verification');
+    // skipAuthRedirect: a 401 here (e.g. revoked token) should show an error
+    // toast via the caller's catch block rather than silently logging the user out.
+    const response = await httpClient.post('/auth/resend-verification', {}, { skipAuthRedirect: true });
     return response.data;
   },
 
@@ -173,6 +175,12 @@ export const publicApi = {
    */
   getServiceById: async (id) => {
     const response = await httpClient.get(`/api/services/${id}`);
+    return response.data;
+  },
+
+  /** Public contact info — used by the footer; no auth required. */
+  getContactInfo: async () => {
+    const response = await httpClient.get('/api/public/contact-info');
     return response.data;
   },
 };
@@ -333,6 +341,46 @@ export const vesselApi = {
    */
   delete: async (id) => {
     const response = await httpClient.delete(`/api/vessels/${id}`);
+    return response.data;
+  },
+
+  // ── Documents ────────────────────────────────────────────────────────────
+
+  listDocuments: async (vesselId) => {
+    const response = await httpClient.get(`/api/vessels/${vesselId}/documents`);
+    return response.data;
+  },
+
+  addDocument: async (vesselId, payload) => {
+    const response = await httpClient.post(`/api/vessels/${vesselId}/documents`, payload);
+    return response.data;
+  },
+
+  deleteDocument: async (documentId) => {
+    await httpClient.delete(`/api/vessels/documents/${documentId}`);
+  },
+
+  // ── Fuel logs ────────────────────────────────────────────────────────────
+
+  listFuelLogs: async (vesselId, { page = 0, size = 20 } = {}) => {
+    const response = await httpClient.get(`/api/vessels/${vesselId}/fuel-logs`, {
+      params: { page, size },
+    });
+    return response.data;
+  },
+
+  addFuelLog: async (vesselId, payload) => {
+    const response = await httpClient.post(`/api/vessels/${vesselId}/fuel-logs`, payload);
+    return response.data;
+  },
+
+  deleteFuelLog: async (logId) => {
+    await httpClient.delete(`/api/vessels/fuel-logs/${logId}`);
+  },
+
+  getFuelAnalytics: async (vesselId, year) => {
+    const params = year ? { year } : {};
+    const response = await httpClient.get(`/api/vessels/${vesselId}/fuel-logs/analytics`, { params });
     return response.data;
   },
 };
@@ -1088,6 +1136,15 @@ export const teamRequestApi = {
   /** Admin: pending count for dashboard badge. */
   stats: async () => {
     const response = await httpClient.get('/api/admin/team-requests/stats');
+    return response.data;
+  },
+
+  /**
+   * Client: own team requests (all statuses, newest first).
+   * Matches clientId + phone so pre-login guest submissions surface after registration.
+   */
+  myRequests: async ({ page = 0, size = 10 } = {}) => {
+    const response = await httpClient.get('/api/clients/me/team-requests', { params: { page, size } });
     return response.data;
   },
 };

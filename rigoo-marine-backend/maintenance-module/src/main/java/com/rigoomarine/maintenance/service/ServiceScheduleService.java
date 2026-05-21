@@ -36,6 +36,7 @@ public class ServiceScheduleService {
 
     private final ServiceScheduleItemRepository scheduleRepo;
     private final ServiceHistoryRecordRepository historyRepo;
+    private final DossierCacheService dossierCache;
     private final Clock clock;
     private final MaintenanceAuditLogger auditLogger;
 
@@ -94,6 +95,7 @@ public class ServiceScheduleService {
         auditLogger.recordIfAdminActingOnBehalf(
             "MAINTENANCE_SCHEDULE_EDIT", "SCHEDULE", saved.getId(), saved.getClientId(),
             "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\"}");
+        dossierCache.evict(vesselId);
         return toDTO(saved, currentEngineHours);
     }
 
@@ -155,6 +157,7 @@ public class ServiceScheduleService {
         auditLogger.recordIfAdminActingOnBehalf(
             "MAINTENANCE_SCHEDULE_SNOOZE", "SCHEDULE", saved.getId(), saved.getClientId(),
             "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\",\"days\":" + days + "}");
+        dossierCache.evict(vesselId);
         return toDTO(saved, currentEngineHours);
     }
 
@@ -168,6 +171,7 @@ public class ServiceScheduleService {
             status == ScheduleStatus.PAUSED ? "MAINTENANCE_SCHEDULE_PAUSE" : "MAINTENANCE_SCHEDULE_RESUME",
             "SCHEDULE", saved.getId(), saved.getClientId(),
             "{\"vesselId\":" + vesselId + ",\"type\":\"" + type + "\"}");
+        dossierCache.evict(vesselId);
         return toDTO(saved, currentEngineHours);
     }
 

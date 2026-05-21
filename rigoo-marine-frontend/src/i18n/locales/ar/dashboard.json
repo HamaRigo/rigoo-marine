@@ -1,0 +1,212 @@
+{
+  "nav": {
+    "fleet": "أسطولي",
+    "account": "حسابي",
+    "profile": "الملف الشخصي",
+    "returnHome": "العودة للرئيسية",
+    "home": "الرئيسية",
+    "signOut": "تسجيل الخروج",
+    "signedInAs": "مسجل الدخول بـ {{email}}",
+    "language": "اللغة"
+  },
+  "vessels": {
+    "title": "أسطولي",
+    "count_one": "{{count}} مركبة",
+    "count_other": "{{count}} مركبة",
+    "addVessel": "إضافة مركبة",
+    "addFirst": "أضف مركبتك الأولى",
+    "addOne": "أضف الآن",
+    "noVessels": "لا توجد مركبات بعد",
+    "noVesselsYet": "لا توجد مركبات بعد",
+    "noVesselsHint": "أضف مركبتك الأولى للبدء.",
+    "editTooltip": "تعديل",
+    "deleteTooltip": "حذف",
+    "exportPdf": "تصدير PDF",
+    "addService": "+ خدمة",
+    "engineHours": "{{hours}} ساعة تشغيل",
+    "selectPrompt": "اختر مركبة",
+    "selectHint": "اختر مركبة من أسطولك لعرض ملفها الكامل، أو أضف مركبة جديدة.",
+    "form": {
+      "addTitle": "إضافة مركبة",
+      "editTitle": "تعديل المركبة",
+      "nameRequired": "اسم المركبة مطلوب",
+      "name": "اسم المركبة *",
+      "type": "النوع",
+      "brand": "الماركة",
+      "model": "الموديل",
+      "year": "السنة",
+      "length": "الطول (قدم)",
+      "engineType": "نوع المحرك",
+      "hullMaterial": "مادة الهيكل",
+      "registration": "رقم التسجيل",
+      "status": "الحالة",
+      "photoUrl": "رابط الصورة",
+      "photoUrlPlaceholder": "https://example.com/boat.jpg",
+      "none": "لا شيء",
+      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "add": "إضافة مركبة",
+      "sectionBasic": "المعلومات الأساسية",
+      "sectionSpecs": "المواصفات التقنية",
+      "sectionDetails": "الحالة والصورة"
+    },
+    "deleteDialog": {
+      "title": "حذف المركبة",
+      "confirm": "هل تريد حذف «{{name}}» بشكل دائم؟ سيتم إزالة جميع سجلات الصيانة والوثائق وسجلات الوقود.",
+      "delete": "حذف",
+      "cancel": "إلغاء"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "maintenance": "الصيانة",
+      "schedule": "الجدول",
+      "team": "الفريق",
+      "documents": "الوثائق",
+      "fuelLog": "سجل الوقود"
+    },
+    "infoLabels": {
+      "type": "النوع",
+      "brand": "الماركة",
+      "model": "الموديل",
+      "year": "السنة",
+      "length": "الطول",
+      "engine": "المحرك",
+      "hull": "الهيكل",
+      "reg": "رقم التسجيل",
+      "ft": "قدم"
+    },
+    "schedule": {
+      "listView": "قائمة",
+      "calendarView": "تقويم"
+    },
+    "status": {
+      "ACTIVE": "نشط",
+      "MAINTENANCE": "صيانة",
+      "LAID_UP": "خارج الخدمة",
+      "SOLD": "مباع"
+    },
+    "overview": {
+      "engineHours": "ساعات التشغيل",
+      "maintCost": "تكاليف الصيانة",
+      "fuelYtd": "الوقود السنوي",
+      "nextService": "الخدمة القادمة",
+      "overdue": "متأخر",
+      "dueSoon": "قريباً",
+      "onSchedule": "في الموعد",
+      "costChart": "تكاليف الصيانة · {{year}}",
+      "hoursChart": "اتجاه ساعات التشغيل",
+      "fuelChart": "استهلاك الوقود · {{year}}",
+      "serviceChart": "توزيع الخدمات",
+      "services": "خدمة",
+      "upcomingTitle": "الخدمات القادمة",
+      "specsTitle": "مواصفات المركبة",
+      "allOnSchedule": "جميع الخدمات في موعدها",
+      "noData": "لا توجد بيانات كافية بعد",
+      "noFuelData": "لا توجد سجلات وقود بعد"
+    },
+    "toast": {
+      "added": "تمت إضافة المركبة",
+      "updated": "تم تحديث المركبة",
+      "deleted": "تم حذف المركبة",
+      "addFailed": "فشل في إضافة المركبة",
+      "updateFailed": "فشل في تحديث المركبة",
+      "deleteFailed": "فشل في حذف المركبة"
+    }
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "subtitle": "إدارة معلوماتك الشخصية وتفضيلاتك",
+    "personalInfo": "المعلومات الشخصية",
+    "commSection": "التواصل",
+    "security": "الأمان",
+    "name": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "saveChanges": "حفظ التغييرات",
+    "reset": "إعادة التعيين",
+    "saving": "جاري الحفظ…",
+    "savedSuccess": "تم تحديث الملف الشخصي",
+    "saveFailed": "فشل تحديث الملف الشخصي",
+    "passwordChanged": "تم تغيير كلمة المرور",
+    "passwordFailed": "فشل تغيير كلمة المرور",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+    "commLanguage": "اللغة المفضلة",
+    "commLanguageHint": "سيتم إرسال الرسائل الإلكترونية والتذكيرات بهذه اللغة.",
+    "whatsapp": "تذكيرات واتساب",
+    "whatsappHint": "إرسال تذكيرات الصيانة عبر واتساب:",
+    "noPhone": "لا يوجد رقم",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور الجديدة",
+    "updatePassword": "تحديث كلمة المرور",
+    "cancelEdit": "إلغاء",
+    "editPassword": "تعديل",
+    "statsVessels": "مركبة",
+    "statsActiveOrders": "طلبات نشطة"
+  },
+  "account": {
+    "title": "حسابي",
+    "subtitle": "تتبع طلبات الخدمة ومشترياتك والفواتير في مكان واحد.",
+    "statsTotal": "إجمالي الطلبات",
+    "statsActive": "نشط",
+    "statsBilled": "إجمالي الفواتير",
+    "tabs": {
+      "serviceOrders": "طلبات الخدمة",
+      "shopOrders": "طلبات المتجر",
+      "invoices": "الفواتير"
+    },
+    "serviceOrders": {
+      "newRequest": "طلب خدمة جديد",
+      "noOrders": "لا توجد طلبات خدمة بعد",
+      "noOrdersHint": "أنشئ طلب خدمة للبدء",
+      "newRequestShort": "طلب جديد",
+      "orderCancelled": "تم إلغاء الطلب",
+      "waitingParts": "انتظار قطع الغيار",
+      "rejectionReason": "سبب الرفض",
+      "vessel": "المركبة #{{id}}",
+      "preferred": "التاريخ المفضل: {{date}}",
+      "status": {
+        "PENDING_APPROVAL": "في انتظار الموافقة",
+        "PENDING": "قيد الانتظار",
+        "IN_PROGRESS": "جاري التنفيذ",
+        "WAITING_PARTS": "انتظار القطع",
+        "COMPLETED": "مكتمل",
+        "CANCELLED": "ملغي"
+      }
+    },
+    "shopOrders": {
+      "noOrders": "لا توجد طلبات متجر بعد",
+      "noOrdersHint": "تصفح متجرنا لتقديم طلب",
+      "showLess": "إظهار أقل",
+      "moreItems": "+{{count}} المزيد",
+      "placed": "بتاريخ {{date}}",
+      "item_one": "{{count}} منتج",
+      "item_other": "{{count}} منتجات",
+      "status": {
+        "PENDING_PAYMENT": "في انتظار الدفع",
+        "PAID": "مدفوع",
+        "CANCELLED": "ملغي",
+        "REFUNDED": "مسترد"
+      }
+    },
+    "invoices": {
+      "noInvoices": "لا توجد فواتير بعد",
+      "noInvoicesHint": "تظهر الفواتير بعد اكتمال طلبات الخدمة",
+      "loadError": "فشل في تحميل الفواتير",
+      "pdfError": "فشل في تحميل ملف PDF",
+      "preview": "معاينة",
+      "download": "تحميل",
+      "dialogTitle": "فاتورة {{number}}",
+      "columns": {
+        "invoiceNo": "رقم الفاتورة",
+        "orderNo": "رقم الطلب",
+        "date": "التاريخ",
+        "dueDate": "تاريخ الاستحقاق",
+        "amount": "المبلغ",
+        "status": "الحالة"
+      }
+    }
+  }
+}

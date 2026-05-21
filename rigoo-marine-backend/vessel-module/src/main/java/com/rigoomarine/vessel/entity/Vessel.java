@@ -53,6 +53,14 @@ public class Vessel {
     @Column(name = "engine_hours_updated_at")
     private Instant engineHoursUpdatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private VesselStatus status = VesselStatus.ACTIVE;
+
+    @Column(name = "photo_url", length = 1024)
+    private String photoUrl;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

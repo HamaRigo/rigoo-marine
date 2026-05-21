@@ -6,6 +6,7 @@ import com.rigoomarine.maintenance.dto.EngineHoursDTO;
 import com.rigoomarine.maintenance.dto.UpcomingServiceDTO;
 import com.rigoomarine.maintenance.dto.UpdateEngineHoursRequest;
 import com.rigoomarine.maintenance.dto.VesselMaintenanceSummaryDTO;
+import com.rigoomarine.maintenance.service.DossierCacheService;
 import com.rigoomarine.maintenance.service.MaintenanceDossierPdfRenderer;
 import com.rigoomarine.maintenance.service.MaintenanceSecurity;
 import com.rigoomarine.maintenance.service.VesselMaintenanceService;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class VesselMaintenanceController {
 
     private final VesselMaintenanceService dossierService;
+    private final DossierCacheService dossierCache;
     private final MaintenanceSecurity security;
     private final VesselClient vesselClient;
     private final MaintenanceDossierPdfRenderer pdfRenderer;
@@ -33,7 +35,7 @@ public class VesselMaintenanceController {
     @GetMapping("/vessels/{vesselId}/dossier")
     public ResponseEntity<VesselMaintenanceSummaryDTO> dossier(@PathVariable Long vesselId) {
         security.assertCanActOnVessel(vesselId);
-        return ResponseEntity.ok(dossierService.buildDossier(vesselId));
+        return ResponseEntity.ok(dossierCache.getOrLoad(vesselId, () -> dossierService.buildDossier(vesselId)));
     }
 
     @GetMapping("/upcoming")
@@ -49,6 +51,7 @@ public class VesselMaintenanceController {
     ) {
         security.assertCanActOnVessel(vesselId);
         vesselClient.updateEngineHours(vesselId, request.getHours());
+        dossierCache.evict(vesselId);
         return ResponseEntity.ok(EngineHoursDTO.builder()
             .vesselId(vesselId)
             .currentEngineHours(request.getHours())
@@ -73,7 +76,7 @@ public class VesselMaintenanceController {
     ) {
         security.assertCanActOnVessel(vesselId);
 
-        VesselMaintenanceSummaryDTO dossier = dossierService.buildDossier(vesselId);
+        VesselMaintenanceSummaryDTO dossier = dossierCache.getOrLoad(vesselId, () -> dossierService.buildDossier(vesselId));
         String vesselName = resolveVesselName(vesselId);
         byte[] pdf = pdfRenderer.render(dossier, vesselName, locale);
 
