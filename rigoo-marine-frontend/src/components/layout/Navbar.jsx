@@ -1,12 +1,20 @@
-import { AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, Badge, Slide, Fade, useScrollTrigger } from '@mui/material';
+import {
+  AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer,
+  List, ListItem, ListItemButton, ListItemText, ListItemIcon,
+  Badge, Slide, Fade, Divider, Avatar, Chip, useScrollTrigger,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import MenuIcon from '@mui/icons-material/Menu';
-import LanguageIcon from '@mui/icons-material/Language';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
-import { SUPPORTED_LANGUAGES } from '../../i18n';
+import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
+import BuildIcon from '@mui/icons-material/Build';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { useCart } from '../../hooks/useCart';
 import CartDrawer from '../shop/CartDrawer';
 import { WAVE_DELAY } from '../../utils/waveSync';
@@ -86,10 +94,42 @@ function NavLinkButton({ to, label, active }) {
   );
 }
 
+// ── User avatar dropdown (desktop) ────────────────────────────────────────
+
+function UserMenu({ user, isAdmin }) {
+  const navigate = useNavigate();
+
+  const initials = (user?.name || 'U')
+    .split(' ')
+    .map(w => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const dest = isAdmin ? '/admin' : '/dashboard/vessels';
+
+  return (
+    <Chip
+      avatar={<Avatar sx={{ bgcolor: 'secondary.main', fontWeight: 700, fontSize: '0.75rem' }}>{initials}</Avatar>}
+      label={user?.name?.split(' ')[0] || 'Account'}
+      onClick={() => navigate(dest)}
+      sx={{
+        color: 'white', bgcolor: 'rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
+        transition: 'background 200ms',
+        '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+        '& .MuiChip-avatar': { ml: 0.5 },
+      }}
+    />
+  );
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [langAnchor, setLangAnchor] = useState(null);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,7 +145,6 @@ export default function Navbar() {
     { key: 'services', path: '/services' },
     { key: 'marketplace', path: '/boats' },
     { key: 'shop', path: '/shop' },
-    { key: 'about', path: '/about' },
   ];
 
   const isActive = (path) =>
@@ -116,9 +155,8 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-    setLangAnchor(null);
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language.startsWith('ar') ? 'en' : 'ar');
   };
 
   const drawer = (
@@ -145,15 +183,49 @@ export default function Navbar() {
         ))}
         {isAuthenticated ? (
           <>
+            <Divider sx={{ my: 1 }} />
+            {user?.name && (
+              <Box sx={{ px: 2, py: 0.75 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  {user.name}
+                </Typography>
+              </Box>
+            )}
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/vessels" onClick={() => setMobileOpen(false)}>
+                <ListItemIcon sx={{ minWidth: 36 }}><DirectionsBoatIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="My Vessels" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/orders" onClick={() => setMobileOpen(false)}>
+                <ListItemIcon sx={{ minWidth: 36 }}><BuildIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="My Orders" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/shop-orders" onClick={() => setMobileOpen(false)}>
+                <ListItemIcon sx={{ minWidth: 36 }}><ShoppingBagOutlinedIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Shop Orders" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard" onClick={() => setMobileOpen(false)}>
+                <ListItemIcon sx={{ minWidth: 36 }}><PersonIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="My Dashboard" />
+              </ListItemButton>
+            </ListItem>
             {isAdmin && (
               <ListItem disablePadding>
                 <ListItemButton component={Link} to="/admin" onClick={() => setMobileOpen(false)}>
+                  <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
                   <ListItemText primary={t('navbar:auth.dashboard')} />
                 </ListItemButton>
               </ListItem>
             )}
             <ListItem disablePadding>
-              <ListItemButton onClick={handleLogout}>
+              <ListItemButton onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
                 <ListItemText primary={t('navbar:auth.logout')} />
               </ListItemButton>
             </ListItem>
@@ -172,13 +244,13 @@ export default function Navbar() {
             </ListItem>
           </>
         )}
-        {SUPPORTED_LANGUAGES.map((lng) => (
-          <ListItem key={lng} disablePadding>
-            <ListItemButton selected={i18n.language === lng} onClick={() => changeLanguage(lng)}>
-              <ListItemText primary={t(`common:language.${lng === 'ar' ? 'arabic' : 'english'}`)} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => { toggleLanguage(); setMobileOpen(false); }}>
+            <ListItemText
+              primary={i18n.language.startsWith('ar') ? 'English — EN' : 'العربية — ع'}
+            />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
@@ -197,12 +269,11 @@ export default function Navbar() {
         }}
       >
         <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ minHeight: { xs: 72, md: 84 } }}>
+          <Toolbar disableGutters sx={{ minHeight: { xs: 72, md: 84 }, position: 'relative' }}>
             <Box
               component={Link}
               to="/"
               sx={{
-                flexGrow: 1,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -240,43 +311,70 @@ export default function Navbar() {
               </Box>
             </Box>
 
-            {/* Desktop Navigation */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
-                {navLinks.map((link) => (
-                  <NavLinkButton
-                    key={link.key}
-                    to={link.path}
-                    label={t(`navbar:links.${link.key}`)}
-                    active={isActive(link.path)}
-                  />
-                ))}
-              </Box>
+            {/* Nav links — absolutely centred in the toolbar */}
+            <Box sx={{
+              display: { xs: 'none', md: 'flex' },
+              position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+              gap: 0.5,
+            }}>
+              {navLinks.map((link) => (
+                <NavLinkButton
+                  key={link.key}
+                  to={link.path}
+                  label={t(`navbar:links.${link.key}`)}
+                  active={isActive(link.path)}
+                />
+              ))}
+            </Box>
 
-              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center' }}>
+            {/* Right side: auth + icons */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', ml: 'auto' }}>
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1.5, alignItems: 'center' }}>
                 {isAuthenticated ? (
-                  <>
-                    {isAdmin && (
-                      <Button component={Link} to="/admin" sx={{ color: 'white' }}>
-                        {t('navbar:auth.dashboard')}
-                      </Button>
-                    )}
-                    <Button onClick={handleLogout} sx={{ color: 'white' }}>
-                      {t('navbar:auth.logout')}
-                    </Button>
-                  </>
+                  <UserMenu user={user} isAdmin={isAdmin} />
                 ) : (
                   <>
-                    <Button component={Link} to="/login" sx={{ color: 'white' }}>
+                    <Button
+                      component={Link}
+                      to="/login"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        color: 'white',
+                        borderColor: 'rgba(255,255,255,0.38)',
+                        borderRadius: '20px',
+                        px: 2.5, py: 0.7,
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        letterSpacing: '0.02em',
+                        '&:hover': {
+                          borderColor: 'rgba(255,255,255,0.72)',
+                          bgcolor: 'rgba(255,255,255,0.08)',
+                        },
+                      }}
+                    >
                       {t('navbar:auth.login')}
                     </Button>
+
                     <Button
                       component={Link}
                       to="/register"
                       variant="contained"
+                      size="small"
                       sx={{
                         bgcolor: 'secondary.main',
-                        '&:hover': { bgcolor: 'secondary.dark' },
+                        color: 'white',
+                        borderRadius: '20px',
+                        px: 2.5, py: 0.7,
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        letterSpacing: '0.03em',
+                        boxShadow: '0 2px 14px rgba(255,143,0,0.38)',
+                        '&:hover': {
+                          bgcolor: 'secondary.dark',
+                          boxShadow: '0 4px 22px rgba(255,143,0,0.55)',
+                          transform: 'translateY(-1px)',
+                        },
                       }}
                     >
                       {t('navbar:auth.register')}
@@ -305,29 +403,24 @@ export default function Navbar() {
                   </IconButton>
                 )}
 
-                <IconButton
+                <Button
                   aria-label={t('common:language.switchTo')}
-                  sx={{ color: 'white' }}
-                  onClick={(e) => setLangAnchor(e.currentTarget)}
+                  onClick={toggleLanguage}
+                  sx={{
+                    color: 'white',
+                    minWidth: 0,
+                    px: 1.5, py: 0.6,
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.06em',
+                    lineHeight: 1,
+                    '&:hover': { borderColor: 'rgba(255,255,255,0.65)', bgcolor: 'rgba(255,255,255,0.08)' },
+                  }}
                 >
-                  <LanguageIcon />
-                </IconButton>
-                <Menu
-                  anchorEl={langAnchor}
-                  open={Boolean(langAnchor)}
-                  onClose={() => setLangAnchor(null)}
-                  TransitionComponent={Fade}
-                >
-                  {SUPPORTED_LANGUAGES.map((lng) => (
-                    <MenuItem
-                      key={lng}
-                      selected={i18n.language === lng}
-                      onClick={() => changeLanguage(lng)}
-                    >
-                      {t(`common:language.${lng === 'ar' ? 'arabic' : 'english'}`)}
-                    </MenuItem>
-                  ))}
-                </Menu>
+                  {i18n.language.startsWith('ar') ? 'EN' : 'ع'}
+                </Button>
               </Box>
 
               {/* Mobile menu button */}

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Box, Container, Typography, Link as MuiLink, Divider } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Reveal } from '../common/Motion';
 import { WAVE_DELAY } from '../../utils/waveSync';
-import { adminApi } from '../../services/api';
+import { publicApi } from '../../services/api';
 
 function FooterBrandMark({ size = 48 }) {
   return (
@@ -24,11 +24,24 @@ function FooterBrandMark({ size = 48 }) {
 
 export default function Footer() {
   const { t, i18n } = useTranslation(['public', 'navbar']);
+  const navigate = useNavigate();
+  const location = useLocation();
   const flyerHref = i18n.language === 'ar' ? '/flyers/rigoo-services-ar.pdf' : '/flyers/rigoo-services-en.pdf';
   const [contact, setContact] = useState({ email: 'rigoomarine@gmail.com', phone: '+974 709 709 17' });
 
+  const handleStoryClick = (e) => {
+    e.preventDefault();
+    const scroll = () => document.getElementById('story')?.scrollIntoView({ behavior: 'smooth' });
+    if (location.pathname === '/') {
+      scroll();
+    } else {
+      navigate('/');
+      setTimeout(scroll, 420);
+    }
+  };
+
   useEffect(() => {
-    adminApi.getAllContactInfo().then((data) => {
+    publicApi.getContactInfo().then((data) => {
       if (!Array.isArray(data)) return;
       const map = Object.fromEntries(data.map((d) => [d.keyName, d.value]));
       setContact({
@@ -132,7 +145,7 @@ export default function Footer() {
                 <MuiLink component={Link} to="/services" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
                   {t('public:footer.links.services')}
                 </MuiLink>
-                <MuiLink component={Link} to="/about" color="inherit" underline="hover" sx={{ '&:hover': { color: 'secondary.light' } }}>
+                <MuiLink onClick={handleStoryClick} color="inherit" underline="hover" sx={{ cursor: 'pointer', '&:hover': { color: 'secondary.light' } }}>
                   {t('public:footer.links.about')}
                 </MuiLink>
               </Box>

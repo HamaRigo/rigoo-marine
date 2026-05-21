@@ -71,6 +71,9 @@
       "title": "المعرض",
       "subtitle": "شاهد أعمالنا — قبل وبعد"
     },
+    "before": "قبل",
+    "after": "بعد",
+    "dragHint": "اسحب للمقارنة",
     "categories": {
       "all": "الكل",
       "Mechanical": "ميكانيكي",

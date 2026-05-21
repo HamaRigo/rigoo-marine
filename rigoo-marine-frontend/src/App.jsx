@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Box, CircularProgress } from '@mui/material';
 import DirectionProvider from './i18n/DirectionProvider';
@@ -19,7 +19,6 @@ import DashboardLayout from './pages/dashboard/DashboardLayout';
 // Public Pages
 import Home from './pages/public/Home';
 import Services from './pages/public/Services';
-import About from './pages/public/About';
 import BoatGallery from './pages/public/marketplace/BoatGallery';
 import BoatDetail from './pages/public/marketplace/BoatDetail';
 import ProductCatalog from './pages/public/shop/ProductCatalog';
@@ -35,15 +34,10 @@ import ResetPassword from './pages/auth/ResetPassword';
 import VerifyEmail from './pages/auth/VerifyEmail';
 
 // Dashboard Pages
-import DashboardHome from './pages/dashboard/DashboardHome';
-import MyOrders from './pages/dashboard/MyOrders';
-import MyVessels from './pages/dashboard/MyVessels';
-import MyVesselDetail from './pages/dashboard/MyVesselDetail';
-import Invoices from './pages/dashboard/Invoices';
-import Profile from './pages/dashboard/Profile';
-import MyShopOrders from './pages/dashboard/MyShopOrders';
+import VesselsPage  from './pages/dashboard/VesselsPage';
+import AccountPage  from './pages/dashboard/AccountPage';
+import Profile      from './pages/dashboard/Profile';
 import Notifications from './pages/dashboard/Notifications';
-import MaintenanceAnalytics from './pages/dashboard/MaintenanceAnalytics';
 
 // Work Order Flow
 import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
@@ -107,7 +101,6 @@ function App() {
               {/* Public Routes with Main Layout */}
               <Route path="/" element={<MainLayout><Home /></MainLayout>} />
               <Route path="/services" element={<MainLayout><Services /></MainLayout>} />
-              <Route path="/about" element={<MainLayout><About /></MainLayout>} />
               <Route path="/boats" element={<MainLayout><BoatGallery /></MainLayout>} />
               <Route path="/boats/:slug" element={<MainLayout><BoatDetail /></MainLayout>} />
               <Route path="/shop" element={<MainLayout><ProductCatalog /></MainLayout>} />
@@ -146,15 +139,18 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<DashboardHome />} />
-                <Route path="orders" element={<MyOrders />} />
-                <Route path="shop-orders" element={<MyShopOrders />} />
-                <Route path="vessels" element={<MyVessels />} />
-                <Route path="vessels/:id" element={<MyVesselDetail />} />
+                {/* Default → vessels */}
+                <Route index element={<Navigate to="/dashboard/vessels" replace />} />
+                <Route path="vessels"       element={<VesselsPage  />} />
+                <Route path="account"       element={<AccountPage  />} />
+                <Route path="profile"       element={<Profile      />} />
                 <Route path="notifications" element={<Notifications />} />
-                <Route path="analytics" element={<MaintenanceAnalytics />} />
-                <Route path="invoices" element={<Invoices />} />
-                <Route path="profile" element={<Profile />} />
+                {/* Legacy URL aliases — redirect so saved links keep working */}
+                <Route path="orders"        element={<Navigate to="/dashboard/account" replace />} />
+                <Route path="shop-orders"   element={<Navigate to="/dashboard/account" replace />} />
+                <Route path="invoices"      element={<Navigate to="/dashboard/account" replace />} />
+                <Route path="analytics"     element={<Navigate to="/dashboard/vessels" replace />} />
+                <Route path="vessels/:id"   element={<Navigate to="/dashboard/vessels" replace />} />
               </Route>
 
               {/* Admin Routes (ADMIN role only) */}

@@ -6,6 +6,12 @@
     "requestTeam": "Request Team",
     "getStarted": "Get Started"
   },
+  "stats": {
+    "vessels":      "Vessels Serviced",
+    "technicians":  "Certified Technicians",
+    "satisfaction": "Client Satisfaction",
+    "support":      "Emergency Support"
+  },
   "services": {
     "title": "Our Services",
     "subtitle": "Comprehensive solutions for all your marine needs",
@@ -23,28 +29,64 @@
       "description": "Gel coat restoration, painting, and interior refinishing"
     }
   },
-  "whyChoose": {
-    "title": "Why Choose Rigoo Marine",
-    "experienced": {
-      "title": "Experienced Technicians",
-      "description": "Certified professionals with years of marine industry experience"
+  "story": {
+    "title": "Built on the Water. Built for Qatar.",
+    "lead": "Born at the heart of Qatar's coastline, Rigoo Marine was founded by master technicians who understood one thing above all else — the sea demands excellence, not excuses.",
+    "highlight": "From a precision engine workshop, we've grown into Qatar's most trusted full-service marine facility. Whether it's a routine check-up, a structural overhaul, or a 2 a.m. emergency call — we show up, fully equipped and fully committed.",
+    "close": "Transparent QAR pricing. Bilingual service. A team that treats every vessel as their own. That's not just our process — that's our promise."
+  },
+  "gallery": {
+    "title": "Before & After Gallery",
+    "subtitle": "See our work — drag to compare every transformation",
+    "before": "Before",
+    "after": "After",
+    "dragHint": "Drag to compare",
+    "categories": {
+      "all": "All",
+      "Mechanical": "Mechanical",
+      "Structural": "Structural",
+      "Finishing": "Finishing"
     },
-    "quality": {
-      "title": "Quality Parts",
-      "description": "We use only OEM and high-quality aftermarket parts"
-    },
-    "fast": {
-      "title": "Fast Turnaround",
-      "description": "Quick service without compromising on quality"
-    },
-    "transparent": {
-      "title": "Transparent Pricing",
-      "description": "No hidden fees - clear quotes before any work begins"
+    "items": {
+      "engine-rebuild":      "Engine Rebuild",
+      "hull-restoration":    "Hull Restoration",
+      "gel-coat-polish":     "Gel Coat Polish",
+      "bottom-paint":        "Bottom Paint Job",
+      "propeller-repair":    "Propeller Repair",
+      "transom-replacement": "Transom Replacement"
     }
+  },
+  "values": {
+    "title": "Why Choose Rigoo Marine",
+    "items": {
+      "quality":      { "title": "Quality First",        "description": "We never cut corners — every job is done right the first time" },
+      "transparency": { "title": "Transparent Pricing",  "description": "No hidden fees — clear QAR quotes before any work begins" },
+      "efficiency":   { "title": "Fast Turnaround",      "description": "Quick service without compromising on quality" },
+      "trust":        { "title": "Trusted Expertise",    "description": "Certified professionals with years of marine industry experience" }
+    }
+  },
+  "team": {
+    "title": "Meet Our Team",
+    "members": {
+      "founder": { "name": "John Smith",     "role": "Founder & Master Technician", "bio": "25+ years of marine engine experience" },
+      "manager": { "name": "Sarah Johnson",  "role": "Service Manager",             "bio": "Certified in fiberglass and structural repair" },
+      "senior":  { "name": "Mike Davis",     "role": "Senior Technician",           "bio": "Specialist in electrical systems and diagnostics" }
+    }
+  },
+  "contact": {
+    "title": "Have Questions?",
+    "subtitle": "Contact us today to discuss your marine service needs"
   },
   "cta": {
     "title": "Ready to Get Started?",
     "subtitle": "Create an account and request service for your vessel today",
     "button": "Create Account"
+  },
+  "whyChoose": {
+    "title": "Why Choose Rigoo Marine",
+    "experienced": { "title": "Experienced Technicians",  "description": "Certified professionals with years of marine industry experience" },
+    "quality":     { "title": "Quality Parts",            "description": "We use only OEM and high-quality aftermarket parts" },
+    "fast":        { "title": "Fast Turnaround",          "description": "Quick service without compromising on quality" },
+    "transparent": { "title": "Transparent Pricing",      "description": "No hidden fees - clear quotes before any work begins" }
   }
 }

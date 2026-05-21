@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Box, Container, Typography, Card, CardContent, CardActions, CardMedia, Button, Chip, Slide, Fade, Collapse } from '@mui/material';
+import { Box, Container, Typography, Card, CardContent, CardActions, CardMedia, Button, Chip, Slide, Fade, Collapse, Dialog, DialogContent, IconButton, Zoom } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseIcon from '@mui/icons-material/Close';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Reveal, Stagger } from '../../components/common/Motion';
@@ -23,6 +25,7 @@ export default function Services() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [posterOpen, setPosterOpen] = useState(null);
 
   const toggleExpand = (id) => setExpandedId((prev) => (prev === id ? null : id));
 
@@ -100,7 +103,7 @@ export default function Services() {
             timeout={520}
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
               gap: 3,
             }}
           >
@@ -111,16 +114,57 @@ export default function Services() {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'box-shadow 200ms ease, transform 200ms ease',
-                  '&:hover': { boxShadow: 6, transform: 'translateY(-4px)' },
+                  transition: 'box-shadow 260ms ease, transform 260ms ease',
+                  '&:hover': { boxShadow: '0 18px 44px rgba(15,23,42,0.14)', transform: 'translateY(-4px)' },
                 }}
               >
-                <CardMedia
-                  component="img"
-                  image={service.poster}
-                  alt={t(`services.items.${service.key}.name`)}
-                  sx={{ height: 400, objectFit: 'contain', bgcolor: '#f0f4f8', p: 1 }}
-                />
+                {/* Poster image with expand overlay */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    bgcolor: '#f0f4f8',
+                    cursor: 'zoom-in',
+                    '&:hover .poster-overlay': { opacity: 1 },
+                    '&:hover .poster-img': { transform: 'scale(1.02)' },
+                  }}
+                  onClick={() => setPosterOpen(service)}
+                >
+                  <CardMedia
+                    component="img"
+                    className="poster-img"
+                    image={service.poster}
+                    alt={t(`services.items.${service.key}.name`)}
+                    sx={{
+                      height: { xs: 340, sm: 460, md: 520 },
+                      objectFit: 'contain',
+                      p: 1.5,
+                      transition: 'transform 400ms cubic-bezier(0.2,0,0,1)',
+                    }}
+                  />
+                  <Box
+                    className="poster-overlay"
+                    sx={{
+                      position: 'absolute', inset: 0,
+                      bgcolor: 'rgba(0,66,99,0.45)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 260ms ease',
+                    }}
+                  >
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      bgcolor: 'white', color: 'primary.dark',
+                      px: 2.5, py: 1, borderRadius: '20px',
+                      fontWeight: 700, fontSize: '0.9rem',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                    }}>
+                      <OpenInFullIcon sx={{ fontSize: 18 }} />
+                      View Full Size
+                    </Box>
+                  </Box>
+                </Box>
+
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Chip
                     label={t(`services.categories.${service.category}`)}
@@ -162,6 +206,46 @@ export default function Services() {
             ))}
           </Stagger>
         )}
+
+        {/* Poster lightbox */}
+        <Dialog
+          open={!!posterOpen}
+          onClose={() => setPosterOpen(null)}
+          maxWidth="lg"
+          fullWidth
+          TransitionComponent={Zoom}
+          transitionDuration={{ enter: 300, exit: 200 }}
+          PaperProps={{ sx: { bgcolor: '#f0f4f8' } }}
+        >
+          <DialogContent sx={{ p: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+            <IconButton
+              onClick={() => setPosterOpen(null)}
+              sx={{
+                position: 'absolute', top: 10, right: 10, zIndex: 1,
+                bgcolor: 'rgba(0,0,0,0.48)', color: 'white',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.70)' },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+            {posterOpen && (
+              <Box>
+                <Box
+                  component="img"
+                  src={posterOpen.poster}
+                  alt={t(`services.items.${posterOpen.key}.name`)}
+                  sx={{ width: '100%', maxHeight: '88vh', objectFit: 'contain', display: 'block' }}
+                />
+                <Box sx={{ px: 3, py: 2, bgcolor: 'white' }}>
+                  <Typography variant="h6" fontWeight={700}>{t(`services.items.${posterOpen.key}.name`)}</Typography>
+                  <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5 }}>
+                    {t(`services.items.${posterOpen.key}.description`)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <Reveal variant="slide" direction="up" timeout={620}>
           <Box textAlign="center" sx={{ mt: 6 }}>

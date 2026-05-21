@@ -71,6 +71,9 @@
       "title": "Gallery",
       "subtitle": "See our work — Before & After transformations"
     },
+    "before": "Before",
+    "after": "After",
+    "dragHint": "Drag to compare",
     "categories": {
       "all": "All",
       "Mechanical": "Mechanical",
