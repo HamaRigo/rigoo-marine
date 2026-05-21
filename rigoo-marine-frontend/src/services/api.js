@@ -335,8 +335,34 @@ export const workOrderApi = {
     const form = new FormData();
     form.append('file', file);
     const response = await httpClient.post(`/api/work-orders/${id}/attachments`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'multipart/form_data' },
     });
+    return response.data;
+  },
+
+  /** Admin/team-lead search with filters + pagination. Returns Page<WorkOrderDTO>. */
+  searchOrders: async (params = {}) => {
+    const response = await httpClient.get('/api/work-orders', { params });
+    return response.data;
+  },
+
+  // ── Time tracking ─────────────────────────────────────────────────────────
+
+  /** Clock technician in on a work order. */
+  clockIn: async (id) => {
+    const response = await httpClient.post(`/api/work-orders/${id}/time/clock-in`);
+    return response.data;
+  },
+
+  /** Clock technician out. */
+  clockOut: async (id) => {
+    const response = await httpClient.post(`/api/work-orders/${id}/time/clock-out`);
+    return response.data;
+  },
+
+  /** Get all time logs for a work order. */
+  getTimeLogs: async (id) => {
+    const response = await httpClient.get(`/api/work-orders/${id}/time`);
     return response.data;
   },
 };
@@ -615,6 +641,12 @@ export const adminApi = {
 
   deleteService: async (id) => {
     const response = await httpClient.delete(`/api/services/${id}`);
+    return response.data;
+  },
+
+  // Analytics
+  getAnalytics: async (months = 12) => {
+    const response = await httpClient.get('/api/invoices/analytics', { params: { months } });
     return response.data;
   },
 
@@ -1283,10 +1315,42 @@ export const teamRequestApi = {
   },
 };
 
+// ============== INVENTORY API ==============
+export const inventoryApi = {
+  search: async (params = {}) => {
+    const response = await httpClient.get('/api/inventory', { params });
+    return response.data; // Page<InventoryPart>
+  },
+  getById: async (id) => {
+    const response = await httpClient.get(`/api/inventory/${id}`);
+    return response.data;
+  },
+  getLowStock: async () => {
+    const response = await httpClient.get('/api/inventory/low-stock');
+    return response.data;
+  },
+  create: async (part) => {
+    const response = await httpClient.post('/api/inventory', part);
+    return response.data;
+  },
+  update: async (id, part) => {
+    const response = await httpClient.put(`/api/inventory/${id}`, part);
+    return response.data;
+  },
+  adjustStock: async (id, delta) => {
+    const response = await httpClient.patch(`/api/inventory/${id}/stock`, { delta });
+    return response.data;
+  },
+  delete: async (id) => {
+    await httpClient.delete(`/api/inventory/${id}`);
+  },
+};
+
 export default {
   auth: authApi,
   public: publicApi,
   workOrder: workOrderApi,
+  inventory: inventoryApi,
   vessel: vesselApi,
   invoice: invoiceApi,
   dashboard: dashboardApi,
@@ -1299,3 +1363,5 @@ export default {
   maintenance: maintenanceApi,
   notifications: notificationApi,
 };
+
+export { inventoryApi };

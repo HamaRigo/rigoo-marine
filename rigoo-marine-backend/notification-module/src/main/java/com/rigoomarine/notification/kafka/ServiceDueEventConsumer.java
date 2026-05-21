@@ -4,14 +4,12 @@ import com.rigoomarine.notification.entity.Notification;
 import com.rigoomarine.notification.mail.EmailTemplateService;
 import com.rigoomarine.notification.recipient.RecipientLookup;
 import com.rigoomarine.notification.repository.NotificationRepository;
-import com.rigoomarine.notification.whatsapp.WhatsAppSender;
+import com.rigoomarine.notification.whatsapp.WhatsAppPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -45,11 +43,11 @@ public class ServiceDueEventConsumer {
     private final EventDedupe eventDedupe;
     private final NotificationMetrics metrics;
     /**
-     * Optional — only present when {@code app.whatsapp.enabled=true}. The
-     * @ConditionalOnProperty on WhatsAppSender keeps the bean out of the
-     * context entirely otherwise, so we tolerate its absence here.
+     * Optional — only present when {@code app.whatsapp.enabled=true}. Both
+     * TwilioWhatsAppSender and MetaWhatsAppSender implement this interface;
+     * exactly one is loaded depending on {@code app.whatsapp.provider}.
      */
-    private final WhatsAppSender whatsAppSender;
+    private final WhatsAppPort whatsAppSender;
 
     public ServiceDueEventConsumer(
             EmailTemplateService emailTemplateService,
@@ -57,7 +55,7 @@ public class ServiceDueEventConsumer {
             RecipientLookup recipientLookup,
             EventDedupe eventDedupe,
             NotificationMetrics metrics,
-            @Autowired(required = false) WhatsAppSender whatsAppSender
+            @Autowired(required = false) WhatsAppPort whatsAppSender
     ) {
         this.emailTemplateService = emailTemplateService;
         this.notificationRepository = notificationRepository;

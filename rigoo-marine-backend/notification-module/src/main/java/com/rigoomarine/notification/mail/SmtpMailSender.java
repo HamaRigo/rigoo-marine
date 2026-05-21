@@ -1,5 +1,6 @@
 package com.rigoomarine.notification.mail;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class SmtpMailSender implements MailSender {
 
     private final JavaMailSender javaMailSender;
+    private final MeterRegistry meterRegistry;
 
     @Value("${app.mail.from:no-reply@rigoomarine.qa}")
     private String from;
@@ -28,8 +30,10 @@ public class SmtpMailSender implements MailSender {
         message.setText(body);
         try {
             javaMailSender.send(message);
+            meterRegistry.counter("notification.mail.sent.total").increment();
         } catch (Exception e) {
             log.error("Failed to send mail to {}: {}", to, e.getMessage());
+            meterRegistry.counter("notification.mail.failed.total").increment();
             throw e;
         }
     }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box, Container, Paper, Typography, TextField, Button, MenuItem,
   Stack, Alert, CircularProgress, Chip,
@@ -6,7 +6,7 @@ import {
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -19,6 +19,14 @@ const CATEGORY_KEYS = [
   'NAVIGATION', 'PLUMBING', 'SAFETY', 'MAINTENANCE', 'OTHER',
 ];
 
+// Map maintenance service-type codes (from notification deep-link) to form categories.
+// Known maintenance types (OIL_CHANGE, ANTIFOULING, etc.) default to MAINTENANCE.
+function serviceTypeToCategory(type) {
+  if (!type) return '';
+  const upper = type.toUpperCase();
+  return CATEGORY_KEYS.includes(upper) ? upper : 'MAINTENANCE';
+}
+
 const MAX_FILES = 5;
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = /^(image\/.+|video\/mp4)$/;
@@ -27,26 +35,43 @@ export default function ServiceRequest() {
   const { user, isTechnician } = useAuth();
   const { t } = useTranslation('workorder');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const tech = isTechnician();
   const submittedByRole = tech ? 'TECHNICIAN' : 'CLIENT';
   const emailVerified = user?.emailVerified !== false;
+
+  const paramVesselId = searchParams.get('vessel');
+  const paramType = searchParams.get('type');
 
   const [vesselId, setVesselId] = useState('');
   const [phone, setPhone] = useState(user?.phone || '');
   const [locationText, setLocationText] = useState('');
   const [coords, setCoords] = useState(null); // { latitude, longitude }
   const [gpsState, setGpsState] = useState({ loading: false, error: null });
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(() => serviceTypeToCategory(paramType));
   const [categoryOther, setCategoryOther] = useState('');
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]); // [{ file, uploadedUrl?, uploading, error? }]
+
+  const vesselPreFilled = useRef(false);
 
   const vesselsQuery = useQuery({
     queryKey: tech ? ['vessels', 'all'] : ['vessels', 'my', user?.id],
     queryFn: () => (tech ? vesselApi.getAll() : vesselApi.getMyVessels(user.id)),
     enabled: !!user?.id,
   });
+
+  // Pre-fill vessel from deep-link once the vessels list has loaded.
+  useEffect(() => {
+    if (!vesselPreFilled.current && paramVesselId && vesselsQuery.data?.length) {
+      const match = vesselsQuery.data.find((v) => v.id === Number(paramVesselId));
+      if (match) {
+        setVesselId(String(match.id));
+        vesselPreFilled.current = true;
+      }
+    }
+  }, [vesselsQuery.data, paramVesselId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedVessel = useMemo(
     () => (vesselsQuery.data || []).find((v) => v.id === Number(vesselId)),

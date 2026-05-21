@@ -242,6 +242,17 @@ function ServiceOrderCard({ order }) {
               <Typography variant="body2" sx={{ mt: 0.25 }}>{order.rejectionReason}</Typography>
             </Box>
           )}
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.5 }}>
+            <Button
+              component={Link}
+              to={`/dashboard/orders/${order.id}`}
+              size="small"
+              variant="outlined"
+              sx={{ borderRadius: 2, fontSize: '0.72rem' }}
+            >
+              View Details →
+            </Button>
+          </Stack>
         </CardContent>
       </Card>
     </HoverLift>

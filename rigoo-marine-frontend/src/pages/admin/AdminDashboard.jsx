@@ -26,6 +26,7 @@ import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
+import PendingApprovalsBanner from '../../components/admin/PendingApprovalsBanner';
 
 const managementModules = [
   {
@@ -192,6 +193,9 @@ export default function AdminDashboard() {
 
   return (
     <Box>
+      {/* Pending approvals inbox — auto-hides when empty */}
+      <PendingApprovalsBanner />
+
       {/* Header with Quick Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>

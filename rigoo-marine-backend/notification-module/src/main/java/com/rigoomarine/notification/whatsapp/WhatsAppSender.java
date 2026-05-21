@@ -1,8 +1,10 @@
 package com.rigoomarine.notification.whatsapp;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,33 +18,30 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * Sends WhatsApp messages via Twilio's Messaging API. Same HTTP shape as
- * {@code client-module/TwilioSmsSender} but with the {@code whatsapp:}
- * channel prefix on both From and To.
+ * Twilio transport for WhatsApp. Active when {@code app.whatsapp.enabled=true}
+ * AND {@code app.whatsapp.provider=twilio} (the default).
  *
- * <p>Why a fresh component instead of reusing TwilioSmsSender:
- * <ul>
- *   <li>The "From" number is a separate WhatsApp-enabled Twilio sender —
- *       different config key, often a different Twilio account.</li>
- *   <li>SMS is hot-path login (OTP); WhatsApp is best-effort notification
- *       fan-out. Mixing them risks SMS failures on the notification path
- *       (or WhatsApp template approvals blocking OTP delivery).</li>
- *   <li>notification-module already owns its mail send infra; symmetric
- *       to add its own WhatsApp sender here.</li>
- * </ul>
+ * <p>Same HTTP shape as client-module/TwilioSmsSender but with the
+ * {@code whatsapp:} channel prefix on both From and To.
  *
- * <p>Active when {@code app.whatsapp.enabled=true}. All three creds must
- * be set; missing creds throw at send-time so misconfig surfaces loudly
- * during the first reminder cycle rather than weeks later.
+ * <p>For the Meta Cloud API alternative see {@link MetaWhatsAppSender}.
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.whatsapp.enabled", havingValue = "true")
-public class WhatsAppSender {
+@ConditionalOnExpression(
+    "${app.whatsapp.enabled:false} == true " +
+    "&& '${app.whatsapp.provider:twilio}'.equals('twilio')"
+)
+public class WhatsAppSender implements WhatsAppPort {
 
     private static final String API_HOST = "https://api.twilio.com";
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final MeterRegistry meterRegistry;
+
+    public WhatsAppSender(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
 
     @Value("${app.whatsapp.twilio.account-sid:}")
     private String accountSid;
@@ -83,10 +82,12 @@ public class WhatsAppSender {
 
         try {
             restTemplate.postForEntity(url, new HttpEntity<>(form, headers), String.class);
-            log.info("whatsapp.sent recipient={}", mask(toE164));
+            log.info("whatsapp.sent provider=twilio recipient={}", mask(toE164));
+            meterRegistry.counter("notification.whatsapp.sent.total", "provider", "twilio").increment();
         } catch (HttpStatusCodeException ex) {
-            log.error("whatsapp.failed recipient={} status={} body={}",
+            log.error("whatsapp.failed provider=twilio recipient={} status={} body={}",
                 mask(toE164), ex.getStatusCode(), ex.getResponseBodyAsString());
+            meterRegistry.counter("notification.whatsapp.failed.total", "provider", "twilio").increment();
             throw new RuntimeException("Twilio rejected WhatsApp: " + ex.getStatusCode(), ex);
         }
     }

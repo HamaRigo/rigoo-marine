@@ -21,6 +21,8 @@ import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import HomeIcon from '@mui/icons-material/Home';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
+import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
 
 const drawerWidth = 240;
 const navItems = [
@@ -38,6 +40,8 @@ const navItems = [
   { name: 'Shop inquiries', path: '/admin/shop-inquiries', icon: <ContactSupportIcon /> },
   { name: 'Team Requests', path: '/admin/team-requests', icon: <GroupsIcon /> },
   { name: 'Deliveries',   path: '/admin/delivery',       icon: <LocalShippingIcon /> },
+  { name: 'Analytics',   path: '/admin/analytics',      icon: <BarChartRoundedIcon /> },
+  { name: 'Inventory',   path: '/admin/inventory',      icon: <InventoryRoundedIcon /> },
   { name: 'Audit log', path: '/admin/audit', icon: <HistoryIcon /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];

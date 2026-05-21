@@ -28,6 +28,10 @@ public class SecurityConfig {
             .cors(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                // Meta webhook — GET verification + POST delivery receipts arrive
+                // without a JWT; Meta uses hub.verify_token + X-Hub-Signature-256
+                // for auth at the application layer instead.
+                .requestMatchers("/whatsapp/webhook").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

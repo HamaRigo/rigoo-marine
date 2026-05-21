@@ -61,15 +61,36 @@ app:
   mail:
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@rigoomarine.qa}
-  # WhatsApp via Twilio. Disabled by default — when enabled the bean is
-  # @ConditionalOnProperty'd into context and ServiceDueEventConsumer fans
-  # WhatsApp messages out to opted-in recipients alongside email + in-app.
+  # WhatsApp — two providers supported.
+  #
+  # provider=twilio (default): routes through Twilio Messaging API.
+  # provider=meta:             routes directly through Meta Cloud API (Graph v19).
+  #
+  # Set WHATSAPP_ENABLED=true and WHATSAPP_PROVIDER=twilio|meta in the
+  # deployment environment; supply the matching credential vars below.
+  # ServiceDueEventConsumer fans WhatsApp messages out to opted-in
+  # recipients alongside email + in-app notifications.
   whatsapp:
-    enabled: ${WHATSAPP_ENABLED:false}
+    enabled:  ${WHATSAPP_ENABLED:false}
+    provider: ${WHATSAPP_PROVIDER:twilio}
+
+    # ── Twilio credentials (used when provider=twilio) ──
     twilio:
       account-sid: ${WHATSAPP_TWILIO_ACCOUNT_SID:}
       auth-token:  ${WHATSAPP_TWILIO_AUTH_TOKEN:}
       from:        ${WHATSAPP_TWILIO_FROM:}
+
+    # ── Meta Cloud API credentials (used when provider=meta) ──
+    # phone-number-id: the numeric ID of the WABA phone number (not the
+    #   display number itself) — found in Meta Business Manager → WhatsApp →
+    #   Phone numbers.
+    # access-token: a permanent System User token scoped to whatsapp_business_messaging.
+    # verify-token: an arbitrary secret you set in Business Manager when
+    #   registering the webhook URL — must match what Meta sends on verification.
+    meta:
+      phone-number-id: ${WHATSAPP_META_PHONE_NUMBER_ID:}
+      access-token:    ${WHATSAPP_META_ACCESS_TOKEN:}
+      verify-token:    ${WHATSAPP_META_VERIFY_TOKEN:rigoo-meta-webhook-secret}
 
 # Disable mail health probe — default points at smtp.example.com which would drag /actuator/health DOWN.
 management:

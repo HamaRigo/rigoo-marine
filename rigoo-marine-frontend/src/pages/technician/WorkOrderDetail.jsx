@@ -5,14 +5,143 @@ import {
   TextField, List, ListItem, ListItemText, Divider,
   CircularProgress, Alert, FormControlLabel, Checkbox,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  IconButton, Tooltip,
+  IconButton, Tooltip, Stack, LinearProgress,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AddIcon from '@mui/icons-material/Add';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import ArrowBackIcon        from '@mui/icons-material/ArrowBack';
+import AddIcon              from '@mui/icons-material/Add';
+import AttachFileIcon       from '@mui/icons-material/AttachFile';
+import HourglassEmptyIcon   from '@mui/icons-material/HourglassEmpty';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon      from '@mui/icons-material/StopRounded';
+import TimerRoundedIcon     from '@mui/icons-material/TimerRounded';
 import toast from 'react-hot-toast';
-import { technicianApi } from '../../services/api';
+import { technicianApi, workOrderApi } from '../../services/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// ─── Time Tracker sidebar card ────────────────────────────────────────────────
+
+function TimeTracker({ workOrderId }) {
+  const qc = useQueryClient();
+  const [elapsed, setElapsed] = useState(0); // seconds since clock-in
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['time-logs', workOrderId],
+    queryFn:  () => workOrderApi.getTimeLogs(workOrderId),
+    refetchInterval: 30_000,
+  });
+
+  const logs       = data?.logs ?? [];
+  const totalMin   = data?.totalMinutes ?? 0;
+  const openLog    = logs.find(l => l.open);
+  const isRunning  = !!openLog;
+
+  // Live elapsed counter while a session is open
+  useEffect(() => {
+    if (!isRunning || !openLog?.clockIn) { setElapsed(0); return; }
+    const start = new Date(openLog.clockIn).getTime();
+    const tick  = () => setElapsed(Math.floor((Date.now() - start) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [isRunning, openLog?.clockIn]);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['time-logs', workOrderId] });
+
+  const clockIn = useMutation({
+    mutationFn: () => workOrderApi.clockIn(workOrderId),
+    onSuccess: () => { toast.success('Clocked in'); invalidate(); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Clock-in failed'),
+  });
+
+  const clockOut = useMutation({
+    mutationFn: () => workOrderApi.clockOut(workOrderId),
+    onSuccess: () => { toast.success('Clocked out'); invalidate(); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Clock-out failed'),
+  });
+
+  const fmt = (sec) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return h > 0
+      ? `${h}h ${String(m).padStart(2,'0')}m`
+      : `${m}m ${String(s).padStart(2,'0')}s`;
+  };
+
+  const fmtMin = (min) => {
+    if (min < 60) return `${min}m`;
+    return `${Math.floor(min / 60)}h ${min % 60}m`;
+  };
+
+  return (
+    <Card sx={{ mt: 2 }}>
+      <CardContent>
+        <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+          <TimerRoundedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+          <Typography variant="h6">Time Tracking</Typography>
+        </Stack>
+
+        {isLoading ? <LinearProgress sx={{ borderRadius: 1 }} /> : (
+          <>
+            {/* Live timer */}
+            <Box sx={{
+              textAlign: 'center', py: 2, mb: 1.5,
+              borderRadius: 2, bgcolor: isRunning ? 'rgba(76,175,80,0.08)' : 'action.hover',
+              border: '1px solid', borderColor: isRunning ? 'success.light' : 'divider',
+            }}>
+              <Typography variant="h4" fontWeight={800}
+                color={isRunning ? 'success.main' : 'text.secondary'}>
+                {isRunning ? fmt(elapsed) : fmtMin(totalMin)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {isRunning ? 'Session running' : `Total logged`}
+              </Typography>
+            </Box>
+
+            <Button
+              fullWidth
+              variant="contained"
+              color={isRunning ? 'error' : 'success'}
+              startIcon={isRunning ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
+              disabled={clockIn.isPending || clockOut.isPending}
+              onClick={() => isRunning ? clockOut.mutate() : clockIn.mutate()}
+              sx={{ mb: 1.5, borderRadius: 2 }}
+            >
+              {isRunning ? 'Clock Out' : 'Clock In'}
+            </Button>
+
+            {/* Recent logs */}
+            {logs.slice(0, 4).map(l => (
+              <Box key={l.id} sx={{
+                display: 'flex', justifyContent: 'space-between',
+                py: 0.5, borderBottom: '1px solid', borderColor: 'divider',
+              }}>
+                <Typography variant="caption" color="text.secondary">
+                  {l.clockIn ? new Date(l.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                  {l.clockOut ? ` → ${new Date(l.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ' → now'}
+                </Typography>
+                <Typography variant="caption" fontWeight={700}
+                  color={l.open ? 'success.main' : 'text.primary'}>
+                  {l.open ? 'open' : fmtMin(l.durationMin ?? 0)}
+                </Typography>
+              </Box>
+            ))}
+
+            {totalMin > 0 && (
+              <Box sx={{ mt: 1, pt: 1, borderTop: '2px solid', borderColor: 'divider',
+                display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" fontWeight={700}>Total</Typography>
+                <Typography variant="caption" fontWeight={800} color="primary.main">
+                  {fmtMin(totalMin)}
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const STATUS_COLORS = {
   PENDING_APPROVAL: 'default',
@@ -402,7 +531,8 @@ export default function WorkOrderDetail() {
 
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
-          <Card>
+          <TimeTracker workOrderId={id} />
+          <Card sx={{ mt: 2 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>Order Details</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

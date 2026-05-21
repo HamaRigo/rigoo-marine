@@ -38,6 +38,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 // Dashboard Pages
 import VesselsPage  from './pages/dashboard/VesselsPage';
 import AccountPage  from './pages/dashboard/AccountPage';
+import ClientOrderDetail from './pages/dashboard/ClientOrderDetail';
 import Profile      from './pages/dashboard/Profile';
 import Notifications from './pages/dashboard/Notifications';
 
@@ -70,6 +71,8 @@ const ProductInquiryManagement = lazy(() => import('./pages/admin/ProductInquiry
 const ShopOrderManagement = lazy(() => import('./pages/admin/ShopOrderManagement'));
 const MaintenanceDashboard = lazy(() => import('./pages/admin/MaintenanceDashboard'));
 const TeamRequestManagement = lazy(() => import('./pages/admin/TeamRequestManagement'));
+const AnalyticsDashboard = lazy(() => import('./pages/admin/AnalyticsDashboard'));
+const InventoryManagement = lazy(() => import('./pages/admin/InventoryManagement'));
 
 /**
  * Lightweight spinner the Suspense fallback renders while a chunk loads.
@@ -169,6 +172,7 @@ function App() {
                 <Route index element={<Navigate to="/dashboard/vessels" replace />} />
                 <Route path="vessels"       element={<VesselsPage  />} />
                 <Route path="account"       element={<AccountPage  />} />
+                <Route path="orders/:id"    element={<ClientOrderDetail />} />
                 <Route path="profile"       element={<Profile      />} />
                 <Route path="notifications" element={<Notifications />} />
                 {/* Legacy URL aliases — redirect so saved links keep working */}
@@ -217,6 +221,8 @@ function App() {
                 <Route path="team-requests" element={<TeamRequestManagement />} />
                 <Route path="delivery" element={<DeliveryTracking />} />
                 <Route path="delivery/:techId" element={<DeliveryTracking />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="inventory" element={<InventoryManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
