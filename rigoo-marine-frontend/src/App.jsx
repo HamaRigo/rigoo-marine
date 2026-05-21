@@ -12,6 +12,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import GuestRoute from './components/GuestRoute';
 import AdminRoute from './components/AdminRoute';
 import TechnicianRoute from './components/TechnicianRoute';
+import TeamLeadRoute from './components/TeamLeadRoute';
+import DeliveryRoute from './components/DeliveryRoute';
 
 // Dashboard Layout
 import DashboardLayout from './pages/dashboard/DashboardLayout';
@@ -206,6 +208,30 @@ function App() {
                 <Route path="orders/:id" element={<WorkOrderDetail />} />
                 <Route path="history" element={<div>Work Order History - Coming Soon</div>} />
               </Route>
+
+              {/* Team Lead Routes (TEAM_LEAD role — Phase 3) */}
+              <Route
+                path="/team-lead"
+                element={
+                  <TeamLeadRoute>
+                    <Suspense fallback={<ChunkLoading />}>
+                      <div style={{ padding: 40, textAlign: 'center' }}>Team Lead Dashboard — Coming Soon</div>
+                    </Suspense>
+                  </TeamLeadRoute>
+                }
+              />
+
+              {/* Delivery Routes (DELIVERY role — Phase 4/5) */}
+              <Route
+                path="/delivery"
+                element={
+                  <DeliveryRoute>
+                    <Suspense fallback={<ChunkLoading />}>
+                      <div style={{ padding: 40, textAlign: 'center' }}>Delivery Dashboard — Coming Soon</div>
+                    </Suspense>
+                  </DeliveryRoute>
+                }
+              />
 
               {/* 404 - Catch all */}
               <Route path="*" element={<NotFound />} />

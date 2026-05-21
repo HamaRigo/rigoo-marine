@@ -6,6 +6,8 @@ export const AuthContext = createContext(null);
 const ROLES = {
   CLIENT: 'CLIENT',
   TECHNICIAN: 'TECHNICIAN',
+  TEAM_LEAD: 'TEAM_LEAD',
+  DELIVERY: 'DELIVERY',
   ADMIN: 'ADMIN',
 };
 
@@ -147,9 +149,11 @@ export function AuthProvider({ children }) {
     return roleList.includes(user.role);
   }, [user]);
 
-  const isAdmin = useCallback(() => hasRole(ROLES.ADMIN), [hasRole]);
+  const isAdmin      = useCallback(() => hasRole(ROLES.ADMIN),      [hasRole]);
   const isTechnician = useCallback(() => hasRole(ROLES.TECHNICIAN), [hasRole]);
-  const isClient = useCallback(() => hasRole(ROLES.CLIENT), [hasRole]);
+  const isTeamLead   = useCallback(() => hasRole(ROLES.TEAM_LEAD),  [hasRole]);
+  const isDelivery   = useCallback(() => hasRole(ROLES.DELIVERY),   [hasRole]);
+  const isClient     = useCallback(() => hasRole(ROLES.CLIENT),     [hasRole]);
 
   const value = {
     user,
@@ -165,6 +169,8 @@ export function AuthProvider({ children }) {
     hasRole,
     isAdmin,
     isTechnician,
+    isTeamLead,
+    isDelivery,
     isClient,
     ROLES,
   };

@@ -78,7 +78,7 @@ Use a configurable font path; do not bundle a binary.
 
 ---
 
-### 2.0 — Role enum + security foundations `[ ]`
+### 2.0 — Role enum + security foundations `[x]`
 
 **Backend**
 

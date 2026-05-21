@@ -96,7 +96,7 @@ function NavLinkButton({ to, label, active }) {
 
 // ── User avatar dropdown (desktop) ────────────────────────────────────────
 
-function UserMenu({ user, isAdmin }) {
+function UserMenu({ user, isAdmin, isTeamLead, isDelivery }) {
   const navigate = useNavigate();
 
   const initials = (user?.name || 'U')
@@ -106,7 +106,10 @@ function UserMenu({ user, isAdmin }) {
     .join('')
     .toUpperCase();
 
-  const dest = isAdmin ? '/admin' : '/dashboard/vessels';
+  const dest = isAdmin ? '/admin'
+    : isTeamLead ? '/team-lead'
+    : isDelivery ? '/delivery'
+    : '/dashboard/vessels';
 
   return (
     <Chip
@@ -134,7 +137,9 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation(['navbar', 'common']);
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin    = user?.role === 'ADMIN';
+  const isTeamLead = user?.role === 'TEAM_LEAD';
+  const isDelivery = user?.role === 'DELIVERY';
   const { itemCount } = useCart();
   const elevated = useScrollTrigger({ disableHysteresis: true, threshold: 12 });
   const [mounted, setMounted] = useState(false);
@@ -331,7 +336,7 @@ export default function Navbar() {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', ml: 'auto' }}>
               <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1.5, alignItems: 'center' }}>
                 {isAuthenticated ? (
-                  <UserMenu user={user} isAdmin={isAdmin} />
+                  <UserMenu user={user} isAdmin={isAdmin} isTeamLead={isTeamLead} isDelivery={isDelivery} />
                 ) : (
                   <>
                     <Button

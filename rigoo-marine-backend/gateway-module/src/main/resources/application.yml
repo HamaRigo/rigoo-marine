@@ -117,6 +117,10 @@ spring:
           uri: lb://technician-service
           predicates:
             - Path=/technician/**
+        - id: team-lead-dashboard
+          uri: lb://technician-service
+          predicates:
+            - Path=/team-lead/**
         - id: client-service
           uri: lb://client-service
           predicates:

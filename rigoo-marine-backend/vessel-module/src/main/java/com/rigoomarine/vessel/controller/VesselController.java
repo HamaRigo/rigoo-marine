@@ -33,19 +33,19 @@ public class VesselController {
         return ResponseEntity.ok(vesselService.getVesselsByClientId(clientId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN','TEAM_LEAD')")
     @GetMapping
     public ResponseEntity<List<VesselDTO>> getAllVessels() {
         return ResponseEntity.ok(vesselService.getAllVessels());
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @vesselSecurity.canAccess(#id)")
+    @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD') or @vesselSecurity.canAccess(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<VesselDTO> getVesselById(@PathVariable Long id) {
         return ResponseEntity.ok(vesselService.getVesselById(id));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @vesselSecurity.canAccess(#id)")
+    @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD') or @vesselSecurity.canAccess(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<VesselDTO> updateVessel(
         @PathVariable Long id,
@@ -54,7 +54,7 @@ public class VesselController {
         return ResponseEntity.ok(vesselService.updateVessel(id, request));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @vesselSecurity.canAccess(#id)")
+    @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD') or @vesselSecurity.canAccess(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVessel(@PathVariable Long id) {
         vesselService.deleteVessel(id);

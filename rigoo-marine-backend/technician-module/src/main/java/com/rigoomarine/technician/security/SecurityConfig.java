@@ -33,8 +33,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (if any)
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                // Technician endpoints - require TECHNICIAN or ADMIN role
-                .requestMatchers("/technician/**").hasAnyRole("TECHNICIAN", "ADMIN")
+                // Technician endpoints
+                .requestMatchers("/technician/**").hasAnyRole("TECHNICIAN", "TEAM_LEAD", "ADMIN")
+                // Team lead endpoints — supervisor view within technician-service
+                .requestMatchers("/team-lead/**").hasAnyRole("TEAM_LEAD", "ADMIN")
+                // Delivery endpoints
+                .requestMatchers("/delivery/**", "/api/delivery/**").hasAnyRole("DELIVERY", "TEAM_LEAD", "ADMIN")
                 // All other authenticated requests
                 .anyRequest().authenticated()
             )

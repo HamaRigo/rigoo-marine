@@ -31,15 +31,19 @@ export function useAuthWithRoles() {
     return userRoles.includes(auth.user.role);
   };
 
-  const isAdmin = () => hasRole('ADMIN');
+  const isAdmin      = () => hasRole('ADMIN');
   const isTechnician = () => hasRole('TECHNICIAN');
-  const isClient = () => hasRole('CLIENT');
+  const isTeamLead   = () => hasRole('TEAM_LEAD');
+  const isDelivery   = () => hasRole('DELIVERY');
+  const isClient     = () => hasRole('CLIENT');
 
   return {
     ...auth,
     hasRole,
     isAdmin,
     isTechnician,
+    isTeamLead,
+    isDelivery,
     isClient,
   };
 }

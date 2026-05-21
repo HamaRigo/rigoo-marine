@@ -109,7 +109,9 @@ public class Client {
 
     public enum UserRole {
         CLIENT,
-        ADMIN,
-        TECHNICIAN
+        TECHNICIAN,
+        TEAM_LEAD,
+        DELIVERY,
+        ADMIN
     }
 }

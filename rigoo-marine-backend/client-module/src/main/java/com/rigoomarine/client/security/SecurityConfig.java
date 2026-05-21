@@ -48,7 +48,11 @@ public class SecurityConfig {
                 // Admin endpoints
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Technician endpoints
-                .requestMatchers("/technician/**").hasAnyRole("TECHNICIAN", "ADMIN")
+                .requestMatchers("/technician/**").hasAnyRole("TECHNICIAN", "TEAM_LEAD", "ADMIN")
+                // Team lead endpoints
+                .requestMatchers("/team-lead/**").hasAnyRole("TEAM_LEAD", "ADMIN")
+                // Delivery endpoints
+                .requestMatchers("/delivery/**", "/api/delivery/**").hasAnyRole("DELIVERY", "TEAM_LEAD", "ADMIN")
                 // All authenticated requests
                 .anyRequest().authenticated()
             )
