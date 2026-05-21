@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import MapIcon from '@mui/icons-material/Map';
 import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
@@ -24,6 +25,7 @@ export default function DeliveryLayout() {
   const navItems = [
     { name: t('nav.dashboard'), path: '/delivery',         icon: <DashboardIcon /> },
     { name: t('nav.tasks'),     path: '/delivery/tasks',   icon: <LocalShippingIcon /> },
+    { name: t('nav.route'),     path: '/delivery/route',   icon: <MapIcon /> },
     { name: t('nav.history'),   path: '/delivery/history', icon: <HistoryIcon /> },
   ];
 

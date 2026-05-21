@@ -94,6 +94,13 @@ import DeliveryLayout from './pages/delivery/DeliveryLayout';
 import DeliveryDashboard from './pages/delivery/DeliveryDashboard';
 import DeliveryTasks from './pages/delivery/DeliveryTasks';
 import DeliveryTaskDetail from './pages/delivery/DeliveryTaskDetail';
+import DeliveryRouteMap from './pages/delivery/DeliveryRoute';
+
+// Admin Delivery Tracking
+const DeliveryTracking = lazy(() => import('./pages/admin/DeliveryTracking'));
+
+// Team Lead Delivery Tracking
+import TeamLeadDelivery from './pages/team-lead/TeamLeadDelivery';
 
 // Team Lead Pages
 import TeamLeadLayout from './pages/team-lead/TeamLeadLayout';
@@ -208,6 +215,8 @@ function App() {
                 <Route path="shop-inquiries" element={<ProductInquiryManagement />} />
                 <Route path="shop-orders" element={<ShopOrderManagement />} />
                 <Route path="team-requests" element={<TeamRequestManagement />} />
+                <Route path="delivery" element={<DeliveryTracking />} />
+                <Route path="delivery/:techId" element={<DeliveryTracking />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
@@ -243,6 +252,7 @@ function App() {
                 <Route path="quotations"      element={<TeamLeadQuotations />} />
                 <Route path="history"         element={<TeamLeadHistory />} />
                 <Route path="technicians"     element={<TeamLeadTechnicians />} />
+                <Route path="delivery"        element={<TeamLeadDelivery />} />
               </Route>
 
               {/* Delivery Routes (DELIVERY role) */}
@@ -257,6 +267,7 @@ function App() {
                 <Route index               element={<DeliveryDashboard />} />
                 <Route path="tasks"        element={<DeliveryTasks />} />
                 <Route path="tasks/:id"    element={<DeliveryTaskDetail />} />
+                <Route path="route"        element={<DeliveryRouteMap />} />
                 <Route path="history"      element={<DeliveryTasks />} />
               </Route>
 

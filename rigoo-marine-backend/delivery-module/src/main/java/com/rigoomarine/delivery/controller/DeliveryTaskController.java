@@ -4,10 +4,13 @@ import com.rigoomarine.common.security.SecurityUtils;
 import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
 import com.rigoomarine.delivery.dto.PositionUpdateRequest;
 import com.rigoomarine.delivery.dto.UpdateStatusRequest;
+import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
+import com.rigoomarine.delivery.repository.DeliveryTaskRepository;
 import com.rigoomarine.delivery.service.DeliveryTaskService;
 import com.rigoomarine.delivery.service.PositionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +32,10 @@ public class DeliveryTaskController {
 
     private final DeliveryTaskService taskService;
     private final PositionService positionService;
+    private final DeliveryTaskRepository taskRepository;
+
+    @Value("${app.delivery.upload-dir:./uploads/delivery}")
+    private String uploadDir;
 
     @GetMapping("/tasks/today")
     @PreAuthorize("hasAnyRole('DELIVERY')")
@@ -56,9 +64,9 @@ public class DeliveryTaskController {
                                        @RequestParam("file") MultipartFile file) throws IOException {
         Long techId = SecurityUtils.currentClientIdOrThrow();
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path uploadDir = Paths.get("uploads/delivery/proof");
-        Files.createDirectories(uploadDir);
-        Files.copy(file.getInputStream(), uploadDir.resolve(fileName));
+        Path dir = Paths.get(uploadDir, "proof");
+        Files.createDirectories(dir);
+        Files.copy(file.getInputStream(), dir.resolve(fileName));
         String filePath = "delivery/proof/" + fileName;
         return taskService.setProofPhoto(id, techId, filePath);
     }
@@ -76,5 +84,14 @@ public class DeliveryTaskController {
     public ResponseEntity<Map<String, Object>> getPosition(@PathVariable Long techId) {
         Map<String, Object> pos = positionService.getPosition(techId);
         return pos != null ? ResponseEntity.ok(pos) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/positions")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public List<Map<String, Object>> getAllPositions() {
+        List<Long> activeTechIds = taskRepository.findActiveTechIdsForDate(
+                LocalDate.now(),
+                List.of(DeliveryTaskStatus.DELIVERED, DeliveryTaskStatus.FAILED));
+        return positionService.getAllPositions(activeTechIds);
     }
 }

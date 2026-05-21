@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "tasks": "توصيلاتي",
+    "route": "خريطة المسار",
     "history": "السجل"
   },
   "dashboard": {

@@ -1143,6 +1143,11 @@ export const deliveryApi = {
     return res.data;
   },
 
+  adminListPositions: async () => {
+    const res = await httpClient.get('/api/delivery/positions');
+    return res.data;
+  },
+
   // Admin / Team Lead
   adminListTasks: async ({ date, assignedTo, status, page = 0, size = 20 } = {}) => {
     const params = { page, size };

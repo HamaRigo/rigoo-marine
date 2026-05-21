@@ -6,6 +6,8 @@ import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
 import com.rigoomarine.delivery.dto.UpdateStatusRequest;
 import com.rigoomarine.delivery.entity.DeliveryTask;
 import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
+import com.rigoomarine.delivery.event.DeliveryEventPublisher;
+import com.rigoomarine.delivery.event.DeliveryStatusChangeEvent;
 import com.rigoomarine.delivery.repository.DeliveryTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,15 +17,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class DeliveryTaskService {
 
     private final DeliveryTaskRepository repo;
+    private final DeliveryEventPublisher eventPublisher;
 
     public List<DeliveryTaskDTO> getTodayTasksForTech(Long techId) {
         return repo.findByAssignedToAndScheduledDateOrderByStopOrderAscIdAsc(techId, LocalDate.now())
@@ -57,7 +63,19 @@ public class DeliveryTaskService {
         if (next == DeliveryTaskStatus.FAILED) {
             task.setFailedReason(req.getFailedReason());
         }
-        return new DeliveryTaskDTO(repo.save(task));
+        DeliveryTask saved = repo.save(task);
+
+        if (next == DeliveryTaskStatus.DELIVERED || next == DeliveryTaskStatus.FAILED) {
+            eventPublisher.publishAfterCommit(DeliveryStatusChangeEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .occurredAt(Instant.now())
+                    .taskId(saved.getId())
+                    .status(next)
+                    .deliveryAddress(saved.getDeliveryAddress())
+                    .failedReason(saved.getFailedReason())
+                    .build());
+        }
+        return new DeliveryTaskDTO(saved);
     }
 
     @Transactional

@@ -9,6 +9,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -48,5 +51,14 @@ public class PositionService {
                 "lng", parts[1],
                 "accuracy", parts.length > 2 ? parts[2] : ""
         );
+    }
+
+    public List<Map<String, Object>> getAllPositions(Collection<Long> techIds) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Long id : techIds) {
+            Map<String, Object> pos = getPosition(id);
+            if (pos != null) result.add(pos);
+        }
+        return result;
     }
 }
