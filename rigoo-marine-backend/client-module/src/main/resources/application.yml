@@ -59,6 +59,7 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 2000ms
+      connect-timeout: 2000ms
       # database 1 holds the cross-service JWT revocation list (key: jwt:revoked:<jti>).
       # Must match the api-gateway's spring.data.redis.database — otherwise the gateway
       # filter reads from a db this service never writes to and revocations silently drop.
@@ -118,4 +119,8 @@ management:
     # Mail HealthIndicator probes SMTP at startup; disabled until real SMTP is provisioned
     # so /actuator/health doesn't go DOWN and break Docker healthchecks.
     mail:
+      enabled: false
+    # Redis health probe can mark the service DOWN even when it's just the cache layer
+    # that's unavailable. Core business logic (DB, API) remains functional without Redis.
+    redis:
       enabled: false
