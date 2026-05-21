@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "tasks": "توصيلاتي",
+    "history": "السجل"
+  },
+  "dashboard": {
+    "title": "لوحة تحكم التوصيل",
+    "todayStops": "محطات اليوم",
+    "pending": "معلّق",
+    "inTransit": "في الطريق",
+    "completed": "مكتمل",
+    "failed": "فشل",
+    "noTasks": "لا توجد توصيلات مجدولة اليوم.",
+    "loadError": "فشل تحميل بيانات التوصيل."
+  },
+  "tasks": {
+    "title": "توصيلاتي",
+    "stop": "محطة",
+    "pickup": "الاستلام",
+    "dropoff": "التسليم",
+    "clientPhone": "هاتف العميل",
+    "invoiceAmount": "مبلغ الفاتورة",
+    "notes": "ملاحظات",
+    "noTasks": "لا توجد توصيلات مسندة.",
+    "openMaps": "فتح في خرائط جوجل",
+    "openWaze": "فتح في ويز",
+    "call": "اتصل بالعميل"
+  },
+  "detail": {
+    "title": "توصيلة #{{id}}",
+    "pickupSection": "الاستلام",
+    "dropoffSection": "التسليم",
+    "billingSection": "الفواتير",
+    "actionsSection": "الإجراءات",
+    "markPickedUp": "تأكيد الاستلام",
+    "startDelivery": "بدء التوصيل",
+    "markDelivered": "تأكيد التسليم",
+    "reportFailed": "الإبلاغ عن فشل",
+    "uploadProof": "رفع صورة دليل التسليم",
+    "failedReason": "سبب الفشل",
+    "failedReasonPlaceholder": "ما الذي حدث؟",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء"
+  },
+  "status": {
+    "PENDING": "معلّق",
+    "ASSIGNED": "مسنَد",
+    "PICKED_UP": "تم الاستلام",
+    "IN_TRANSIT": "في الطريق",
+    "DELIVERED": "تم التسليم",
+    "FAILED": "فشل"
+  }
+}

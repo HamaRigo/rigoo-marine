@@ -347,6 +347,17 @@ spring:
           uri: lb://client-service
           predicates:
             - Path=/api/team-requests/**
+        # Delivery — tech task/position endpoints + admin task management.
+        - id: delivery-service
+          uri: lb://delivery-service
+          predicates:
+            - Path=/api/delivery/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
 
 eureka:
   client:

@@ -1107,6 +1107,68 @@ export const technicianApi = {
   },
 };
 
+// ============== DELIVERY APIs ==============
+export const deliveryApi = {
+  getTodayTasks: async () => {
+    const res = await httpClient.get('/api/delivery/tasks/today');
+    return res.data;
+  },
+
+  getTaskById: async (id) => {
+    const res = await httpClient.get(`/api/delivery/tasks/${id}`);
+    return res.data;
+  },
+
+  updateStatus: async (id, status, failedReason) => {
+    const res = await httpClient.patch(`/api/delivery/tasks/${id}/status`, { status, failedReason });
+    return res.data;
+  },
+
+  uploadProof: async (id, file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await httpClient.post(`/api/delivery/tasks/${id}/proof`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  updatePosition: async (lat, lng, accuracy) => {
+    const res = await httpClient.post('/api/delivery/position', { lat, lng, accuracy });
+    return res.data;
+  },
+
+  getTechPosition: async (techId) => {
+    const res = await httpClient.get(`/api/delivery/position/${techId}`);
+    return res.data;
+  },
+
+  // Admin / Team Lead
+  adminListTasks: async ({ date, assignedTo, status, page = 0, size = 20 } = {}) => {
+    const params = { page, size };
+    if (date) params.date = date;
+    if (assignedTo) params.assignedTo = assignedTo;
+    if (status) params.status = status;
+    const res = await httpClient.get('/api/delivery/admin/tasks', { params });
+    return res.data;
+  },
+
+  adminGetTask: async (id) => {
+    const res = await httpClient.get(`/api/delivery/admin/tasks/${id}`);
+    return res.data;
+  },
+
+  adminCreateTask: async (data) => {
+    const res = await httpClient.post('/api/delivery/admin/tasks', data);
+    return res.data;
+  },
+
+  adminAssignTask: async (id, technicianId) => {
+    const res = await httpClient.patch(`/api/delivery/admin/tasks/${id}/assign`, { technicianId });
+    return res.data;
+  },
+};
+
 // ============== FILE UPLOAD APIs ==============
 export const fileApi = {
   /**
@@ -1227,6 +1289,7 @@ export default {
   marketplace: marketplaceApi,
   shop: shopApi,
   technician: technicianApi,
+  delivery: deliveryApi,
   file: fileApi,
   maintenance: maintenanceApi,
   notifications: notificationApi,

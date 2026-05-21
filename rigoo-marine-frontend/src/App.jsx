@@ -89,6 +89,12 @@ import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import WorkOrderQueue from './pages/technician/WorkOrderQueue';
 import WorkOrderDetail from './pages/technician/WorkOrderDetail';
 
+// Delivery Pages
+import DeliveryLayout from './pages/delivery/DeliveryLayout';
+import DeliveryDashboard from './pages/delivery/DeliveryDashboard';
+import DeliveryTasks from './pages/delivery/DeliveryTasks';
+import DeliveryTaskDetail from './pages/delivery/DeliveryTaskDetail';
+
 // Team Lead Pages
 import TeamLeadLayout from './pages/team-lead/TeamLeadLayout';
 import TeamLeadDashboard from './pages/team-lead/TeamLeadDashboard';
@@ -239,17 +245,20 @@ function App() {
                 <Route path="technicians"     element={<TeamLeadTechnicians />} />
               </Route>
 
-              {/* Delivery Routes (DELIVERY role — Phase 4/5) */}
+              {/* Delivery Routes (DELIVERY role) */}
               <Route
                 path="/delivery"
                 element={
                   <DeliveryRoute>
-                    <Suspense fallback={<ChunkLoading />}>
-                      <div style={{ padding: 40, textAlign: 'center' }}>Delivery Dashboard — Coming Soon</div>
-                    </Suspense>
+                    <DeliveryLayout />
                   </DeliveryRoute>
                 }
-              />
+              >
+                <Route index               element={<DeliveryDashboard />} />
+                <Route path="tasks"        element={<DeliveryTasks />} />
+                <Route path="tasks/:id"    element={<DeliveryTaskDetail />} />
+                <Route path="history"      element={<DeliveryTasks />} />
+              </Route>
 
               {/* 404 - Catch all */}
               <Route path="*" element={<NotFound />} />

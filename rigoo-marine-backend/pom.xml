@@ -28,6 +28,7 @@
         <module>marketplace-module</module>
         <module>shop-module</module>
         <module>maintenance-module</module>
+        <module>delivery-module</module>
     </modules>
 
     <parent>

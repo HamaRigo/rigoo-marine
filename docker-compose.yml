@@ -190,6 +190,32 @@ services:
     networks:
       - marine-network
 
+  delivery-service:
+    build:
+      context: ./rigoo-marine-backend
+      dockerfile: delivery-module/Dockerfile
+    container_name: delivery-service
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - REDIS_HOST=redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8092/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 240s
+    networks:
+      - marine-network
+
   # Invoice Service (internal, no exposed port)
   invoice-service:
     build:

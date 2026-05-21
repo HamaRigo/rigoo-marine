@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "My Deliveries",
+    "history": "History"
+  },
+  "dashboard": {
+    "title": "Delivery Dashboard",
+    "todayStops": "Today's Stops",
+    "pending": "Pending",
+    "inTransit": "In Transit",
+    "completed": "Completed",
+    "failed": "Failed",
+    "noTasks": "No deliveries scheduled for today.",
+    "loadError": "Failed to load delivery data."
+  },
+  "tasks": {
+    "title": "My Deliveries",
+    "stop": "Stop",
+    "pickup": "Pickup",
+    "dropoff": "Drop-off",
+    "clientPhone": "Client Phone",
+    "invoiceAmount": "Invoice Amount",
+    "notes": "Notes",
+    "noTasks": "No deliveries assigned.",
+    "openMaps": "Open in Google Maps",
+    "openWaze": "Open in Waze",
+    "call": "Call Client"
+  },
+  "detail": {
+    "title": "Delivery #{{id}}",
+    "pickupSection": "Pickup",
+    "dropoffSection": "Drop-off",
+    "billingSection": "Billing",
+    "actionsSection": "Actions",
+    "markPickedUp": "Mark Picked Up",
+    "startDelivery": "Start Delivery",
+    "markDelivered": "Mark Delivered",
+    "reportFailed": "Report Failed",
+    "uploadProof": "Upload Proof Photo",
+    "failedReason": "Reason for failure",
+    "failedReasonPlaceholder": "What went wrong?",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "ASSIGNED": "Assigned",
+    "PICKED_UP": "Picked Up",
+    "IN_TRANSIT": "In Transit",
+    "DELIVERED": "Delivered",
+    "FAILED": "Failed"
+  }
+}

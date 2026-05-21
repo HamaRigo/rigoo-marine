@@ -5,7 +5,7 @@
 
 ---
 
-## TRACK 1 — Carry-over: Unfinished items from previous sessions
+## TRACK 1 — Carry-over: Unfinished items
 
 ### A1 — Arabic font in the maintenance PDF renderer `[ ]`
 **What**: `locale=ar` emits Arabic labels but body text renders as boxes (Helvetica has no Arabic glyphs).
@@ -64,154 +64,15 @@ Use a configurable font path; do not bundle a binary.
 
 ---
 
-## TRACK 2 — Role System Expansion
+## TRACK 2 — Delivery Technician `[ ]`
 
-### Overview of new roles
-
-| Role | Level | Short description |
-|---|---|---|
-| `CLIENT` | 1 | Vessel owner — existing, unchanged |
-| `TECHNICIAN` | 2 | Field worker — existing, extended (see §2.1) |
-| `TEAM_LEAD` | 3 | Field supervisor — new role (see §2.2) |
-| `DELIVERY` | 4 | Logistics / delivery driver — new role (see §2.3) |
-| `ADMIN` | 5 | Platform operator — existing, unchanged |
-
----
-
-### 2.0 — Role enum + security foundations `[x]`
-
-**Backend**
-
-- Add `TEAM_LEAD` and `DELIVERY` to `UserRole` enum in `client-module/.../entity/Client.java`
-- Update all `SecurityConfig` files:
-  - `/team-lead/**` → permit `TEAM_LEAD | ADMIN`
-  - `/delivery/**` → permit `DELIVERY | ADMIN`
-  - `TEAM_LEAD` granted same vessel read access as `ADMIN` in `vessel-module` and `maintenance-module`
-- Gateway `application.yml`:
-  - Add route `/team-lead/**` → `lb://technician-service`
-  - Add route `/api/delivery/**` → `lb://delivery-service`
-
-**DB migrations (client-module)**
-
-- `V13__team_request_assignment.sql`
-  ```sql
-  ALTER TABLE team_requests ADD COLUMN assigned_to  BIGINT REFERENCES clients(id) ON DELETE SET NULL;
-  ALTER TABLE team_requests ADD COLUMN assigned_at  TIMESTAMP;
-  ```
-
-**DB migrations (work-order-module)**
-
-- `V_WO_1__work_order_updates.sql`
-  ```sql
-  CREATE TABLE work_order_updates (
-    id                BIGSERIAL PRIMARY KEY,
-    work_order_id     BIGINT NOT NULL REFERENCES work_orders(id) ON DELETE CASCADE,
-    author_id         BIGINT NOT NULL,
-    author_role       VARCHAR(20) NOT NULL,
-    message           TEXT NOT NULL,
-    visible_to_client BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at        TIMESTAMP NOT NULL DEFAULT NOW()
-  );
-  ```
-- `V_WO_2__work_order_attachments.sql`
-  ```sql
-  CREATE TABLE work_order_attachments (
-    id            BIGSERIAL PRIMARY KEY,
-    work_order_id BIGINT NOT NULL REFERENCES work_orders(id) ON DELETE CASCADE,
-    uploaded_by   BIGINT NOT NULL,
-    file_path     VARCHAR(500) NOT NULL,
-    original_name VARCHAR(255),
-    content_type  VARCHAR(100),
-    file_size     BIGINT,
-    created_at    TIMESTAMP NOT NULL DEFAULT NOW()
-  );
-  ```
-
-**Frontend**
-
-- Add `isTeamLead`, `isDelivery` booleans to `AuthContext`
-- Add `<TeamLeadRoute>` and `<DeliveryRoute>` guard components alongside existing `<AdminRoute>` / `<TechnicianRoute>`
-- `Navbar.jsx` — `UserMenu` chip navigates:
-  - `TEAM_LEAD` → `/team-lead`
-  - `DELIVERY` → `/delivery`
-
----
-
-### 2.1 — Enhanced Technician `[x]`
-
-**New capabilities over current scope:**
-
-| Capability | Backend endpoint | Notes |
-|---|---|---|
-| Upload photo / file attachments to a work order | `POST /api/work-orders/{id}/attachments` | Multipart, stored in `work_order_attachments` |
-| View full vessel maintenance dossier for assigned vessels | `GET /api/maintenance/vessels/{vesselId}/dossier` | Accessible only when vessel is on one of their assigned orders |
-| Flag order as WAITING_PARTS | `PATCH /api/work-orders/{id}/status` with `WAITING_PARTS` + `reason` | Already in `WorkOrderStatus`; previously blocked to technician |
-| Post a client-visible update on a job | `POST /api/work-orders/{id}/updates` | `visible_to_client=true` triggers notification |
-| Respond to an assigned team request | `PATCH /api/team-requests/{id}/status` | Scope-guarded: only requests assigned to them |
-
-**Frontend additions (technician dashboard)**
-
-- Work order detail page:
-  - Attachment upload zone (drag & drop, max 5 × 20 MB, images + videos)
-  - "Post Update" form — text field + optional photo, preview of what client sees
-  - "Flag as Waiting Parts" button → reason text field → confirm
-- Work order list: show `WAITING_PARTS` badge
-
----
-
-### 2.2 — Team Lead `[x]`
-
-**Responsibilities**: field supervisor. Manages technicians, handles client-facing job communication, generates billing documents for jobs under their supervision. No access to platform admin (users, audit log, settings, marketing).
-
-#### 2.2.1 — Backend
-
-**Work-order-module**
-
-- `TEAM_LEAD` gets `ADMIN`-equivalent access on:
-  - `GET /api/work-orders` (all orders, not just assigned)
-  - `PATCH /api/work-orders/{id}/assign` — assign/reassign technician
-  - `PATCH /api/work-orders/{id}/approve` — approve from field
-  - `PATCH /api/work-orders/{id}/complete` — sign off on completion
-  - `POST /api/work-orders/{id}/updates` — post client-visible updates
-
-**Invoice-module** — scope-restricted TEAM_LEAD access
-
-- `POST /api/invoices` — allowed only if `work_order.assignedTechnicianId` maps back to a technician under this team lead, or the order is directly assigned to them; controller enforces ownership check
-- `POST /api/quotations` — same ownership guard
-- `GET /api/invoices?myJobs=true` — filter to their supervised jobs only
-
-**Client-module (team requests)**
-
-- `PATCH /api/admin/team-requests/{id}/assign` — assign request to a technician
-- `PATCH /api/admin/team-requests/{id}/status` — update status + add note
-- `GET /api/admin/team-requests` — accessible to `TEAM_LEAD | ADMIN`
-
-**Maintenance-module**
-
-- `GET /api/maintenance/vessels/{vesselId}/dossier` — readable by `TEAM_LEAD` for any vessel (read-only, no schedule edits)
-
-#### 2.2.2 — Frontend `/team-lead`
-
-```
-/team-lead                      → Dashboard: today's jobs, pending approvals, open team requests
-/team-lead/orders               → Full job board (all work orders, filterable by status / technician)
-/team-lead/orders/:id           → Order detail: full timeline, assign technician, post update, approve/complete
-/team-lead/team-requests        → Incoming on-site requests: assign, schedule, update status
-/team-lead/invoices             → Create / view invoices for supervised jobs
-/team-lead/quotations           → Create / send quotations to clients
-/team-lead/history              → Completed jobs history (filterable by date, technician, vessel)
-/team-lead/technicians          → Roster: availability, active assignments per technician
-```
-
----
-
-### 2.3 — Delivery Technician `[ ]`
+**Status**: Phase 4 (next up). Phases 1–3 (Role foundations, Enhanced Technician, Team Lead) are complete.
 
 **Responsibilities**: picks up shop-order products and work-order parts from variable supplier / warehouse locations and delivers them to client addresses. Has a daily stop list with map visualization and live GPS tracking visible to Admin and Team Lead.
 
-#### 2.3.1 — New microservice: `delivery-module` (port 8089)
+### Phase 4 — Delivery module backend + task list frontend
 
-**DB schema**
+#### DB schema — `delivery-module`
 
 ```sql
 -- V1__delivery_tasks.sql
@@ -223,7 +84,7 @@ CREATE TABLE delivery_tasks (
   status            VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
   -- PENDING → ASSIGNED → PICKED_UP → IN_TRANSIT → DELIVERED | FAILED
 
-  pickup_label      VARCHAR(255),            -- "Main Warehouse" / "Al Jaber Auto"
+  pickup_label      VARCHAR(255),
   pickup_address    TEXT,
   pickup_lat        DECIMAL(9,6),
   pickup_lng        DECIMAL(9,6),
@@ -238,7 +99,7 @@ CREATE TABLE delivery_tasks (
   currency          VARCHAR(5)   DEFAULT 'QAR',
 
   scheduled_date    DATE         NOT NULL,
-  stop_order        INTEGER,                 -- position in the day's optimized route
+  stop_order        INTEGER,
   notes             TEXT,
   proof_photo_path  VARCHAR(500),
   delivered_at      TIMESTAMP,
@@ -268,42 +129,32 @@ CREATE INDEX idx_delivery_pos_tech ON delivery_positions(tech_id, recorded_at DE
 delivery:position:{techId}  →  { lat, lng, accuracy, updatedAt }   TTL: 10 min
 ```
 
-**REST endpoints**
+#### REST endpoints — port 8089
 
 | Method | Path | Who | Description |
 |---|---|---|---|
 | `GET` | `/api/delivery/tasks/today` | DELIVERY | Today's assigned stops, ordered by `stop_order` |
-| `GET` | `/api/delivery/tasks/{id}` | DELIVERY | Full task detail (addresses, invoice, phone) |
-| `PATCH` | `/api/delivery/tasks/{id}/status` | DELIVERY | Advance status (PICKED_UP / IN_TRANSIT / DELIVERED / FAILED) |
+| `GET` | `/api/delivery/tasks/{id}` | DELIVERY | Full task detail |
+| `PATCH` | `/api/delivery/tasks/{id}/status` | DELIVERY | Advance status |
 | `POST` | `/api/delivery/tasks/{id}/proof` | DELIVERY | Upload delivery proof photo |
-| `POST` | `/api/delivery/position` | DELIVERY | Broadcast current GPS position (called every 30s) |
-| `GET` | `/api/delivery/position/{techId}` | TEAM_LEAD, ADMIN | Get last-known position for one tech |
+| `POST` | `/api/delivery/position` | DELIVERY | Broadcast current GPS position (every 30 s) |
+| `GET` | `/api/delivery/position/{techId}` | TEAM_LEAD, ADMIN | Last-known position for one tech |
 | `GET` | `/api/delivery/positions` | ADMIN | Last-known positions for all active delivery techs |
-| `GET` | `/api/delivery/admin/tasks` | TEAM_LEAD, ADMIN | All tasks with filters (date, status, assignedTo) |
-| `POST` | `/api/delivery/admin/tasks` | ADMIN | Create a new delivery task (link to shop order or work order) |
-| `PATCH` | `/api/delivery/admin/tasks/{id}/assign` | TEAM_LEAD, ADMIN | Assign / reassign to a delivery tech |
+| `GET` | `/api/delivery/admin/tasks` | TEAM_LEAD, ADMIN | All tasks with filters |
+| `POST` | `/api/delivery/admin/tasks` | ADMIN | Create a delivery task |
+| `PATCH` | `/api/delivery/admin/tasks/{id}/assign` | TEAM_LEAD, ADMIN | Assign / reassign |
 
-#### 2.3.2 — Frontend `/delivery` (Delivery Technician)
+#### Frontend `/delivery` (Delivery Technician)
 
 ```
 /delivery                   → Today's summary: N stops, estimated distance, status overview
 /delivery/route             → Map view (Leaflet.js): numbered stop markers + route polyline + own live dot
 /delivery/tasks             → List view: stop cards ordered by stop_order
-/delivery/tasks/:id         → Stop detail: pickup address, drop-off address, client phone,
+/delivery/tasks/:id         → Stop detail: pickup + drop-off addresses, client phone,
                               invoice amount, status action buttons, proof photo upload
 ```
 
-**Map behaviour**
-
-- **Library**: Leaflet.js (open source, no API key)
-- Stop markers numbered 1…N in optimized order
-- Polyline connects stops in order
-- Delivery tech's own live position dot (browser `navigator.geolocation`, updates every 30 s)
-- Per-stop button: **"Open in Google Maps"** / **"Open in Waze"** → deep-link with coordinates for turn-by-turn navigation
-- Completed stops: greyed out marker with ✓ overlay
-
 **Status action flow per stop**
-
 ```
 ASSIGNED  →  [Mark Picked Up]  →  PICKED_UP
 PICKED_UP →  [Start Delivery]  →  IN_TRANSIT
@@ -311,29 +162,32 @@ IN_TRANSIT → [Mark Delivered]  →  DELIVERED  (+ optional proof photo)
            → [Report Failed]   →  FAILED     (+ reason text)
 ```
 
-#### 2.3.3 — Admin + Team Lead tracking view
+### Phase 5 — Delivery map + live tracking
 
+**Map behaviour (delivery tech)**
+- Library: Leaflet.js (open source, no API key)
+- Stop markers numbered 1…N in optimized order; polyline connects them
+- Delivery tech's own live position dot (`navigator.geolocation`, updates every 30 s)
+- Per-stop button: **"Open in Google Maps"** / **"Open in Waze"** deep-link
+- Completed stops: greyed-out marker with ✓ overlay
+
+**Admin + Team Lead tracking views**
 ```
-/admin/delivery             → Map: all active delivery tech dots (polling every 30s)
+/admin/delivery             → Map: all active delivery tech dots (polling every 30 s)
                               List: each tech's progress (X of Y stops done)
-/admin/delivery/:techId     → Single tech map: their route + live position dot + stop list
+/admin/delivery/:techId     → Single tech map: route + live position + stop list
 /team-lead/delivery         → Same as admin/delivery (read-only)
 ```
+- Dots colored by status: green on-time · yellow running late · red failed stop
+- Click a dot → side panel with stop list and current progress
 
-**Map behaviour (tracking)**
-
-- Dots colored by status: 🟢 on-time · 🟡 running late · 🔴 failed stop
-- Click a dot → side panel with their stop list and current progress
-- Auto-refresh every 30 s via polling `GET /api/delivery/positions`
-
-#### 2.3.4 — Notification trigger (delivery-module → notification-module)
-
-- `DELIVERY_STATUS_CHANGE` event published when a task reaches `DELIVERED` or `FAILED`
-- `notification-module` consumes: sends WhatsApp (if opted in) + in-app notification to client with delivery status
+**Notification trigger**
+- `DELIVERY_STATUS_CHANGE` Kafka event on `DELIVERED` or `FAILED`
+- `notification-module` sends WhatsApp (if opted in) + in-app notification to client
 
 ---
 
-## TRACK 3 — Observability (carry-over)
+## TRACK 3 — Observability
 
 ### C1 — Custom Micrometer metrics `[ ]`
 **What**: No custom metrics. Hard to diagnose a quiet outage.
@@ -347,19 +201,14 @@ IN_TRANSIT → [Mark Delivered]  →  DELIVERED  (+ optional proof photo)
 ## Execution order (recommended)
 
 ```
-Track 2 first — roles are foundational; other features build on top.
+Phase 4 — Delivery module backend + task list frontend   (large)
+Phase 5 — Delivery map + live tracking                   (large)
 
-  Phase 1 — 2.0  Role enum + security + DB migrations         (small)
-  Phase 2 — 2.1  Enhanced Technician                          (medium)
-  Phase 3 — 2.2  Team Lead backend + /team-lead frontend      (medium-large)
-  Phase 4 — 2.3  Delivery module backend + task list frontend (large)
-  Phase 5 — 2.3  Delivery map + live tracking                 (large)
-
-Track 1 carry-overs can be slotted between phases as fillers:
-  A1+A2 (PDF) — slot after Phase 2
-  B2 (Book Now CTA) — slot after Phase 3
-  B3 (service catalog) — slot after Phase 3
-  A3, A4, A5, A6, B1, C1 — low-urgency, any time
+Track 1 carry-overs slot between phases as fillers:
+  A1 + A2  (PDF fixes)          — slot after Phase 4
+  B2       (Book Now CTA)       — slot after Phase 4
+  B3       (service catalog)    — slot after Phase 4
+  A3, A4, A5, A6, B1, C1        — low-urgency, any time
 ```
 
 ---
