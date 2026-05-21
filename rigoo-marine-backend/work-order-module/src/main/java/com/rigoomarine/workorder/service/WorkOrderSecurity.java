@@ -39,7 +39,7 @@ public class WorkOrderSecurity {
         if (userOpt.isEmpty()) return false;
         AuthenticatedUser user = userOpt.get();
 
-        if (user.hasRole("ADMIN")) return true;
+        if (user.hasRole("ADMIN") || user.hasRole("TEAM_LEAD")) return true;
 
         Long actorId = user.getClientId();
         if (actorId == null) {

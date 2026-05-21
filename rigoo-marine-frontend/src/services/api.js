@@ -280,6 +280,65 @@ export const workOrderApi = {
     const response = await httpClient.delete(`/api/work-orders/${id}`);
     return response.data;
   },
+
+  /**
+   * Work orders assigned to the calling technician (TECHNICIAN/TEAM_LEAD).
+   * @returns {Promise<Array>}
+   */
+  getAssigned: async () => {
+    const response = await httpClient.get('/api/work-orders/assigned');
+    return response.data;
+  },
+
+  /**
+   * Get the update timeline for a work order.
+   * @param {string|number} id
+   * @returns {Promise<Array>}
+   */
+  getUpdates: async (id) => {
+    const response = await httpClient.get(`/api/work-orders/${id}/updates`);
+    return response.data;
+  },
+
+  /**
+   * Post a work update / field note on a work order.
+   * @param {string|number} id
+   * @param {string} message
+   * @param {boolean} visibleToClient
+   * @returns {Promise<object>}
+   */
+  postUpdate: async (id, message, visibleToClient = true) => {
+    const response = await httpClient.post(`/api/work-orders/${id}/updates`, {
+      message,
+      visibleToClient,
+    });
+    return response.data;
+  },
+
+  /**
+   * List attachments on a work order.
+   * @param {string|number} id
+   * @returns {Promise<Array>}
+   */
+  getAttachments: async (id) => {
+    const response = await httpClient.get(`/api/work-orders/${id}/attachments`);
+    return response.data;
+  },
+
+  /**
+   * Upload a file attachment to a work order (multipart).
+   * @param {string|number} id
+   * @param {File} file
+   * @returns {Promise<object>}
+   */
+  uploadAttachment: async (id, file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await httpClient.post(`/api/work-orders/${id}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
 
 // ============== VESSEL APIs ==============
@@ -1023,47 +1082,28 @@ export const maintenanceApi = {
 
 // ============== TECHNICIAN APIs ==============
 export const technicianApi = {
-  // Dashboard
-  getDashboardStats: async () => {
-    const response = await httpClient.get('/technician/dashboard/stats');
-    return response.data;
-  },
+  // Work Orders — call work-order-service directly via gateway (/api/work-orders/*)
+  getMyOrders: async () => workOrderApi.getAssigned(),
 
-  // Work Orders
-  getMyOrders: async (filters = {}) => {
-    const response = await httpClient.get('/technician/orders', { params: filters });
-    return response.data;
-  },
+  getOrderById: async (id) => workOrderApi.getWorkOrderById(id),
 
-  getOrderById: async (id) => {
-    const response = await httpClient.get(`/technician/orders/${id}`);
-    return response.data;
-  },
+  updateStatus: async (id, status) => workOrderApi.updateStatus(id, status),
 
-  updateStatus: async (id, status) => {
-    const response = await httpClient.patch(`/technician/orders/${id}/status`, { status });
-    return response.data;
-  },
+  // Update timeline (replaces old notes stub)
+  postUpdate: async (id, message, visibleToClient = true) =>
+    workOrderApi.postUpdate(id, message, visibleToClient),
 
-  // Notes
-  addNote: async (id, content) => {
-    const response = await httpClient.post(`/technician/orders/${id}/notes`, { content });
-    return response.data;
-  },
+  getUpdates: async (id) => workOrderApi.getUpdates(id),
 
-  // Time Tracking
-  addTimeEntry: async (id, duration, activity) => {
-    const response = await httpClient.post(`/technician/orders/${id}/time-entries`, {
-      duration,
-      activity,
-    });
-    return response.data;
-  },
+  // Attachments
+  uploadAttachment: async (id, file) => workOrderApi.uploadAttachment(id, file),
 
-  // History
+  getAttachments: async (id) => workOrderApi.getAttachments(id),
+
+  // History (completed orders for the technician)
   getWorkHistory: async () => {
-    const response = await httpClient.get('/technician/history');
-    return response.data;
+    const orders = await workOrderApi.getAssigned();
+    return (orders || []).filter(o => o.status === 'COMPLETED');
   },
 };
 
@@ -1145,6 +1185,33 @@ export const teamRequestApi = {
    */
   myRequests: async ({ page = 0, size = 10 } = {}) => {
     const response = await httpClient.get('/api/clients/me/team-requests', { params: { page, size } });
+    return response.data;
+  },
+
+  /**
+   * Technician/Team Lead: requests assigned to the caller.
+   */
+  myAssigned: async ({ page = 0, size = 20 } = {}) => {
+    const response = await httpClient.get('/api/team-requests/assigned', { params: { page, size } });
+    return response.data;
+  },
+
+  /**
+   * Technician/Team Lead: respond to an assigned request (scope-guarded).
+   * @param {number} id
+   * @param {string} status  APPROVED | COMPLETED
+   * @param {string} [note]
+   */
+  respond: async (id, status, note) => {
+    const response = await httpClient.patch(`/api/team-requests/${id}/respond`, { status, note });
+    return response.data;
+  },
+
+  /**
+   * Admin/Team Lead: assign a request to a technician.
+   */
+  assign: async (id, technicianId) => {
+    const response = await httpClient.patch(`/api/admin/team-requests/${id}/assign`, { technicianId });
     return response.data;
   },
 };

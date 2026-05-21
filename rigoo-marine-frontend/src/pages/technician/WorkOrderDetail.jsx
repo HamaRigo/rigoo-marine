@@ -1,95 +1,159 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Grid, Chip, Button,
-  TextField, IconButton, List, ListItem, ListItemText, Divider
+  TextField, List, ListItem, ListItemText, Divider,
+  CircularProgress, Alert, FormControlLabel, Checkbox,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  IconButton, Tooltip,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import toast from 'react-hot-toast';
+import { technicianApi } from '../../services/api';
+
+const STATUS_COLORS = {
+  PENDING_APPROVAL: 'default',
+  PENDING: 'warning',
+  IN_PROGRESS: 'info',
+  WAITING_PARTS: 'error',
+  COMPLETED: 'success',
+  CANCELLED: 'default',
+};
+
+const ROLE_COLORS = {
+  ADMIN: 'error',
+  TEAM_LEAD: 'warning',
+  TECHNICIAN: 'primary',
+  CLIENT: 'default',
+};
 
 export default function WorkOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
-  const [notes, setNotes] = useState([]);
-  const [timeEntries, setTimeEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [newNote, setNewNote] = useState('');
-  const [timeSpent, setTimeSpent] = useState('');
 
-  useEffect(() => {
-    // TODO: Replace with API call
-    // fetch(`/api/technician/orders/${id}`)
-    setOrder({
-      id: parseInt(id),
-      customer: { name: 'John Doe', email: 'john@example.com', phone: '+1 (555) 123-4567' },
-      vessel: { name: 'Sea Ray 270', type: 'Cruiser', year: 2018 },
-      service: 'Engine Diagnostic',
-      status: 'IN_PROGRESS',
-      priority: 'HIGH',
-      description: 'Engine making unusual noise at high RPM. Customer reports occasional loss of power.',
-      assignedDate: '2026-03-27',
-      dueDate: '2026-03-29',
-    });
-    setNotes([
-      { id: 1, author: 'Mike Davis', content: 'Initial inspection complete. Found worn spark plugs.', createdAt: '2026-03-27 10:30' },
-    ]);
-    setTimeEntries([
-      { id: 1, technician: 'Mike Davis', duration: 1.5, activity: 'Initial diagnosis', createdAt: '2026-03-27' },
-    ]);
-    setLoading(false);
+  const [order, setOrder] = useState(null);
+  const [updates, setUpdates] = useState([]);
+  const [attachments, setAttachments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [newMessage, setNewMessage] = useState('');
+  const [visibleToClient, setVisibleToClient] = useState(true);
+  const [postingUpdate, setPostingUpdate] = useState(false);
+
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef();
+
+  const [waitingPartsDialog, setWaitingPartsDialog] = useState(false);
+  const [waitingPartsReason, setWaitingPartsReason] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [orderData, updatesData, attachmentsData] = await Promise.all([
+        technicianApi.getOrderById(id),
+        technicianApi.getUpdates(id),
+        technicianApi.getAttachments(id),
+      ]);
+      setOrder(orderData);
+      setUpdates(updatesData || []);
+      setAttachments(attachmentsData || []);
+    } catch {
+      setError('Failed to load work order.');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  const handleAddNote = async () => {
-    if (!newNote.trim()) return;
-    // TODO: Call API to add note
-    // POST /api/technician/orders/:id/notes
-    setNotes([...notes, {
-      id: Date.now(),
-      author: 'Current User',
-      content: newNote,
-      createdAt: new Date().toLocaleString(),
-    }]);
-    setNewNote('');
-  };
-
-  const handleAddTime = async () => {
-    if (!timeSpent) return;
-    // TODO: Call API to add time entry
-    // POST /api/technician/orders/:id/time-entries
-    setTimeEntries([...timeEntries, {
-      id: Date.now(),
-      technician: 'Current User',
-      duration: parseFloat(timeSpent),
-      activity: 'Work performed',
-      createdAt: new Date().toLocaleDateString(),
-    }]);
-    setTimeSpent('');
-  };
+  useEffect(() => { load(); }, [load]);
 
   const handleStatusUpdate = async (newStatus) => {
-    // TODO: Call API to update status
-    // PATCH /api/technician/orders/:id/status
-    setOrder({ ...order, status: newStatus });
+    try {
+      const updated = await technicianApi.updateStatus(id, newStatus);
+      setOrder(updated);
+      toast.success(`Status → ${newStatus.replace(/_/g, ' ')}`);
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handlePostUpdate = async () => {
+    if (!newMessage.trim()) return;
+    setPostingUpdate(true);
+    try {
+      const update = await technicianApi.postUpdate(id, newMessage, visibleToClient);
+      setUpdates(prev => [...prev, update]);
+      setNewMessage('');
+      toast.success('Update posted');
+    } catch {
+      toast.error('Failed to post update');
+    } finally {
+      setPostingUpdate(false);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('File too large (max 20 MB)');
+      return;
+    }
+    setUploadingFile(true);
+    try {
+      const attachment = await technicianApi.uploadAttachment(id, file);
+      setAttachments(prev => [...prev, attachment]);
+      toast.success('File uploaded');
+    } catch {
+      toast.error('Upload failed');
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleWaitingParts = async () => {
+    try {
+      const updated = await technicianApi.updateStatus(id, 'WAITING_PARTS');
+      setOrder(updated);
+      if (waitingPartsReason.trim()) {
+        const note = await technicianApi.postUpdate(id, `Waiting for parts: ${waitingPartsReason}`, false);
+        setUpdates(prev => [...prev, note]);
+      }
+      setWaitingPartsDialog(false);
+      setWaitingPartsReason('');
+      toast.success('Status set to Waiting Parts');
+    } catch {
+      toast.error('Failed to update status');
+    }
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  if (!order) {
-    return <Typography>Order not found</Typography>;
+  if (error || !order) {
+    return (
+      <Box>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/technician/orders')} sx={{ mb: 2 }}>
+          Back to Queue
+        </Button>
+        <Alert severity="error">{error || 'Order not found'}</Alert>
+      </Box>
+    );
   }
 
-  const statusColors = {
-    PENDING: 'warning',
-    IN_PROGRESS: 'info',
-    PAUSED: 'default',
-    COMPLETED: 'success',
-  };
-
-  const statusOptions = ['PENDING', 'IN_PROGRESS', 'PAUSED', 'COMPLETED'];
+  const canMarkWaiting = ['PENDING', 'IN_PROGRESS'].includes(order.status);
+  const canStart = order.status === 'PENDING';
+  const canComplete = order.status === 'IN_PROGRESS' || order.status === 'WAITING_PARTS';
 
   return (
     <Box>
@@ -102,24 +166,24 @@ export default function WorkOrderDetail() {
       </Button>
 
       <Grid container spacing={3}>
-        {/* Main Content */}
+        {/* Main content */}
         <Grid item xs={12} md={8}>
           {/* Order Info */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box>
-                  <Typography variant="h4" gutterBottom>Work Order #{order.id}</Typography>
-                  <Typography color="text.secondary">{order.service}</Typography>
-                </Box>
+                <Typography variant="h4">Work Order #{order.id}</Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
+                  {order.priority && (
+                    <Chip
+                      label={order.priority}
+                      color={order.priority === 'HIGH' ? 'error' : order.priority === 'NORMAL' ? 'info' : 'default'}
+                      size="small"
+                    />
+                  )}
                   <Chip
-                    label={order.priority}
-                    color={order.priority === 'HIGH' ? 'error' : order.priority === 'NORMAL' ? 'info' : 'default'}
-                  />
-                  <Chip
-                    label={order.status.replace('_', ' ')}
-                    color={statusColors[order.status]}
+                    label={order.status.replace(/_/g, ' ')}
+                    color={STATUS_COLORS[order.status] || 'default'}
                   />
                 </Box>
               </Box>
@@ -129,139 +193,282 @@ export default function WorkOrderDetail() {
               <Typography variant="h6" gutterBottom>Description</Typography>
               <Typography paragraph>{order.description}</Typography>
 
-              <Grid container spacing={2} sx={{ mt: 2 }}>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Customer</Typography>
-                  <Typography>{order.customer.name}</Typography>
-                  <Typography color="text.secondary">{order.customer.email}</Typography>
-                  <Typography color="text.secondary">{order.customer.phone}</Typography>
+                  <Typography variant="subtitle2">Vessel ID</Typography>
+                  <Typography>#{order.vesselId}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Vessel</Typography>
-                  <Typography>{order.vessel.name}</Typography>
-                  <Typography color="text.secondary">{order.vessel.type} ({order.vessel.year})</Typography>
+                  <Typography variant="subtitle2">Client ID</Typography>
+                  <Typography>#{order.clientId}</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Assigned Date</Typography>
-                  <Typography>{order.assignedDate}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Due Date</Typography>
-                  <Typography>{order.dueDate}</Typography>
-                </Grid>
+                {order.locationText && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2">Location</Typography>
+                    <Typography>{order.locationText}</Typography>
+                  </Grid>
+                )}
+                {order.phone && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2">Contact Phone</Typography>
+                    <Typography>{order.phone}</Typography>
+                  </Grid>
+                )}
+                {order.createdAt && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2">Created</Typography>
+                    <Typography>{new Date(order.createdAt).toLocaleDateString()}</Typography>
+                  </Grid>
+                )}
               </Grid>
 
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Update Status</Typography>
+              {/* Status actions */}
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Actions</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {statusOptions.map((status) => (
+                {canStart && (
                   <Button
-                    key={status}
-                    variant={order.status === status ? 'contained' : 'outlined'}
-                    onClick={() => handleStatusUpdate(status)}
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleStatusUpdate('IN_PROGRESS')}
                   >
-                    {status.replace('_', ' ')}
+                    Start Work
                   </Button>
-                ))}
+                )}
+                {canComplete && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() => handleStatusUpdate('COMPLETED')}
+                  >
+                    Mark Complete
+                  </Button>
+                )}
+                {canMarkWaiting && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<HourglassEmptyIcon />}
+                    onClick={() => setWaitingPartsDialog(true)}
+                  >
+                    Waiting for Parts
+                  </Button>
+                )}
               </Box>
             </CardContent>
           </Card>
 
-          {/* Notes */}
+          {/* Update Timeline */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Work Notes</Typography>
-              <List>
-                {notes.map((note) => (
-                  <ListItem key={note.id} alignItems="flex-start">
+              <Typography variant="h6" gutterBottom>Update Timeline</Typography>
+
+              {updates.length === 0 && (
+                <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>
+                  No updates yet.
+                </Typography>
+              )}
+
+              <List disablePadding>
+                {updates.map((u, i) => (
+                  <Box key={u.id}>
+                    <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                              <Chip
+                                label={u.authorRole}
+                                color={ROLE_COLORS[u.authorRole] || 'default'}
+                                size="small"
+                                variant="outlined"
+                              />
+                              {!u.visibleToClient && (
+                                <Chip label="Internal" size="small" color="default" />
+                              )}
+                            </Box>
+                            <Typography variant="caption" color="text.secondary">
+                              {u.createdAt ? new Date(u.createdAt).toLocaleString() : ''}
+                            </Typography>
+                          </Box>
+                        }
+                        secondary={
+                          <Typography variant="body2" sx={{ mt: 0.5 }}>
+                            {u.message}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                    {i < updates.length - 1 && <Divider />}
+                  </Box>
+                ))}
+              </List>
+
+              <Box sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Add an update or note…"
+                  sx={{ mb: 1 }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={visibleToClient}
+                        onChange={(e) => setVisibleToClient(e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Visible to client</Typography>}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handlePostUpdate}
+                    disabled={!newMessage.trim() || postingUpdate}
+                  >
+                    {postingUpdate ? 'Posting…' : 'Post Update'}
+                  </Button>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Attachments */}
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Attachments</Typography>
+                <Tooltip title="Upload photo or file (max 20 MB)">
+                  <span>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={uploadingFile ? <CircularProgress size={16} /> : <AttachFileIcon />}
+                      disabled={uploadingFile}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {uploadingFile ? 'Uploading…' : 'Upload File'}
+                    </Button>
+                  </span>
+                </Tooltip>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*,.pdf,.doc,.docx"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+              </Box>
+
+              {attachments.length === 0 && (
+                <Typography color="text.secondary" variant="body2">No attachments yet.</Typography>
+              )}
+
+              <List disablePadding>
+                {attachments.map(a => (
+                  <ListItem
+                    key={a.id}
+                    sx={{ px: 0 }}
+                    secondaryAction={
+                      <Button
+                        size="small"
+                        href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${a.downloadUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download
+                      </Button>
+                    }
+                  >
                     <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="subtitle2">{note.author}</Typography>
-                          <Typography variant="caption" color="text.secondary">{note.createdAt}</Typography>
-                        </Box>
+                      primary={a.originalName}
+                      secondary={
+                        <>
+                          {a.contentType} · {a.fileSize ? `${Math.round(a.fileSize / 1024)} KB` : ''}
+                          {a.createdAt ? ` · ${new Date(a.createdAt).toLocaleDateString()}` : ''}
+                        </>
                       }
-                      secondary={note.content}
                     />
                   </ListItem>
                 ))}
               </List>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Add a work note..."
-                sx={{ mt: 2 }}
-              />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddNote}
-                disabled={!newNote.trim()}
-                sx={{ mt: 1 }}
-              >
-                Add Note
-              </Button>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
-          {/* Time Tracking */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <AccessTimeIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Time Tracking
-              </Typography>
-              <List>
-                {timeEntries.map((entry) => (
-                  <ListItem key={entry.id}>
-                    <ListItemText
-                      primary={`${entry.duration}h - ${entry.activity}`}
-                      secondary={entry.createdAt}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  size="small"
-                  value={timeSpent}
-                  onChange={(e) => setTimeSpent(e.target.value)}
-                  placeholder="Hours"
-                  inputProps={{ step: 0.5, min: 0 }}
-                />
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={handleAddTime}
-                  disabled={!timeSpent}
-                >
-                  Add
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Actions</Typography>
-              <Button fullWidth variant="outlined" sx={{ mb: 1 }}>
-                Print Work Order
-              </Button>
-              <Button fullWidth variant="outlined">
-                Request Parts
-              </Button>
+              <Typography variant="h6" gutterBottom>Order Details</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Status</Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    <Chip
+                      label={order.status.replace(/_/g, ' ')}
+                      color={STATUS_COLORS[order.status] || 'default'}
+                      size="small"
+                    />
+                  </Box>
+                </Box>
+                {order.issueCategory && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Category</Typography>
+                    <Typography variant="body2">{order.issueCategory.replace(/_/g, ' ')}</Typography>
+                  </Box>
+                )}
+                {order.severity && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Severity</Typography>
+                    <Typography variant="body2">{order.severity}</Typography>
+                  </Box>
+                )}
+                {order.symptoms && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Symptoms</Typography>
+                    <Typography variant="body2">{order.symptoms}</Typography>
+                  </Box>
+                )}
+                {order.notes && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Notes</Typography>
+                    <Typography variant="body2">{order.notes}</Typography>
+                  </Box>
+                )}
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
+
+      {/* Waiting Parts Dialog */}
+      <Dialog open={waitingPartsDialog} onClose={() => setWaitingPartsDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Flag as Waiting for Parts</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            This will change the order status to WAITING_PARTS. Optionally add a note about what parts are needed.
+          </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Parts needed (optional)"
+            value={waitingPartsReason}
+            onChange={(e) => setWaitingPartsReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWaitingPartsDialog(false)}>Cancel</Button>
+          <Button onClick={handleWaitingParts} variant="contained" color="warning">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

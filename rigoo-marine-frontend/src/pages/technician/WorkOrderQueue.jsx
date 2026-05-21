@@ -1,61 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Grid, Chip, Button,
-  TextField, MenuItem, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField as MuiTextField
+  TextField, MenuItem, CircularProgress, Alert,
 } from '@mui/material';
+import toast from 'react-hot-toast';
+import { technicianApi } from '../../services/api';
 
-const statusOptions = ['PENDING', 'IN_PROGRESS', 'PAUSED', 'COMPLETED'];
-const priorityColors = {
+const STATUS_OPTIONS = ['ALL', 'PENDING', 'IN_PROGRESS', 'WAITING_PARTS', 'COMPLETED', 'CANCELLED'];
+
+const STATUS_COLORS = {
+  PENDING_APPROVAL: 'default',
+  PENDING: 'warning',
+  IN_PROGRESS: 'info',
+  WAITING_PARTS: 'error',
+  COMPLETED: 'success',
+  CANCELLED: 'default',
+};
+
+const PRIORITY_COLORS = {
   HIGH: 'error',
   NORMAL: 'info',
   LOW: 'default',
 };
 
 export default function WorkOrderQueue() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [noteText, setNoteText] = useState('');
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // TODO: Replace with API call
-    // fetch('/api/technician/orders')
-    setOrders([
-      { id: 1, customer: 'John Doe', vessel: 'Sea Ray 270', service: 'Engine Diagnostic', status: 'IN_PROGRESS', priority: 'HIGH', description: 'Engine making unusual noise', assignedDate: '2026-03-27' },
-      { id: 2, customer: 'Jane Smith', vessel: 'Boston Whaler', service: 'Oil Change', status: 'PENDING', priority: 'NORMAL', description: 'Regular maintenance', assignedDate: '2026-03-27' },
-      { id: 3, customer: 'Bob Wilson', vessel: 'Yamaha 242', service: 'Propeller Repair', status: 'PENDING', priority: 'LOW', description: 'Propeller damaged after hitting debris', assignedDate: '2026-03-26' },
-    ]);
-    setLoading(false);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await technicianApi.getMyOrders();
+      setOrders(data || []);
+    } catch {
+      setError('Failed to load work orders.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredOrders = filterStatus === 'ALL'
+  useEffect(() => { load(); }, [load]);
+
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      await technicianApi.updateStatus(orderId, newStatus);
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const filtered = filterStatus === 'ALL'
     ? orders
     : orders.filter(o => o.status === filterStatus);
 
-  const handleStatusUpdate = async (orderId, newStatus) => {
-    // TODO: Call API to update status
-    // PATCH /api/technician/orders/:id/status
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-  };
-
-  const handleAddNote = async () => {
-    // TODO: Call API to add note
-    // POST /api/technician/orders/:id/notes
-    console.log('Adding note:', noteText);
-    setNoteText('');
-  };
-
-  const statusColors = {
-    PENDING: 'warning',
-    IN_PROGRESS: 'info',
-    PAUSED: 'default',
-    COMPLETED: 'success',
-  };
-
   if (loading) {
-    return <Typography>Loading work orders...</Typography>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -67,72 +77,78 @@ export default function WorkOrderQueue() {
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           size="small"
-          sx={{ minWidth: 150 }}
+          sx={{ minWidth: 160 }}
         >
-          <MenuItem value="ALL">All Status</MenuItem>
-          {statusOptions.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status.replace('_', ' ')}
+          {STATUS_OPTIONS.map(s => (
+            <MenuItem key={s} value={s}>
+              {s === 'ALL' ? 'All Status' : s.replace(/_/g, ' ')}
             </MenuItem>
           ))}
         </TextField>
       </Box>
 
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
+      {filtered.length === 0 && !error && (
+        <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>
+          No work orders found.
+        </Typography>
+      )}
+
       <Grid container spacing={3}>
-        {filteredOrders.map((order) => (
+        {filtered.map((order) => (
           <Grid item xs={12} md={6} lg={4} key={order.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                   <Typography variant="h6">#{order.id}</Typography>
-                  <Chip
-                    label={order.priority}
-                    color={priorityColors[order.priority]}
-                    size="small"
-                  />
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {order.priority && (
+                      <Chip
+                        label={order.priority}
+                        color={PRIORITY_COLORS[order.priority] || 'default'}
+                        size="small"
+                      />
+                    )}
+                    <Chip
+                      label={order.status.replace(/_/g, ' ')}
+                      color={STATUS_COLORS[order.status] || 'default'}
+                      size="small"
+                    />
+                  </Box>
                 </Box>
 
-                <Typography variant="body1" fontWeight="600" gutterBottom>
-                  {order.service}
+                <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }}>
+                  <strong>Vessel:</strong> #{order.vesselId}
                 </Typography>
 
-                <Typography color="text.secondary" paragraph>
-                  <strong>Customer:</strong> {order.customer}<br />
-                  <strong>Vessel:</strong> {order.vessel}
+                <Typography color="text.secondary" variant="body2" paragraph>
+                  {order.description?.slice(0, 120)}{order.description?.length > 120 ? '…' : ''}
                 </Typography>
 
-                <Typography color="text.secondary" paragraph>
-                  <strong>Description:</strong> {order.description}
-                </Typography>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                  <Chip
-                    label={order.status.replace('_', ' ')}
-                    color={statusColors[order.status]}
-                    size="small"
-                  />
+                {order.locationText && (
                   <Typography variant="caption" color="text.secondary">
-                    Assigned: {order.assignedDate}
+                    📍 {order.locationText}
                   </Typography>
-                </Box>
+                )}
               </CardContent>
 
-              <CardContent sx={{ pt: 2, borderTop: '1px solid #eee' }}>
+              <CardContent sx={{ pt: 1.5, borderTop: '1px solid #eee' }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button
                     size="small"
                     variant="outlined"
                     fullWidth
-                    onClick={() => setSelectedOrder(order)}
+                    onClick={() => navigate(`/technician/orders/${order.id}`)}
                   >
-                    View Details
+                    Details
                   </Button>
                   {order.status === 'PENDING' && (
                     <Button
                       size="small"
                       variant="contained"
+                      color="primary"
                       onClick={() => handleStatusUpdate(order.id, 'IN_PROGRESS')}
-                      sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
                     >
                       Start
                     </Button>
@@ -141,10 +157,10 @@ export default function WorkOrderQueue() {
                     <Button
                       size="small"
                       variant="contained"
+                      color="success"
                       onClick={() => handleStatusUpdate(order.id, 'COMPLETED')}
-                      sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
                     >
-                      Complete
+                      Done
                     </Button>
                   )}
                 </Box>
@@ -153,70 +169,6 @@ export default function WorkOrderQueue() {
           </Grid>
         ))}
       </Grid>
-
-      {/* Order Details Dialog */}
-      <Dialog open={!!selectedOrder} onClose={() => setSelectedOrder(null)} maxWidth="md" fullWidth>
-        <DialogTitle>Work Order #{selectedOrder?.id}</DialogTitle>
-        <DialogContent>
-          {selectedOrder && (
-            <Box sx={{ pt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Customer</Typography>
-                  <Typography paragraph>{selectedOrder.customer}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Vessel</Typography>
-                  <Typography paragraph>{selectedOrder.vessel}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Service</Typography>
-                  <Typography paragraph>{selectedOrder.service}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Description</Typography>
-                  <Typography paragraph>{selectedOrder.description}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Status</Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    {statusOptions.map((status) => (
-                      <Button
-                        key={status}
-                        size="small"
-                        variant={selectedOrder.status === status ? 'contained' : 'outlined'}
-                        onClick={() => handleStatusUpdate(selectedOrder.id, status)}
-                      >
-                        {status.replace('_', ' ')}
-                      </Button>
-                    ))}
-                  </Box>
-                </Grid>
-
-                {/* Add Note Section */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" sx={{ mt: 2 }}>Add Note</Typography>
-                  <MuiTextField
-                    fullWidth
-                    multiline
-                    rows={3}
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Add work notes or updates..."
-                    sx={{ mt: 1 }}
-                  />
-                </Grid>
-              </Grid>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelectedOrder(null)}>Close</Button>
-          <Button onClick={handleAddNote} variant="contained" disabled={!noteText}>
-            Add Note
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

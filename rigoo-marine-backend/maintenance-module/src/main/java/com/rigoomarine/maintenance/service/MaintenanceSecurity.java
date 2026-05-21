@@ -9,11 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Ownership guard for maintenance endpoints. ADMIN/TECHNICIAN bypass; everyone
- * else must own the vessel. Mirrors {@code WorkOrderSecurity} / {@code VesselSecurity}
- * but called imperatively from controllers (the maintenance endpoints take
- * vesselId as a path variable, not the maintenance entity id, so SpEL-based
- * {@code @PreAuthorize} predicates don't help us in the schedule/history flow).
+ * Ownership guard for maintenance endpoints. ADMIN/TECHNICIAN/TEAM_LEAD bypass;
+ * everyone else must own the vessel. Mirrors {@code WorkOrderSecurity} /
+ * {@code VesselSecurity} but called imperatively from controllers (the maintenance
+ * endpoints take vesselId as a path variable, not the maintenance entity id, so
+ * SpEL-based {@code @PreAuthorize} predicates don't help us in the schedule/history flow).
  */
 @Component("maintenanceSecurity")
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class MaintenanceSecurity {
         AuthenticatedUser user = SecurityUtils.currentUser()
             .orElseThrow(() -> new VesselNotOwnedException(vesselId));
 
-        if (user.hasRole("ADMIN") || user.hasRole("TECHNICIAN")) {
+        if (user.hasRole("ADMIN") || user.hasRole("TECHNICIAN") || user.hasRole("TEAM_LEAD")) {
             // Staff acting on behalf of a client; the controller layer will
             // populate clientId from the vessel ownership lookup if needed.
             // For now return null so callers know to resolve via VesselClient.
@@ -56,7 +56,7 @@ public class MaintenanceSecurity {
 
     public boolean isAdminOrTechnician() {
         return SecurityUtils.currentUser()
-            .map(u -> u.hasRole("ADMIN") || u.hasRole("TECHNICIAN"))
+            .map(u -> u.hasRole("ADMIN") || u.hasRole("TECHNICIAN") || u.hasRole("TEAM_LEAD"))
             .orElse(false);
     }
 }

@@ -1,5 +1,7 @@
 package com.rigoomarine.client.teamrequest;
 
+import com.rigoomarine.common.security.AuthenticatedUser;
+import com.rigoomarine.common.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,14 +25,6 @@ public class TeamRequestController {
 
     // ── Public: submit ────────────────────────────────────────────────────────
 
-    /**
-     * Open to guests and authenticated clients. The JWT filter sets the principal
-     * as the caller's email (String) when a valid token is present.
-     *
-     * For authenticated users, contactPhone is IGNORED and replaced with the phone
-     * stored on their account — preventing callers from spoofing another user's phone
-     * to poison the duplicate-pending guard.
-     */
     @PostMapping("/api/team-requests")
     public ResponseEntity<TeamRequestDTO> create(
             @RequestParam("category")            String category,
@@ -48,10 +42,7 @@ public class TeamRequestController {
         if (contactPhone == null || contactPhone.isBlank())
             return ResponseEntity.badRequest().build();
 
-        // JWT filter puts the caller's email (String) as the principal.
-        // We resolve it in the service to get clientId and canonical phone.
         String callerEmail = resolveEmail(authentication);
-
         TeamRequestDTO dto = service.create(callerEmail, contactPhone, category,
                                             description, location, whatsapp, files);
         return ResponseEntity.ok(dto);
@@ -59,11 +50,6 @@ public class TeamRequestController {
 
     // ── Client: own requests ──────────────────────────────────────────────────
 
-    /**
-     * Returns the authenticated caller's own team requests (all statuses).
-     * Matches on both clientId and contactPhone so pre-login guest submissions
-     * surface after the guest creates an account with the same phone number.
-     */
     @GetMapping("/api/clients/me/team-requests")
     public ResponseEntity<Page<TeamRequestDTO>> myRequests(
             @RequestParam(defaultValue = "0")  int page,
@@ -77,10 +63,55 @@ public class TeamRequestController {
         return ResponseEntity.ok(service.listForCaller(callerEmail, pr));
     }
 
-    // ── Admin ─────────────────────────────────────────────────────────────────
+    // ── Technician: view + respond to assigned requests ───────────────────────
+
+    @GetMapping("/api/team-requests/assigned")
+    @PreAuthorize("hasAnyRole('TECHNICIAN', 'TEAM_LEAD', 'ADMIN')")
+    public ResponseEntity<Page<TeamRequestDTO>> myAssigned(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Long callerClientId = SecurityUtils.currentUser()
+            .map(AuthenticatedUser::getClientId)
+            .orElse(null);
+        if (callerClientId == null) return ResponseEntity.status(401).build();
+
+        PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(service.listAssigned(callerClientId, pr));
+    }
+
+    @PatchMapping("/api/team-requests/{id}/respond")
+    @PreAuthorize("hasAnyRole('TECHNICIAN', 'TEAM_LEAD')")
+    public ResponseEntity<TeamRequestDTO> respond(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        String statusStr = body.get("status");
+        if (statusStr == null) return ResponseEntity.badRequest().build();
+
+        TeamRequestStatus newStatus;
+        try { newStatus = TeamRequestStatus.valueOf(statusStr.toUpperCase()); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().build(); }
+
+        Long callerClientId = SecurityUtils.currentUser()
+            .map(AuthenticatedUser::getClientId)
+            .orElse(null);
+        if (callerClientId == null) return ResponseEntity.status(401).build();
+
+        try {
+            return ResponseEntity.ok(
+                service.respondAsAssigned(id, callerClientId, newStatus, body.get("note")));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return ResponseEntity.status(403).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // ── Admin + Team Lead: list, assign, update status ────────────────────────
 
     @GetMapping("/api/admin/team-requests")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     public ResponseEntity<Page<TeamRequestDTO>> list(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0")  int page,
@@ -98,7 +129,7 @@ public class TeamRequestController {
     }
 
     @PatchMapping("/api/admin/team-requests/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     public ResponseEntity<TeamRequestDTO> updateStatus(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
@@ -113,8 +144,19 @@ public class TeamRequestController {
         return ResponseEntity.ok(service.updateStatus(id, newStatus, body.get("adminNotes")));
     }
 
+    @PatchMapping("/api/admin/team-requests/{id}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
+    public ResponseEntity<TeamRequestDTO> assign(
+            @PathVariable Long id,
+            @RequestBody Map<String, Long> body) {
+
+        Long technicianId = body.get("technicianId");
+        if (technicianId == null) return ResponseEntity.badRequest().build();
+        return ResponseEntity.ok(service.assign(id, technicianId));
+    }
+
     @GetMapping("/api/admin/team-requests/stats")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     public ResponseEntity<Map<String, Long>> stats() {
         return ResponseEntity.ok(Map.of("pending", service.countPending()));
     }
@@ -124,7 +166,6 @@ public class TeamRequestController {
     private static String resolveEmail(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) return null;
         Object principal = auth.getPrincipal();
-        // JWT filter stores the subject (email) as a raw String principal.
         return principal instanceof String s ? s : null;
     }
 }

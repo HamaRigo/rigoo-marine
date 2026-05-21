@@ -2,12 +2,19 @@ package com.rigoomarine.workorder.service;
 
 import com.rigoomarine.workorder.client.ServiceCatalogClient;
 import com.rigoomarine.workorder.client.VesselOwnershipClient;
+import com.rigoomarine.workorder.dto.PostUpdateRequest;
+import com.rigoomarine.workorder.dto.WorkOrderAttachmentDTO;
+import com.rigoomarine.workorder.dto.WorkOrderUpdateDTO;
 import com.rigoomarine.workorder.entity.SubmittedByRole;
 import com.rigoomarine.workorder.entity.WorkOrder;
+import com.rigoomarine.workorder.entity.WorkOrderAttachment;
+import com.rigoomarine.workorder.entity.WorkOrderUpdate;
 import com.rigoomarine.workorder.event.WorkOrderCompletedEvent;
 import com.rigoomarine.workorder.event.WorkOrderEventPublisher;
 import com.rigoomarine.workorder.exception.WorkOrderNotFoundException;
+import com.rigoomarine.workorder.repository.WorkOrderAttachmentRepository;
 import com.rigoomarine.workorder.repository.WorkOrderRepository;
+import com.rigoomarine.workorder.repository.WorkOrderUpdateRepository;
 import com.rigoomarine.workorder.dto.WorkOrderDTO;
 import com.rigoomarine.workorder.dto.CreateWorkOrderRequest;
 import com.rigoomarine.workorder.dto.ServiceRequestRequest;
@@ -16,13 +23,20 @@ import com.rigoomarine.common.security.SecurityUtils;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +50,15 @@ import java.util.stream.Collectors;
 public class WorkOrderService {
 
     private final WorkOrderRepository workOrderRepository;
+    private final WorkOrderUpdateRepository workOrderUpdateRepository;
+    private final WorkOrderAttachmentRepository workOrderAttachmentRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final VesselOwnershipClient vesselOwnershipClient;
     private final ServiceCatalogClient serviceCatalogClient;
     private final WorkOrderEventPublisher workOrderEventPublisher;
+
+    @Value("${app.work-order.upload-dir:./uploads/work-orders}")
+    private String uploadDir;
 
     public WorkOrderDTO createWorkOrder(CreateWorkOrderRequest request) {
         // Convert mediaUrls set to JSON string for storage
@@ -293,6 +312,129 @@ public class WorkOrderService {
         WorkOrder wo = workOrderRepository.findById(id)
             .orElseThrow(() -> new WorkOrderNotFoundException(id));
         workOrderRepository.delete(wo);
+    }
+
+    // ── Updates (work log / timeline) ─────────────────────────────────────────
+
+    public WorkOrderUpdateDTO postUpdate(Long workOrderId, PostUpdateRequest req) {
+        workOrderRepository.findById(workOrderId)
+            .orElseThrow(() -> new WorkOrderNotFoundException(workOrderId));
+
+        AuthenticatedUser actor = SecurityUtils.currentUser()
+            .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        String role = actor.getRoles().stream()
+            .findFirst()
+            .map(r -> r.replace("ROLE_", ""))
+            .orElse("UNKNOWN");
+
+        WorkOrderUpdate update = WorkOrderUpdate.builder()
+            .workOrderId(workOrderId)
+            .authorId(actor.getClientId())
+            .authorRole(role)
+            .message(req.getMessage())
+            .visibleToClient(req.isVisibleToClient())
+            .build();
+
+        return toUpdateDTO(workOrderUpdateRepository.save(update));
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkOrderUpdateDTO> getUpdates(Long workOrderId) {
+        workOrderRepository.findById(workOrderId)
+            .orElseThrow(() -> new WorkOrderNotFoundException(workOrderId));
+        return workOrderUpdateRepository.findByWorkOrderIdOrderByCreatedAtAsc(workOrderId)
+            .stream().map(this::toUpdateDTO).collect(Collectors.toList());
+    }
+
+    // ── Attachments ────────────────────────────────────────────────────────────
+
+    public WorkOrderAttachmentDTO uploadAttachment(Long workOrderId, MultipartFile file) {
+        workOrderRepository.findById(workOrderId)
+            .orElseThrow(() -> new WorkOrderNotFoundException(workOrderId));
+
+        AuthenticatedUser actor = SecurityUtils.currentUser()
+            .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+
+        String originalName = StringUtils.cleanPath(
+            file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload");
+        String storedName = UUID.randomUUID() + "_" + originalName;
+
+        Path dir = Paths.get(uploadDir, String.valueOf(workOrderId));
+        try {
+            Files.createDirectories(dir);
+            Path dest = dir.resolve(storedName);
+            file.transferTo(dest);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store attachment: " + e.getMessage(), e);
+        }
+
+        WorkOrderAttachment attachment = WorkOrderAttachment.builder()
+            .workOrderId(workOrderId)
+            .uploadedBy(actor.getClientId())
+            .filePath(dir.resolve(storedName).toAbsolutePath().toString())
+            .originalName(originalName)
+            .contentType(file.getContentType())
+            .fileSize(file.getSize())
+            .build();
+
+        WorkOrderAttachment saved = workOrderAttachmentRepository.save(attachment);
+        return toAttachmentDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkOrderAttachmentDTO> getAttachments(Long workOrderId) {
+        workOrderRepository.findById(workOrderId)
+            .orElseThrow(() -> new WorkOrderNotFoundException(workOrderId));
+        return workOrderAttachmentRepository.findByWorkOrderIdOrderByCreatedAtAsc(workOrderId)
+            .stream().map(this::toAttachmentDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public WorkOrderAttachment getAttachmentEntity(Long workOrderId, Long attachmentId) {
+        WorkOrderAttachment a = workOrderAttachmentRepository.findById(attachmentId)
+            .orElseThrow(() -> new WorkOrderNotFoundException(attachmentId));
+        if (!a.getWorkOrderId().equals(workOrderId)) {
+            throw new WorkOrderNotFoundException(attachmentId);
+        }
+        return a;
+    }
+
+    // ── Assigned queue (technician's own work orders) ─────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<WorkOrderDTO> getAssignedOrders() {
+        Long technicianId = SecurityUtils.currentUser()
+            .map(AuthenticatedUser::getClientId)
+            .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        return workOrderRepository.findByAssignedTechnicianId(technicianId)
+            .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // ── Private helpers ────────────────────────────────────────────────────────
+
+    private WorkOrderUpdateDTO toUpdateDTO(WorkOrderUpdate u) {
+        return WorkOrderUpdateDTO.builder()
+            .id(u.getId())
+            .workOrderId(u.getWorkOrderId())
+            .authorId(u.getAuthorId())
+            .authorRole(u.getAuthorRole())
+            .message(u.getMessage())
+            .visibleToClient(u.isVisibleToClient())
+            .createdAt(u.getCreatedAt())
+            .build();
+    }
+
+    private WorkOrderAttachmentDTO toAttachmentDTO(WorkOrderAttachment a) {
+        return WorkOrderAttachmentDTO.builder()
+            .id(a.getId())
+            .workOrderId(a.getWorkOrderId())
+            .uploadedBy(a.getUploadedBy())
+            .originalName(a.getOriginalName())
+            .contentType(a.getContentType())
+            .fileSize(a.getFileSize())
+            .downloadUrl("/api/work-orders/" + a.getWorkOrderId() + "/attachments/" + a.getId() + "/download")
+            .createdAt(a.getCreatedAt())
+            .build();
     }
 
     private void sendNotificationEvent(WorkOrder workOrder, String eventType) {

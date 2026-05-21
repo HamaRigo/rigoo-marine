@@ -51,6 +51,13 @@ public class TeamRequest {
     @Column(name = "admin_notes", columnDefinition = "TEXT")
     private String adminNotes;
 
+    /** Technician or team lead assigned to handle this request. Set by admin/team-lead. */
+    @Column(name = "assigned_to")
+    private Long assignedTo;
+
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
     @OneToMany(mappedBy = "teamRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TeamRequestAttachment> attachments = new ArrayList<>();

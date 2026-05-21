@@ -166,6 +166,57 @@ public class TeamRequestService {
         return repository.countByStatus(TeamRequestStatus.PENDING);
     }
 
+    public TeamRequestDTO assign(Long id, Long technicianId) {
+        TeamRequest req = repository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Team request not found: " + id));
+        req.setAssignedTo(technicianId);
+        req.setAssignedAt(LocalDateTime.now());
+        TeamRequest saved = repository.save(req);
+        log.info("team-request.assigned id={} technicianId={}", id, technicianId);
+        return toDTO(saved);
+    }
+
+    /**
+     * Scope-guarded respond: TECHNICIAN may only update requests assigned to them.
+     * Allowed transitions: DISPATCHED→IN_PROGRESS, IN_PROGRESS→COMPLETED.
+     */
+    public TeamRequestDTO respondAsAssigned(Long id, Long callerClientId,
+                                            TeamRequestStatus newStatus, String note) {
+        TeamRequest req = repository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Team request not found: " + id));
+
+        if (!callerClientId.equals(req.getAssignedTo())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                "Not assigned to this request");
+        }
+
+        TeamRequestStatus current = req.getStatus();
+        boolean validTransition =
+            (current == TeamRequestStatus.DISPATCHED && newStatus == TeamRequestStatus.APPROVED) ||
+            (current == TeamRequestStatus.APPROVED   && newStatus == TeamRequestStatus.COMPLETED) ||
+            (current == TeamRequestStatus.DISPATCHED && newStatus == TeamRequestStatus.COMPLETED);
+
+        if (!validTransition) {
+            throw new IllegalStateException(
+                "Transition " + current + " → " + newStatus + " not allowed for technician");
+        }
+
+        req.setStatus(newStatus);
+        if (note != null && !note.isBlank()) {
+            String existing = req.getAdminNotes();
+            req.setAdminNotes(existing != null ? existing + "\n" + note : note);
+        }
+        TeamRequest saved = repository.save(req);
+        log.info("team-request.technician-respond id={} {}→{}", id, current, newStatus);
+        return toDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TeamRequestDTO> listAssigned(Long technicianId, Pageable pageable) {
+        return repository.findByAssignedToOrderByCreatedAtDesc(technicianId, pageable)
+            .map(this::toDTO);
+    }
+
     /**
      * Returns the caller's own team requests. Matches on clientId (primary) and
      * on contactPhone (fallback for pre-login guest submissions so they surface
@@ -272,6 +323,8 @@ public class TeamRequestService {
             r.isWhatsappOptIn(),
             r.getStatus().name(),
             r.getAdminNotes(),
+            r.getAssignedTo(),
+            r.getAssignedAt(),
             r.getAttachments().stream().map(a -> new TeamRequestDTO.AttachmentDTO(
                 a.getId(), a.getOriginalName(), a.getContentType(), a.getFileSize()
             )).toList(),

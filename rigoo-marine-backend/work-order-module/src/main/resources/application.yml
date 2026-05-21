@@ -51,3 +51,7 @@ logging:
 
 jwt:
   secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
+
+app:
+  work-order:
+    upload-dir: ${UPLOAD_DIR:./uploads/work-orders}

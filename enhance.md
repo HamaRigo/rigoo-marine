@@ -137,7 +137,7 @@ Use a configurable font path; do not bundle a binary.
 
 ---
 
-### 2.1 — Enhanced Technician `[ ]`
+### 2.1 — Enhanced Technician `[x]`
 
 **New capabilities over current scope:**
 

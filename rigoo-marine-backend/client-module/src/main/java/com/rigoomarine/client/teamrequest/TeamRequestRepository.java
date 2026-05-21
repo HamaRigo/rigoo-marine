@@ -27,6 +27,8 @@ public interface TeamRequestRepository extends JpaRepository<TeamRequest, Long> 
 
     long countByStatus(TeamRequestStatus status);
 
+    Page<TeamRequest> findByAssignedToOrderByCreatedAtDesc(Long assignedTo, Pageable pageable);
+
     /**
      * Client-facing list: match by clientId (authenticated) OR phone (legacy guest
      * submissions made before clientId resolution was fixed). Either condition

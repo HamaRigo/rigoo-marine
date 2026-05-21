@@ -328,7 +328,7 @@ spring:
                 redis-rate-limiter.replenishRate: 1
                 redis-rate-limiter.burstCapacity: 3
                 key-resolver: "#{@ipKeyResolver}"
-        # Team requests admin — list, status updates, stats. ADMIN role enforced at
+        # Team requests admin — list, status updates, stats. ADMIN/TEAM_LEAD enforced at
         # controller via @PreAuthorize; user-keyed limit for normal admin traffic.
         - id: team-requests-admin
           uri: lb://client-service
@@ -340,6 +340,13 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
+        # Team requests — technician assigned list + respond endpoints.
+        # Must come AFTER the POST rate-limited route so that exact POST /api/team-requests
+        # is still caught by the stricter upstream rule.
+        - id: team-requests-technician
+          uri: lb://client-service
+          predicates:
+            - Path=/api/team-requests/**
 
 eureka:
   client:

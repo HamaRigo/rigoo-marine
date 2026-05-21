@@ -1,72 +1,92 @@
 import { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Grid, Card, CardContent, Chip, List, ListItem, ListItemText, ListItemSecondaryAction, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box, Typography, Grid, Card, CardContent, Chip,
+  List, ListItem, ListItemText, ListItemSecondaryAction,
+  Button, CircularProgress, Alert,
+} from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import AddIcon from '@mui/icons-material/Add';
+import { technicianApi } from '../../services/api';
+
+const STATUS_COLORS = {
+  PENDING_APPROVAL: 'default',
+  PENDING: 'warning',
+  IN_PROGRESS: 'info',
+  WAITING_PARTS: 'error',
+  COMPLETED: 'success',
+  CANCELLED: 'default',
+};
+
+const PRIORITY_COLORS = {
+  HIGH: 'error',
+  NORMAL: 'info',
+  LOW: 'default',
+};
 
 export default function TechnicianDashboard() {
-  const [stats, setStats] = useState({
-    assignedOrders: 0,
-    inProgress: 0,
-    completedToday: 0,
-    pendingApproval: 0,
-  });
-  const [myOrders, setMyOrders] = useState([]);
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: Replace with API call
-    // fetch('/api/technician/dashboard')
-    setStats({
-      assignedOrders: 8,
-      inProgress: 3,
-      completedToday: 2,
-      pendingApproval: 1,
-    });
-    setMyOrders([
-      { id: 1, customer: 'John Doe', vessel: 'Sea Ray 270', service: 'Engine Diagnostic', status: 'IN_PROGRESS', priority: 'HIGH' },
-      { id: 2, customer: 'Jane Smith', vessel: 'Boston Whaler', service: 'Oil Change', status: 'PENDING', priority: 'NORMAL' },
-      { id: 3, customer: 'Bob Wilson', vessel: 'Yamaha 242', service: 'Propeller Repair', status: 'PENDING', priority: 'LOW' },
-    ]);
-    setLoading(false);
+    technicianApi.getMyOrders()
+      .then(data => setOrders(data || []))
+      .catch(() => setError('Failed to load your orders.'))
+      .finally(() => setLoading(false));
   }, []);
 
-  const priorityColors = {
-    HIGH: 'error',
-    NORMAL: 'info',
-    LOW: 'default',
+  const today = new Date().toDateString();
+  const stats = {
+    assigned: orders.length,
+    inProgress: orders.filter(o => o.status === 'IN_PROGRESS').length,
+    completedToday: orders.filter(
+      o => o.status === 'COMPLETED' && o.completedAt && new Date(o.completedAt).toDateString() === today
+    ).length,
+    waitingParts: orders.filter(o => o.status === 'WAITING_PARTS').length,
   };
 
+  const activeOrders = orders.filter(o =>
+    o.status === 'PENDING' || o.status === 'IN_PROGRESS' || o.status === 'WAITING_PARTS'
+  ).slice(0, 5);
+
   if (loading) {
-    return <Typography>Loading dashboard...</Typography>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Technician Dashboard</Typography>
         <Button
-          component={RouterLink}
-          to="/service-request"
           variant="contained"
           startIcon={<AddIcon />}
+          onClick={() => navigate('/service-request')}
         >
           New Service Request
         </Button>
       </Box>
+
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BuildIcon sx={{ fontSize: 40, mr: 2, opacity: 0.8 }} />
-                <Typography variant="h4">{stats.assignedOrders}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <BuildIcon sx={{ fontSize: 36, mr: 1.5, opacity: 0.8 }} />
+                <Typography variant="h4">{stats.assigned}</Typography>
               </Box>
-              <Typography variant="body1">Assigned Orders</Typography>
+              <Typography variant="body2">Assigned Orders</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -74,11 +94,11 @@ export default function TechnicianDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'warning.main', color: 'white' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AccessTimeIcon sx={{ fontSize: 40, mr: 2, opacity: 0.8 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <AccessTimeIcon sx={{ fontSize: 36, mr: 1.5, opacity: 0.8 }} />
                 <Typography variant="h4">{stats.inProgress}</Typography>
               </Box>
-              <Typography variant="body1">In Progress</Typography>
+              <Typography variant="body2">In Progress</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -86,77 +106,77 @@ export default function TechnicianDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'success.main', color: 'white' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CheckCircleIcon sx={{ fontSize: 40, mr: 2, opacity: 0.8 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <CheckCircleIcon sx={{ fontSize: 36, mr: 1.5, opacity: 0.8 }} />
                 <Typography variant="h4">{stats.completedToday}</Typography>
               </Box>
-              <Typography variant="body1">Completed Today</Typography>
+              <Typography variant="body2">Completed Today</Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'secondary.main', color: 'white' }}>
+          <Card sx={{ bgcolor: 'error.main', color: 'white' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BuildIcon sx={{ fontSize: 40, mr: 2, opacity: 0.8 }} />
-                <Typography variant="h4">{stats.pendingApproval}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <HourglassEmptyIcon sx={{ fontSize: 36, mr: 1.5, opacity: 0.8 }} />
+                <Typography variant="h4">{stats.waitingParts}</Typography>
               </Box>
-              <Typography variant="body1">Pending Approval</Typography>
+              <Typography variant="body2">Waiting Parts</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* My Orders */}
+      {/* Active Orders */}
       <Card>
         <CardContent>
-          <Typography variant="h6" gutterBottom>My Work Orders</Typography>
-          <List>
-            {myOrders.map((order) => (
+          <Typography variant="h6" gutterBottom>Active Orders</Typography>
+
+          {activeOrders.length === 0 && (
+            <Typography color="text.secondary" variant="body2">
+              No active orders. All caught up!
+            </Typography>
+          )}
+
+          <List disablePadding>
+            {activeOrders.map((order) => (
               <ListItem
                 key={order.id}
-                sx={{
-                  borderBottom: '1px solid #eee',
-                  '&:last-child': { borderBottom: 'none' },
-                }}
+                sx={{ borderBottom: '1px solid #eee', '&:last-child': { borderBottom: 'none' } }}
               >
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body1" fontWeight="600">
-                        #{order.id} - {order.service}
+                      <Typography variant="body1" fontWeight={600}>
+                        #{order.id}
                       </Typography>
+                      {order.priority && (
+                        <Chip
+                          label={order.priority}
+                          color={PRIORITY_COLORS[order.priority] || 'default'}
+                          size="small"
+                        />
+                      )}
                       <Chip
-                        label={order.priority}
-                        color={priorityColors[order.priority]}
+                        label={order.status.replace(/_/g, ' ')}
+                        color={STATUS_COLORS[order.status] || 'default'}
                         size="small"
                       />
                     </Box>
                   }
                   secondary={
-                    <>
-                      <Typography variant="body2" component="span">
-                        Customer: {order.customer} | Vessel: {order.vessel}
-                      </Typography>
-                      <br />
-                      <Chip
-                        label={order.status.replace('_', ' ')}
-                        color={
-                          order.status === 'COMPLETED' ? 'success' :
-                          order.status === 'IN_PROGRESS' ? 'info' : 'warning'
-                        }
-                        size="small"
-                        sx={{ mt: 1 }}
-                      />
-                    </>
+                    <Typography variant="body2" color="text.secondary">
+                      Vessel #{order.vesselId}
+                      {order.locationText ? ` · ${order.locationText}` : ''}
+                    </Typography>
                   }
                 />
                 <ListItemSecondaryAction>
                   <Button
                     variant="outlined"
                     size="small"
-                    href={`/technician/orders/${order.id}`}
+                    onClick={() => navigate(`/technician/orders/${order.id}`)}
                   >
                     View
                   </Button>
@@ -164,9 +184,12 @@ export default function TechnicianDashboard() {
               </ListItem>
             ))}
           </List>
-          <Button fullWidth sx={{ mt: 2 }} href="/technician/orders">
-            View All Orders
-          </Button>
+
+          {orders.length > 5 && (
+            <Button fullWidth sx={{ mt: 2 }} onClick={() => navigate('/technician/orders')}>
+              View All {orders.length} Orders
+            </Button>
+          )}
         </CardContent>
       </Card>
     </Box>

@@ -13,6 +13,8 @@ public record TeamRequestDTO(
     boolean whatsappOptIn,
     String status,
     String adminNotes,
+    Long assignedTo,
+    LocalDateTime assignedAt,
     List<AttachmentDTO> attachments,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
