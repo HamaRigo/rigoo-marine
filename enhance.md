@@ -64,9 +64,9 @@ Use a configurable font path; do not bundle a binary.
 
 ---
 
-## TRACK 2 — Delivery Technician `[ ]`
+## TRACK 2 — Delivery Technician `[x]`
 
-**Status**: Phase 4 (next up). Phases 1–3 (Role foundations, Enhanced Technician, Team Lead) are complete.
+**Status**: Phases 4 + 5 complete. Phases 1–3 (Role foundations, Enhanced Technician, Team Lead) also complete.
 
 **Responsibilities**: picks up shop-order products and work-order parts from variable supplier / warehouse locations and delivers them to client addresses. Has a daily stop list with map visualization and live GPS tracking visible to Admin and Team Lead.
 
@@ -201,14 +201,13 @@ IN_TRANSIT → [Mark Delivered]  →  DELIVERED  (+ optional proof photo)
 ## Execution order (recommended)
 
 ```
-Phase 4 — Delivery module backend + task list frontend   (large)
-Phase 5 — Delivery map + live tracking                   (large)
+Delivery module complete (Phases 1–5 all done).
 
-Track 1 carry-overs slot between phases as fillers:
-  A1 + A2  (PDF fixes)          — slot after Phase 4
-  B2       (Book Now CTA)       — slot after Phase 4
-  B3       (service catalog)    — slot after Phase 4
-  A3, A4, A5, A6, B1, C1        — low-urgency, any time
+Remaining carry-overs (any order):
+  A1 + A2  (PDF Arabic font + vessel name)   — medium priority
+  B2       (Book Now CTA in email)            — high priority (revenue)
+  B3       (service catalog in dialog)        — medium priority
+  A3, A4, A5, A6, B1, C1                     — low-urgency, any time
 ```
 
 ---
