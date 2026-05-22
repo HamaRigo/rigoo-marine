@@ -151,7 +151,7 @@ function VesselCard({ vessel, onEdit, onDelete }) {
           {specs.length > 0 && (
             <Grid container spacing={1}>
               {specs.map(({ label, value }) => (
-                <Grid item xs={6} key={label}>
+                <Grid size={6} key={label} >
                   <Typography variant="caption" color="text.disabled" display="block">
                     {label}
                   </Typography>
@@ -209,7 +209,7 @@ function VesselCardSkeleton() {
         <Skeleton width="60%" height={20} sx={{ mb: 1 }} />
         <Grid container spacing={1}>
           {[1,2,3,4].map(i => (
-            <Grid item xs={6} key={i}>
+            <Grid size={6} key={i} >
               <Skeleton width="50%" height={14} />
               <Skeleton width="70%" height={18} />
             </Grid>
@@ -307,14 +307,14 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
 
         <Grid container spacing={2}>
           {/* Row 1 */}
-          <Grid item xs={12} sm={8}>
+          <Grid size={{ xs: 12, sm: 8 }} >
             <TextField
               fullWidth label="Vessel Name" value={form.name}
               onChange={set('name')} required
               placeholder="e.g. Blue Horizon"
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }} >
             <TextField
               select fullWidth label="Type" value={form.type}
               onChange={set('type')} required
@@ -324,13 +324,13 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
           </Grid>
 
           {/* Row 2 */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }} >
             <TextField
               fullWidth label="Brand" value={form.brand}
               onChange={set('brand')} placeholder="e.g. Sunseeker, Azimut"
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }} >
             <TextField
               fullWidth label="Model" value={form.model}
               onChange={set('model')} placeholder="e.g. Manhattan 66"
@@ -338,14 +338,14 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
           </Grid>
 
           {/* Row 3 */}
-          <Grid item xs={6} sm={4}>
+          <Grid size={{ xs: 6, sm: 4 }} >
             <TextField
               fullWidth label="Year" value={form.year}
               onChange={set('year')} placeholder="e.g. 2019"
               type="number" inputProps={{ min: 1950, max: new Date().getFullYear() + 1 }}
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid size={{ xs: 6, sm: 4 }} >
             <TextField
               fullWidth label="Length" value={form.length}
               onChange={set('length')}
@@ -353,7 +353,7 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
               type="number" inputProps={{ min: 1, max: 500 }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }} >
             <TextField
               select fullWidth label="Hull Material" value={form.hullMaterial}
               onChange={set('hullMaterial')}
@@ -364,7 +364,7 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
           </Grid>
 
           {/* Row 4 */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }} >
             <TextField
               select fullWidth label="Engine Type" value={form.engineType}
               onChange={set('engineType')}
@@ -373,7 +373,7 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
               {ENGINE_TYPES.map(e => <MenuItem key={e} value={e}>{e}</MenuItem>)}
             </TextField>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }} >
             <TextField
               fullWidth label="Registration Number" value={form.registrationNumber}
               onChange={set('registrationNumber')} placeholder="e.g. QA-0001"
@@ -381,7 +381,7 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
           </Grid>
 
           {/* Row 5 */}
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }} >
             <TextField
               select fullWidth label="Status" value={form.status}
               onChange={set('status')}
@@ -391,7 +391,7 @@ function VesselFormDialog({ open, onClose, onSubmit, initial, loading }) {
               ))}
             </TextField>
           </Grid>
-          <Grid item xs={12} sm={8}>
+          <Grid size={{ xs: 12, sm: 8 }} >
             <TextField
               fullWidth label="Photo URL" value={form.photoUrl}
               onChange={set('photoUrl')} placeholder="https://…"
@@ -507,7 +507,7 @@ export default function MyVessels() {
       {isLoading && (
         <Grid container spacing={3}>
           {[1, 2, 3].map(i => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i} >
               <VesselCardSkeleton />
             </Grid>
           ))}
@@ -524,7 +524,7 @@ export default function MyVessels() {
         <Stagger step={80}>
           <Grid container spacing={3}>
             {vessels.map(vessel => (
-              <Grid item xs={12} sm={6} md={4} key={vessel.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={vessel.id} >
                 <VesselCard
                   vessel={vessel}
                   onEdit={v => setEditTarget(v)}

@@ -23,6 +23,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
+import VerifiedIcon from '@mui/icons-material/Verified';
 
 const drawerWidth = 240;
 const navItems = [
@@ -32,7 +33,8 @@ const navItems = [
   { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
   { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
   { name: 'Services', path: '/admin/services', icon: <EngineeringIcon /> },
-  { name: 'Maintenance', path: '/admin/maintenance', icon: <HandymanRoundedIcon /> },
+  { name: 'Maintenance',  path: '/admin/maintenance',  icon: <HandymanRoundedIcon /> },
+  { name: 'Inspections', path: '/admin/inspections', icon: <VerifiedIcon /> },
   { name: 'Boats', path: '/admin/boats', icon: <DirectionsBoatIcon /> },
   { name: 'Inquiries', path: '/admin/inquiries', icon: <MarkChatUnreadIcon /> },
   { name: 'Products', path: '/admin/products', icon: <StorefrontIcon /> },

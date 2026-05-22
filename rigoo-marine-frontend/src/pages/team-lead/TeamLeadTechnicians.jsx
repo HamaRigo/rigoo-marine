@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import { Reveal, Stagger } from '../../components/common/Motion';
-import { adminApi } from '../../services/api';
+import { adminApi, technicianApi } from '../../services/api';
 
 const ROLE_COLORS = { TECHNICIAN: 'primary', TEAM_LEAD: 'warning' };
 
@@ -18,11 +18,11 @@ export default function TeamLeadTechnicians() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [users, ordersPage] = await Promise.all([
-          adminApi.getAllUsers(),
+        const [techList, ordersPage] = await Promise.all([
+          technicianApi.getAll(),
           adminApi.searchOrders({ size: 200, status: 'IN_PROGRESS' }),
         ]);
-        setTechs((users || []).filter(u => ['TECHNICIAN', 'TEAM_LEAD'].includes(u.role)));
+        setTechs(techList || []);
         setOrders(ordersPage?.content || []);
       } catch {
         setError('Failed to load technician roster.');
@@ -51,7 +51,7 @@ export default function TeamLeadTechnicians() {
           {techs.map(tech => {
             const active = orders.filter(o => o.assignedTechnicianId === tech.id);
             return (
-              <Grid item xs={12} sm={6} md={4} key={tech.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tech.id} >
                 <Card variant="outlined">
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
@@ -62,7 +62,7 @@ export default function TeamLeadTechnicians() {
                         <Typography variant="subtitle1" fontWeight={600} noWrap>{tech.name}</Typography>
                         <Typography variant="caption" color="text.secondary" noWrap>{tech.email}</Typography>
                       </Box>
-                      <Chip label={tech.role} color={ROLE_COLORS[tech.role] || 'default'} size="small" />
+                      <Chip label={tech.specialization || 'Technician'} color="primary" size="small" />
                     </Stack>
                     <Divider sx={{ my: 1 }} />
                     <Stack direction="row" spacing={1} alignItems="center">

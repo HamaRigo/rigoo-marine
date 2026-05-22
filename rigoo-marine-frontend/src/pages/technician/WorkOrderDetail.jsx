@@ -296,7 +296,7 @@ export default function WorkOrderDetail() {
 
       <Grid container spacing={3}>
         {/* Main content */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }} >
           {/* Order Info */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
@@ -323,28 +323,28 @@ export default function WorkOrderDetail() {
               <Typography paragraph>{order.description}</Typography>
 
               <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Typography variant="subtitle2">Vessel ID</Typography>
                   <Typography>#{order.vesselId}</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Typography variant="subtitle2">Client ID</Typography>
                   <Typography>#{order.clientId}</Typography>
                 </Grid>
                 {order.locationText && (
-                  <Grid item xs={12}>
+                  <Grid size={12} >
                     <Typography variant="subtitle2">Location</Typography>
                     <Typography>{order.locationText}</Typography>
                   </Grid>
                 )}
                 {order.phone && (
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <Typography variant="subtitle2">Contact Phone</Typography>
                     <Typography>{order.phone}</Typography>
                   </Grid>
                 )}
                 {order.createdAt && (
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <Typography variant="subtitle2">Created</Typography>
                     <Typography>{new Date(order.createdAt).toLocaleDateString()}</Typography>
                   </Grid>
@@ -530,7 +530,7 @@ export default function WorkOrderDetail() {
         </Grid>
 
         {/* Sidebar */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }} >
           <TimeTracker workOrderId={id} />
           <Card sx={{ mt: 2 }}>
             <CardContent>

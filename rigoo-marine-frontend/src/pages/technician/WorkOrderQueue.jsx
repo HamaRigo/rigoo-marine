@@ -97,7 +97,7 @@ export default function WorkOrderQueue() {
 
       <Grid container spacing={3}>
         {filtered.map((order) => (
-          <Grid item xs={12} md={6} lg={4} key={order.id}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={order.id} >
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>

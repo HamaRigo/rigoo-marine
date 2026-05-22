@@ -275,7 +275,7 @@ export default function DocumentVault({ vesselId }) {
     return (
       <Grid container spacing={2}>
         {[0, 1, 2].map((i) => (
-          <Grid item xs={12} sm={6} md={4} key={i}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i} >
             <Skeleton variant="rounded" height={160} />
           </Grid>
         ))}
@@ -332,7 +332,7 @@ export default function DocumentVault({ vesselId }) {
         <Stagger>
           <Grid container spacing={2}>
             {docs.map((doc) => (
-              <Grid item xs={12} sm={6} md={4} key={doc.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={doc.id} >
                 <DocCard doc={doc} onDelete={setDeleteTarget} />
               </Grid>
             ))}

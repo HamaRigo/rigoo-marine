@@ -273,7 +273,7 @@ export default function ClientOrderDetail() {
             {/* Meta grid */}
             <Grid container spacing={1.5}>
               {order.vesselId && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <DirectionsBoatIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                     <Typography variant="body2" color="text.secondary">
@@ -283,7 +283,7 @@ export default function ClientOrderDetail() {
                 </Grid>
               )}
               {order.locationText && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Stack direction="row" spacing={1} alignItems="flex-start">
                     <LocationOnIcon sx={{ fontSize: 16, color: 'text.disabled', mt: 0.15 }} />
                     <Typography variant="body2" color="text.secondary">
@@ -293,7 +293,7 @@ export default function ClientOrderDetail() {
                 </Grid>
               )}
               {order.createdAt && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                     <Typography variant="body2" color="text.secondary">
@@ -303,7 +303,7 @@ export default function ClientOrderDetail() {
                 </Grid>
               )}
               {order.completedAt && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
                     <Typography variant="body2" color="text.secondary">

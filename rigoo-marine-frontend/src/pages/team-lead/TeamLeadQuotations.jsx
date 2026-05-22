@@ -10,7 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { adminApi } from '../../services/api';
+import { adminApi, clientApi } from '../../services/api';
 import FilterableTable from '../../components/admin/FilterableTable';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
@@ -30,7 +30,7 @@ export default function TeamLeadQuotations() {
   const [clients, setClients]         = useState([]);
 
   useEffect(() => {
-    adminApi.getAllUsers().then(setClients).catch(() => {});
+    clientApi.getAll().then(setClients).catch(() => {});
   }, []);
 
   const openPreview = async (row) => {

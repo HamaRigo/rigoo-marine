@@ -171,7 +171,7 @@ export default function DeliveryTracking() {
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
             const hasFailed = techTasks.some(t => t.status === 'FAILED');
             return (
-              <Grid item xs={12} sm={6} md={4} key={id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={id} >
                 <Card
                   variant="outlined"
                   sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}
@@ -198,7 +198,7 @@ export default function DeliveryTracking() {
             );
           })}
           {techIds.length === 0 && (
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Typography color="text.disabled">No active delivery techs today.</Typography>
             </Grid>
           )}

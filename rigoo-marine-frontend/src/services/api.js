@@ -587,6 +587,16 @@ export const adminApi = {
     return response.data; // List<ClientDTO> (used by AdminDashboard stats)
   },
 
+  createUser: async (userData) => {
+    const response = await httpClient.post('/admin/users', userData);
+    return response.data;
+  },
+
+  updateUser: async (userId, userData) => {
+    const response = await httpClient.put(`/admin/users/${userId}`, userData);
+    return response.data;
+  },
+
   updateUserRole: async (userId, role) => {
     const response = await httpClient.put(`/admin/users/${userId}/role`, { role });
     return response.data;
@@ -1112,8 +1122,49 @@ export const maintenanceApi = {
   },
 };
 
+// ============== VESSEL INSPECTION APIs ==============
+export const vesselInspectionApi = {
+  search: async ({ clientId, vesselId, page = 0, size = 20 } = {}) => {
+    const params = { page, size };
+    if (clientId)  params.clientId  = clientId;
+    if (vesselId)  params.vesselId  = vesselId;
+    const res = await httpClient.get('/api/vessel-inspections', { params });
+    return res.data;
+  },
+
+  getById: async (id) => {
+    const res = await httpClient.get(`/api/vessel-inspections/${id}`);
+    return res.data;
+  },
+
+  create: async (data) => {
+    const res = await httpClient.post('/api/vessel-inspections', data);
+    return res.data;
+  },
+
+  updateStatus: async (id, status, findings) => {
+    const res = await httpClient.patch(`/api/vessel-inspections/${id}/status`, { status, findings });
+    return res.data;
+  },
+
+  delete: async (id) => {
+    await httpClient.delete(`/api/vessel-inspections/${id}`);
+  },
+};
+
 // ============== TECHNICIAN APIs ==============
 export const technicianApi = {
+  // List all technicians — accessible to TEAM_LEAD, ADMIN, and TECHNICIAN
+  getAll: async () => {
+    const response = await httpClient.get('/api/technicians');
+    return response.data; // List<TechnicianDTO>
+  },
+
+  getAvailable: async () => {
+    const response = await httpClient.get('/api/technicians/available');
+    return response.data;
+  },
+
   // Work Orders — call work-order-service directly via gateway (/api/work-orders/*)
   getMyOrders: async () => workOrderApi.getAssigned(),
 
@@ -1239,6 +1290,14 @@ export const fileApi = {
 };
 
 // ============== TEAM REQUEST APIs ==============
+// Lightweight client listing — accessible to any authenticated role (anyRequest().authenticated())
+export const clientApi = {
+  getAll: async () => {
+    const response = await httpClient.get('/api/clients');
+    return response.data; // List<ClientDTO>
+  },
+};
+
 export const teamRequestApi = {
   /**
    * Submit a team request (guest or authenticated).
@@ -1361,7 +1420,7 @@ export default {
   delivery: deliveryApi,
   file: fileApi,
   maintenance: maintenanceApi,
+  vesselInspection: vesselInspectionApi,
   notifications: notificationApi,
+  client: clientApi,
 };
-
-export { inventoryApi };

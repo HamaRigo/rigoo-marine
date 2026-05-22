@@ -14,6 +14,7 @@ import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import HistoryIcon from '@mui/icons-material/History';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
@@ -27,7 +28,8 @@ const navItems = [
   { name: 'Quotations',     path: '/team-lead/quotations',     icon: <RequestQuoteIcon /> },
   { name: 'History',        path: '/team-lead/history',        icon: <HistoryIcon /> },
   { name: 'Technicians',    path: '/team-lead/technicians',    icon: <PeopleIcon /> },
-  { name: 'Deliveries',    path: '/team-lead/delivery',       icon: <LocalShippingIcon /> },
+  { name: 'Inspections',   path: '/team-lead/inspections',    icon: <VerifiedIcon /> },
+  { name: 'Deliveries',   path: '/team-lead/delivery',       icon: <LocalShippingIcon /> },
 ];
 
 export default function TeamLeadLayout() {

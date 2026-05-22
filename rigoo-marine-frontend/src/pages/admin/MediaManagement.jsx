@@ -184,7 +184,7 @@ export default function MediaManagement() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }} >
               <FormControl fullWidth size="small">
                 <InputLabel>Filter by Type</InputLabel>
                 <Select
@@ -201,7 +201,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }} >
               <FormControl fullWidth size="small">
                 <InputLabel>Filter by Category</InputLabel>
                 <Select
@@ -218,7 +218,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }} >
               <Typography variant="body2" color="text.secondary">
                 Showing: {filteredMedia.length} of {media?.length || 0} items
               </Typography>
@@ -317,7 +317,7 @@ export default function MediaManagement() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
+            <Grid size={12} >
               <TextField
                 label="Title"
                 fullWidth
@@ -326,7 +326,7 @@ export default function MediaManagement() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12} >
               <TextField
                 label="URL"
                 fullWidth
@@ -336,7 +336,7 @@ export default function MediaManagement() {
                 helperText="Direct URL to the media file"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth>
                 <InputLabel>Type</InputLabel>
                 <Select
@@ -352,7 +352,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -368,7 +368,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12} >
               <TextField
                 label="Description"
                 fullWidth

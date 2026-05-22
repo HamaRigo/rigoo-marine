@@ -70,6 +70,7 @@ const ProductForm = lazy(() => import('./pages/admin/ProductForm'));
 const ProductInquiryManagement = lazy(() => import('./pages/admin/ProductInquiryManagement'));
 const ShopOrderManagement = lazy(() => import('./pages/admin/ShopOrderManagement'));
 const MaintenanceDashboard = lazy(() => import('./pages/admin/MaintenanceDashboard'));
+const VesselInspections    = lazy(() => import('./pages/admin/VesselInspections'));
 const TeamRequestManagement = lazy(() => import('./pages/admin/TeamRequestManagement'));
 const AnalyticsDashboard = lazy(() => import('./pages/admin/AnalyticsDashboard'));
 const InventoryManagement = lazy(() => import('./pages/admin/InventoryManagement'));
@@ -91,6 +92,9 @@ import TechnicianLayout from './pages/technician/TechnicianLayout';
 import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import WorkOrderQueue from './pages/technician/WorkOrderQueue';
 import WorkOrderDetail from './pages/technician/WorkOrderDetail';
+import WorkOrderHistory from './pages/technician/WorkOrderHistory';
+import TechnicianInventory from './pages/technician/TechnicianInventory';
+import TechnicianTeamRequests from './pages/technician/TechnicianTeamRequests';
 
 // Delivery Pages
 import DeliveryLayout from './pages/delivery/DeliveryLayout';
@@ -114,7 +118,8 @@ import TeamLeadTeamRequests from './pages/team-lead/TeamLeadTeamRequests';
 import TeamLeadInvoices from './pages/team-lead/TeamLeadInvoices';
 import TeamLeadQuotations from './pages/team-lead/TeamLeadQuotations';
 import TeamLeadHistory from './pages/team-lead/TeamLeadHistory';
-import TeamLeadTechnicians from './pages/team-lead/TeamLeadTechnicians';
+import TeamLeadTechnicians  from './pages/team-lead/TeamLeadTechnicians';
+import TeamLeadInspections  from './pages/team-lead/TeamLeadInspections';
 
 // Error Pages
 import NotFound from './pages/error/NotFound';
@@ -204,7 +209,8 @@ function App() {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="audit" element={<AuditLog />} />
                 <Route path="services" element={<ServiceManagement />} />
-                <Route path="maintenance" element={<MaintenanceDashboard />} />
+                <Route path="maintenance"   element={<MaintenanceDashboard />} />
+                <Route path="inspections"  element={<VesselInspections />} />
                 <Route path="invoices" element={<InvoiceManagement />} />
                 <Route path="quotations" element={<QuotationManagement />} />
                 <Route path="media" element={<MediaManagement />} />
@@ -238,7 +244,9 @@ function App() {
                 <Route index element={<TechnicianDashboard />} />
                 <Route path="orders" element={<WorkOrderQueue />} />
                 <Route path="orders/:id" element={<WorkOrderDetail />} />
-                <Route path="history" element={<div>Work Order History - Coming Soon</div>} />
+                <Route path="history" element={<WorkOrderHistory />} />
+                <Route path="inventory" element={<TechnicianInventory />} />
+                <Route path="team-requests" element={<TechnicianTeamRequests />} />
               </Route>
 
               {/* Team Lead Routes (TEAM_LEAD role) */}
@@ -258,6 +266,7 @@ function App() {
                 <Route path="quotations"      element={<TeamLeadQuotations />} />
                 <Route path="history"         element={<TeamLeadHistory />} />
                 <Route path="technicians"     element={<TeamLeadTechnicians />} />
+                <Route path="inspections"     element={<TeamLeadInspections />} />
                 <Route path="delivery"        element={<TeamLeadDelivery />} />
               </Route>
 

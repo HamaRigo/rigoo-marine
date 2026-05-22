@@ -11,7 +11,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import toast from 'react-hot-toast';
-import { adminApi, workOrderApi } from '../../services/api';
+import { adminApi, workOrderApi, technicianApi } from '../../services/api';
 
 const STATUS_COLORS = {
   PENDING_APPROVAL: 'default',
@@ -46,14 +46,14 @@ export default function TeamLeadOrderDetail() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [orderData, updatesData, allUsers] = await Promise.all([
+      const [orderData, updatesData, techList] = await Promise.all([
         adminApi.getOrderById(id),
         workOrderApi.getUpdates(id),
-        adminApi.getAllUsers().catch(() => []),
+        technicianApi.getAll().catch(() => []),
       ]);
       setOrder(orderData);
       setUpdates(updatesData || []);
-      setTechs((allUsers || []).filter(u => ['TECHNICIAN', 'TEAM_LEAD'].includes(u.role)));
+      setTechs(techList || []);
     } catch {
       setError('Failed to load work order.');
     } finally {
@@ -129,7 +129,7 @@ export default function TeamLeadOrderDetail() {
 
       <Grid container spacing={3}>
         {/* Order info */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }} >
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
@@ -170,7 +170,7 @@ export default function TeamLeadOrderDetail() {
         </Grid>
 
         {/* Timeline */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }} >
           <Card variant="outlined" sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>Timeline</Typography>
@@ -248,7 +248,7 @@ export default function TeamLeadOrderDetail() {
             >
               {techs.map(t => (
                 <MenuItem key={t.id} value={String(t.id)}>
-                  {t.name} ({t.role})
+                  {t.name}{t.specialization ? ` — ${t.specialization}` : ''}
                 </MenuItem>
               ))}
             </Select>

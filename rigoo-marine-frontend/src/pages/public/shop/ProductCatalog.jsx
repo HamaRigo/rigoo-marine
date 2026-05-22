@@ -87,8 +87,8 @@ export default function ProductCatalog() {
           <>
             <Grid container spacing={3}>
               {isLoading
-                ? Array.from({ length: 6 }).map((_, i) => <Grid item xs={12} sm={6} lg={4} key={`s-${i}`}><CardSkeleton /></Grid>)
-                : rows.map((product, i) => <Grid item xs={12} sm={6} lg={4} key={product.id}><ProductCard product={product} index={i} /></Grid>)}
+                ? Array.from({ length: 6 }).map((_, i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`s-${i}`} ><CardSkeleton /></Grid>)
+                : rows.map((product, i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={product.id} ><ProductCard product={product} index={i} /></Grid>)}
             </Grid>
             {!isLoading && rows.length === 0 && <Box sx={{ textAlign: 'center', py: 8 }}><Typography color="text.secondary">{t('empty')}</Typography></Box>}
             {totalPages > 1 && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><Pagination count={totalPages} page={page + 1} onChange={(_, p) => setPage(p - 1)} color="primary" /></Box>}

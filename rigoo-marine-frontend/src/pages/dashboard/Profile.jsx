@@ -187,19 +187,19 @@ export default function Profile() {
           <CardContent sx={{ p: 2.5 }}>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.name')} value={formData.name} required
                     onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
                     InputProps={{ startAdornment: <InputAdornment position="start"><PersonRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} /></InputAdornment> }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.email')} type="email" value={formData.email} required
                     onChange={(e) => setFormData(f => ({ ...f, email: e.target.value }))}
                     InputProps={{ startAdornment: <InputAdornment position="start"><EmailRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} /></InputAdornment> }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.phone')} value={formData.phone}
                     onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
                     InputProps={{ startAdornment: <InputAdornment position="start"><PhoneRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} /></InputAdornment> }}
@@ -287,7 +287,7 @@ export default function Profile() {
           <Collapse in={showPasswordSection}>
             <CardContent sx={{ p: 2.5 }}>
               <Grid container spacing={2.5}>
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <TextField fullWidth label={t('profile.currentPassword')} value={formData.currentPassword}
                     type={showCurrentPw ? 'text' : 'password'}
                     onChange={(e) => setFormData(f => ({ ...f, currentPassword: e.target.value }))}
@@ -301,7 +301,7 @@ export default function Profile() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.newPassword')} value={formData.newPassword}
                     type={showNewPw ? 'text' : 'password'}
                     onChange={(e) => setFormData(f => ({ ...f, newPassword: e.target.value }))}
@@ -314,13 +314,13 @@ export default function Profile() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.confirmPassword')} type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(f => ({ ...f, confirmPassword: e.target.value }))}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <Button variant="contained" color="error" onClick={handlePasswordChange}
                     disabled={passwordMutation.isPending}
                     startIcon={passwordMutation.isPending ? <CircularProgress size={14} /> : null}

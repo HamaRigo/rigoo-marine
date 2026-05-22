@@ -34,6 +34,31 @@
     "edit": "Edit",
     "delete": "Delete",
     "promote": "Change role",
+    "createUser": "Add user",
+    "deleteConfirm": "Delete user {{name}}? This cannot be undone.",
+    "deleteSuccess": "User deleted.",
+    "deleteFailed": "Could not delete user. Please try again.",
+    "form": {
+      "titleCreate": "Add user",
+      "titleEdit": "Edit user",
+      "password": "Password",
+      "passwordOptional": "New password (optional)",
+      "passwordHelper": "Minimum 6 characters.",
+      "passwordEditHelper": "Leave blank to keep the current password.",
+      "company": "Company",
+      "language": "Language",
+      "cancel": "Cancel",
+      "saveCreate": "Create",
+      "saveEdit": "Save",
+      "submitting": "Saving…",
+      "successCreate": "User {{name}} created.",
+      "successEdit": "User {{name}} updated.",
+      "errors": {
+        "conflict": "Email or phone already in use.",
+        "invalid": "Invalid data. Please review the form.",
+        "fallback": "Could not save. Please try again."
+      }
+    },
     "resetPassword": {
       "action": "Reset password",
       "title": "Reset user password",
@@ -73,7 +98,9 @@
       "all": "All actions",
       "PASSWORD_RESET": "Password reset",
       "ROLE_CHANGE": "Role change",
-      "USER_DELETE": "User deleted"
+      "USER_DELETE": "User deleted",
+      "USER_CREATE": "User created",
+      "USER_UPDATE": "User updated"
     },
     "empty": {
       "all": "No audit entries recorded yet.",

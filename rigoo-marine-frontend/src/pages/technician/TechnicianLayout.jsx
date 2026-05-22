@@ -6,14 +6,18 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
 import HistoryIcon from '@mui/icons-material/History';
+import InventoryIcon from '@mui/icons-material/Inventory2';
+import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
 const navItems = [
-  { name: 'Dashboard', path: '/technician', icon: <DashboardIcon /> },
-  { name: 'Work Orders', path: '/technician/orders', icon: <BuildIcon /> },
-  { name: 'History', path: '/technician/history', icon: <HistoryIcon /> },
+  { name: 'Dashboard',      path: '/technician',               icon: <DashboardIcon /> },
+  { name: 'Work Orders',    path: '/technician/orders',        icon: <BuildIcon /> },
+  { name: 'History',        path: '/technician/history',       icon: <HistoryIcon /> },
+  { name: 'Parts & Inventory', path: '/technician/inventory',  icon: <InventoryIcon /> },
+  { name: 'Team Requests',  path: '/technician/team-requests', icon: <GroupsIcon /> },
 ];
 
 export default function TechnicianLayout() {
@@ -40,7 +44,9 @@ export default function TechnicianLayout() {
       </Toolbar>
       <List sx={{ px: 1, py: 1 }}>
         {navItems.map((item) => {
-          const selected = location.pathname === item.path;
+          const selected = item.path === '/technician'
+            ? location.pathname === '/technician'
+            : location.pathname.startsWith(item.path);
           return (
             <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton

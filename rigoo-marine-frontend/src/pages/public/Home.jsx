@@ -501,7 +501,7 @@ export default function Home() {
       }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Reveal variant="slide" direction="right" timeout={640}>
                 <Box>
                   <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
@@ -548,7 +548,7 @@ export default function Home() {
                 </Box>
               </Reveal>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Reveal variant="slide" direction="left" timeout={640}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   {[0, 1].map((page) => (

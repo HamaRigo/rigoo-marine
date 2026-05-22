@@ -50,14 +50,14 @@ public class WorkOrderTimeController {
         });
 
         Long techId = SecurityUtils.currentClientIdOrThrow();
-        WorkOrderTimeLog log = WorkOrderTimeLog.builder()
+        WorkOrderTimeLog entry = WorkOrderTimeLog.builder()
             .workOrderId(id)
             .technicianId(techId)
             .clockIn(LocalDateTime.now())
             .build();
-        log = timeRepo.save(log);
-        log.info("clockIn workOrderId={} techId={} logId={}", id, techId, log.getId());
-        return ResponseEntity.ok(TimeLogDTO.from(log));
+        entry = timeRepo.save(entry);
+        log.info("clockIn workOrderId={} techId={} logId={}", id, techId, entry.getId());
+        return ResponseEntity.ok(TimeLogDTO.from(entry));
     }
 
     @PreAuthorize("hasAnyRole('TECHNICIAN', 'TEAM_LEAD', 'ADMIN')")
@@ -90,6 +90,4 @@ public class WorkOrderTimeController {
         ));
     }
 
-    private static final org.slf4j.Logger log =
-        org.slf4j.LoggerFactory.getLogger(WorkOrderTimeController.class);
 }

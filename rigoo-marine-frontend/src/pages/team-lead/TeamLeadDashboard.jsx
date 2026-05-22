@@ -52,18 +52,22 @@ export default function TeamLeadDashboard() {
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const [ordersPage, reqsPage] = await Promise.all([
-          adminApi.searchOrders({ size: 50, sort: 'createdAt,desc' }),
-          teamRequestApi.list({ size: 20 }),
-        ]);
-        setOrders(ordersPage?.content || []);
-        setTeamReqs(reqsPage?.content || []);
-      } catch {
-        setError('Failed to load dashboard data.');
-      } finally {
-        setLoading(false);
+      const [ordersResult, reqsResult] = await Promise.allSettled([
+        adminApi.searchOrders({ size: 50, sort: 'createdAt,desc' }),
+        teamRequestApi.list({ size: 20 }),
+      ]);
+
+      if (ordersResult.status === 'fulfilled') {
+        setOrders(ordersResult.value?.content || []);
+      } else {
+        setError('Work-order service is unavailable. Some data may be missing.');
       }
+
+      if (reqsResult.status === 'fulfilled') {
+        setTeamReqs(reqsResult.value?.content || []);
+      }
+
+      setLoading(false);
     };
     load();
   }, []);
@@ -75,33 +79,33 @@ export default function TeamLeadDashboard() {
   const pendingReqs = teamReqs.filter(r => r.status === 'PENDING');
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
-  if (error)   return <Alert severity="error">{error}</Alert>;
 
   return (
     <Box>
+      {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
       <Reveal variant="fade">
         <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>Dashboard</Typography>
       </Reveal>
 
       <Stagger>
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard label="Active Jobs"       value={active.length}    color="primary" icon={<BuildIcon fontSize="inherit" />}     onClick={() => navigate('/team-lead/orders')} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard label="Pending Approval"  value={approvals.length} color="warning" icon={<PendingIcon fontSize="inherit" />}   onClick={() => navigate('/team-lead/orders')} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard label="Completed Today"   value={doneToday.length} color="success" icon={<CheckCircleIcon fontSize="inherit" />} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard label="Pending Requests"  value={pendingReqs.length} color="error" icon={<GroupWorkIcon fontSize="inherit" />} onClick={() => navigate('/team-lead/team-requests')} />
           </Grid>
         </Grid>
       </Stagger>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }} >
           <Reveal variant="slideUp">
             <Card variant="outlined">
               <CardContent>
@@ -139,7 +143,7 @@ export default function TeamLeadDashboard() {
           </Reveal>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }} >
           <Reveal variant="slideUp">
             <Card variant="outlined">
               <CardContent>

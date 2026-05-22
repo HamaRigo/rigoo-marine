@@ -26,6 +26,8 @@ public class AdminAuditService {
     public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
     public static final String ACTION_ROLE_CHANGE    = "ROLE_CHANGE";
     public static final String ACTION_USER_DELETE    = "USER_DELETE";
+    public static final String ACTION_USER_CREATE    = "USER_CREATE";
+    public static final String ACTION_USER_UPDATE    = "USER_UPDATE";
 
     public static final String TARGET_USER = "USER";
 

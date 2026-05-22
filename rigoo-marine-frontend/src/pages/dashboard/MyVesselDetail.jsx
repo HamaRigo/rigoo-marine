@@ -226,7 +226,7 @@ export default function MyVesselDetail() {
                 ['Hull', vessel.hullMaterial],
                 ['Reg #', vessel.registrationNumber],
               ].map(([label, value]) => (
-                <Grid item xs={6} sm={4} key={label}>
+                <Grid size={{ xs: 6, sm: 4 }} key={label} >
                   <Typography variant="caption" color="text.secondary">{label}</Typography>
                   <Typography variant="body2">{value || '—'}</Typography>
                 </Grid>

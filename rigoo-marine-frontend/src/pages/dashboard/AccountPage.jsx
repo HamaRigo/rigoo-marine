@@ -63,7 +63,7 @@ function AccountStatsBanner() {
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
       {stats.map(s => (
-        <Grid key={s.label} item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }} key={s.label} >
           <Card variant="outlined" sx={{ borderRadius: 3, p: 2, display: 'flex', alignItems: 'center', gap: 2, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <s.icon sx={{ color: s.color, fontSize: 22 }} />
@@ -191,7 +191,7 @@ function ServiceOrderCard({ order }) {
           <Divider sx={{ my: 1.25 }} />
           <Grid container spacing={1} sx={{ mb: 1 }}>
             {order.vesselId && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <DirectionsBoatIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -201,7 +201,7 @@ function ServiceOrderCard({ order }) {
               </Grid>
             )}
             {order.preferredDate && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <CalendarTodayIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -211,7 +211,7 @@ function ServiceOrderCard({ order }) {
               </Grid>
             )}
             {order.locationText && (
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <Stack direction="row" spacing={0.75} alignItems="flex-start">
                   <LocationOnIcon sx={{ fontSize: 14, color: 'text.disabled', mt: 0.15 }} />
                   <Typography variant="caption" color="text.secondary">{order.locationText}</Typography>

@@ -257,29 +257,29 @@ export default function BoatListingForm() {
         <Box component="form" onSubmit={handleSubmit}>
           <Section title={t('admin.sections.basic')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField select label={t('admin.fields.status')} value={form.status} onChange={update('status')} fullWidth>
                   {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{t(`status.${s}`)}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField select label={t('admin.fields.sellerType')} value={form.sellerType} onChange={update('sellerType')} fullWidth>
                   {SELLER_TYPES.map((s) => <MenuItem key={s} value={s}>{t(`admin.sellerType.${s}`)}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField label={t('admin.fields.slug')} value={form.slug} onChange={update('slug')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.titleEn')} value={form.titleEn} onChange={update('titleEn')} fullWidth required />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.titleAr')} value={form.titleAr} onChange={update('titleAr')} fullWidth dir="rtl" />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.descriptionEn')} value={form.descriptionEn} onChange={update('descriptionEn')} fullWidth multiline minRows={4} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.descriptionAr')} value={form.descriptionAr} onChange={update('descriptionAr')} fullWidth multiline minRows={4} dir="rtl" />
               </Grid>
             </Grid>
@@ -287,40 +287,40 @@ export default function BoatListingForm() {
 
           <Section title={t('admin.sections.pricing')}>
             <Grid container spacing={2}>
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }} >
                 <FormControlLabel control={<Checkbox checked={form.forSale} onChange={updateBool('forSale')} />} label={t('admin.fields.forSale')} />
               </Grid>
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }} >
                 <FormControlLabel control={<Checkbox checked={form.forRent} onChange={updateBool('forRent')} />} label={t('admin.fields.forRent')} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.salePrice')} type="number" value={form.salePrice} onChange={update('salePrice')} fullWidth disabled={!form.forSale} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.dailyRate')} type="number" value={form.dailyRate} onChange={update('dailyRate')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.weeklyRate')} type="number" value={form.weeklyRate} onChange={update('weeklyRate')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.cleaningFee')} type="number" value={form.cleaningFee} onChange={update('cleaningFee')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.minRentalNights')} type="number" value={form.minRentalNights} onChange={update('minRentalNights')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.maxRentalNights')} type="number" value={form.maxRentalNights} onChange={update('maxRentalNights')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.rentalSecurityDeposit')} type="number" value={form.rentalSecurityDeposit} onChange={update('rentalSecurityDeposit')} fullWidth disabled={!form.forRent} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField select label={t('admin.fields.captainRequired')} value={form.captainRequired} onChange={update('captainRequired')} fullWidth disabled={!form.forRent}>
                   <MenuItem value="">—</MenuItem>
                   {CAPTAIN_OPTIONS.map((c) => <MenuItem key={c} value={c}>{t(`captainOptions.${c}`)}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.captainDailyFee')} type="number" value={form.captainDailyFee} onChange={update('captainDailyFee')} fullWidth disabled={!form.forRent} />
               </Grid>
             </Grid>
@@ -342,7 +342,7 @@ export default function BoatListingForm() {
                 ['waterCapacityLiters', 'specs.waterCapacityLiters', 'number'],
                 ['sleepingBerths', 'specs.sleepingBerths', 'number'],
               ].map(([field, key, type]) => (
-                <Grid item xs={6} sm={4} md={3} key={field}>
+                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={field} >
                   <TextField label={t(key)} type={type} value={form[field]} onChange={update(field)} fullWidth size="small" />
                 </Grid>
               ))}
@@ -358,7 +358,7 @@ export default function BoatListingForm() {
                 ['fuelType', 'specs.fuelType', 'text'],
                 ['batteryCount', 'specs.batteryCount', 'number'],
               ].map(([field, key, type]) => (
-                <Grid item xs={6} sm={4} key={field}>
+                <Grid size={{ xs: 6, sm: 4 }} key={field} >
                   <TextField label={t(key)} type={type} value={form[field]} onChange={update(field)} fullWidth size="small" />
                 </Grid>
               ))}
@@ -375,7 +375,7 @@ export default function BoatListingForm() {
                 ['hasWatermaker', 'equipment.watermaker'],
                 ['hasSolar', 'equipment.solar'],
               ].map(([field, key]) => (
-                <Grid item xs={6} sm={4} md={3} key={field}>
+                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={field} >
                   <FormControlLabel control={<Checkbox checked={form[field]} onChange={updateBool(field)} />} label={t(key)} />
                 </Grid>
               ))}
@@ -384,25 +384,25 @@ export default function BoatListingForm() {
 
           <Section title={t('admin.sections.condition')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField type="date" label={t('detail.lastSurvey')} value={form.lastSurveyDate} onChange={update('lastSurveyDate')} fullWidth InputLabelProps={{ shrink: true }} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField type="date" label={t('detail.lastAntifoul')} value={form.lastAntifoulDate} onChange={update('lastAntifoulDate')} fullWidth InputLabelProps={{ shrink: true }} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField type="date" label={t('detail.lastEngineService')} value={form.lastEngineServiceDate} onChange={update('lastEngineServiceDate')} fullWidth InputLabelProps={{ shrink: true }} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.knownIssuesEn')} value={form.knownIssuesEn} onChange={update('knownIssuesEn')} fullWidth multiline minRows={3} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.knownIssuesAr')} value={form.knownIssuesAr} onChange={update('knownIssuesAr')} fullWidth multiline minRows={3} dir="rtl" />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.inclusionsEn')} value={form.inclusionsEn} onChange={update('inclusionsEn')} fullWidth multiline minRows={3} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.inclusionsAr')} value={form.inclusionsAr} onChange={update('inclusionsAr')} fullWidth multiline minRows={3} dir="rtl" />
               </Grid>
             </Grid>
@@ -410,16 +410,16 @@ export default function BoatListingForm() {
 
           <Section title={t('admin.sections.location')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('detail.location')} value={form.locationText} onChange={update('locationText')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label="Marina" value={form.locationMarina} onChange={update('locationMarina')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label="City" value={form.locationCity} onChange={update('locationCity')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label="Country" value={form.locationCountry} onChange={update('locationCountry')} fullWidth />
               </Grid>
             </Grid>
@@ -427,28 +427,28 @@ export default function BoatListingForm() {
 
           <Section title={t('admin.sections.documents')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('detail.registrationCountry')} value={form.registrationCountry} onChange={update('registrationCountry')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('detail.ownershipStatus')} value={form.ownershipStatus} onChange={update('ownershipStatus')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('detail.vatStatus')} value={form.vatStatus} onChange={update('vatStatus')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <FormControlLabel control={<Checkbox checked={form.lienFree} onChange={updateBool('lienFree')} />} label={t('detail.lienFree')} />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField label={t('admin.fields.specSheetUrl')} value={form.specSheetUrl} onChange={update('specSheetUrl')} fullWidth />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField label={t('admin.fields.videoUrl')} value={form.videoUrl} onChange={update('videoUrl')} fullWidth />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField label="Financing notes" value={form.financingNotes} onChange={update('financingNotes')} fullWidth multiline minRows={2} />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <FormControlLabel control={<Checkbox checked={form.sellerVerified} onChange={updateBool('sellerVerified')} />} label={t('admin.fields.sellerVerified')} />
               </Grid>
             </Grid>

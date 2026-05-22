@@ -14,7 +14,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { teamRequestApi, adminApi } from '../../services/api';
+import { teamRequestApi, technicianApi } from '../../services/api';
 import { Reveal } from '../../components/common/Motion';
 
 const STATUS_COLORS = {
@@ -46,9 +46,7 @@ export default function TeamLeadTeamRequests() {
   const [techs, setTechs]               = useState([]);
 
   useEffect(() => {
-    adminApi.getAllUsers().then(users =>
-      setTechs((users || []).filter(u => ['TECHNICIAN', 'TEAM_LEAD'].includes(u.role)))
-    ).catch(() => {});
+    technicianApi.getAll().then(list => setTechs(list || [])).catch(() => {});
   }, []);
 
   const { data, isLoading, isError } = useQuery({
@@ -244,7 +242,9 @@ export default function TeamLeadTeamRequests() {
             <InputLabel>Technician</InputLabel>
             <Select value={techId} label="Technician" onChange={e => setTechId(e.target.value)}>
               {techs.map(t => (
-                <MenuItem key={t.id} value={String(t.id)}>{t.name} ({t.role})</MenuItem>
+                <MenuItem key={t.id} value={String(t.id)}>
+                  {t.name}{t.specialization ? ` — ${t.specialization}` : ''}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>

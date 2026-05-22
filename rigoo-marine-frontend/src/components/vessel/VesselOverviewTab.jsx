@@ -485,7 +485,7 @@ function VesselSpecsCard({ vessel }) {
     >
       <Grid container spacing={2}>
         {fields.map(({ key, label, value }) => (
-          <Grid item xs={6} sm={4} md={3} key={key}>
+          <Grid size={{ xs: 6, sm: 4, md: 3 }} key={key} >
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25 }}>{label}</Typography>
             <Typography variant="body2" fontWeight={600}>{value}</Typography>
           </Grid>
@@ -580,12 +580,12 @@ export default function VesselOverviewTab({ vessel, vesselId, dossier }) {
 
       {/* ── Row: Cost bar + Service donut ── */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }} >
           <Reveal variant="fade" timeout={400}>
             <CostBarChart records={records} />
           </Reveal>
         </Grid>
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Reveal variant="fade" timeout={440}>
             <ServiceDonutChart records={records} />
           </Reveal>
@@ -594,12 +594,12 @@ export default function VesselOverviewTab({ vessel, vesselId, dossier }) {
 
       {/* ── Row: Engine hours trend + Upcoming ── */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }} >
           <Reveal variant="fade" timeout={480}>
             <EngineHoursTrendCard records={records} />
           </Reveal>
         </Grid>
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Reveal variant="fade" timeout={520}>
             <UpcomingServicesPanel schedule={schedule} />
           </Reveal>

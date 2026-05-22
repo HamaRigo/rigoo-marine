@@ -183,7 +183,7 @@ function OrderCard({ order }) {
           {/* Meta grid */}
           <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
             {order.vesselId && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <DirectionsBoatIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -193,7 +193,7 @@ function OrderCard({ order }) {
               </Grid>
             )}
             {order.preferredDate && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <CalendarTodayIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -203,7 +203,7 @@ function OrderCard({ order }) {
               </Grid>
             )}
             {order.locationText && (
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <Stack direction="row" spacing={0.75} alignItems="flex-start">
                   <LocationOnIcon sx={{ fontSize: 15, color: 'text.disabled', mt: 0.15 }} />
                   <Typography variant="caption" color="text.secondary">

@@ -223,7 +223,7 @@ export default function ContactInfoManagement() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth size="small">
                 <InputLabel>Filter by Category</InputLabel>
                 <Select
@@ -240,7 +240,7 @@ export default function ContactInfoManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <Typography variant="body2" color="text.secondary">
                 Showing: {filteredInfo.length} of {contactInfo?.length || 0} items
               </Typography>
@@ -332,7 +332,7 @@ export default function ContactInfoManagement() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth required>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -348,7 +348,7 @@ export default function ContactInfoManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth required>
                 <InputLabel>Key Name</InputLabel>
                 <Select
@@ -366,7 +366,7 @@ export default function ContactInfoManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12} >
               <TextField
                 label="Value"
                 fullWidth
@@ -376,7 +376,7 @@ export default function ContactInfoManagement() {
                 helperText={`Enter the ${formData.keyName?.replace(/_/g, ' ') || 'value'}`}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField
                 label="Display Order"
                 type="number"
@@ -388,7 +388,7 @@ export default function ContactInfoManagement() {
                 helperText="Lower numbers appear first"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth>
                 <InputLabel>Active</InputLabel>
                 <Select

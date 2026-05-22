@@ -138,7 +138,7 @@ export default function MaintenanceAnalytics() {
 
           <Grid container spacing={2}>
             {/* By service type */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Reveal variant="slide" direction="up" timeout={500}>
                 <Card>
                   <CardContent>
@@ -152,7 +152,7 @@ export default function MaintenanceAnalytics() {
             </Grid>
 
             {/* By vessel — table with click-through */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Reveal variant="slide" direction="up" timeout={500}>
                 <Card>
                   <CardContent>
@@ -305,8 +305,8 @@ function LoadingSkeleton() {
       </Stack>
       <Skeleton variant="rounded" height={240} sx={{ mb: 3 }} />
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}><Skeleton variant="rounded" height={300} /></Grid>
-        <Grid item xs={12} md={6}><Skeleton variant="rounded" height={300} /></Grid>
+        <Grid size={{ xs: 12, md: 6 }} ><Skeleton variant="rounded" height={300} /></Grid>
+        <Grid size={{ xs: 12, md: 6 }} ><Skeleton variant="rounded" height={300} /></Grid>
       </Grid>
     </Box>
   );

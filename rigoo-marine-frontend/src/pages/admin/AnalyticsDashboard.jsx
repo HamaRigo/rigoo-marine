@@ -157,7 +157,7 @@ export default function AnalyticsDashboard() {
       {/* ── KPI cards ────────────────────────────── */}
       <Stagger variant="fade" step={80}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             {isLoading ? <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} /> : (
               <KpiCard
                 icon={TrendingUpRoundedIcon}
@@ -167,7 +167,7 @@ export default function AnalyticsDashboard() {
               />
             )}
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             {isLoading ? <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} /> : (
               <KpiCard
                 icon={ReceiptRoundedIcon}
@@ -177,7 +177,7 @@ export default function AnalyticsDashboard() {
               />
             )}
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             {isLoading ? <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} /> : (
               <KpiCard
                 icon={SpeedRoundedIcon}
@@ -187,7 +187,7 @@ export default function AnalyticsDashboard() {
               />
             )}
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             {isLoading ? <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} /> : (
               <KpiCard
                 icon={PeopleRoundedIcon}
@@ -233,7 +233,7 @@ export default function AnalyticsDashboard() {
       {/* ── Status breakdown + top clients ─────────── */}
       <Grid container spacing={2}>
         {/* Pie chart */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Reveal variant="fade" timeout={560}>
             <Card sx={{ borderRadius: 3, height: '100%', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', p: 2 }}>
               <Typography variant="h6" fontWeight={700} mb={2}>Invoice Status</Typography>
@@ -267,7 +267,7 @@ export default function AnalyticsDashboard() {
         </Grid>
 
         {/* Top clients */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }} >
           <Reveal variant="fade" timeout={600}>
             <Card sx={{ borderRadius: 3, height: '100%', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', p: 2 }}>
               <Typography variant="h6" fontWeight={700} mb={1.5}>Top Clients by Revenue</Typography>

@@ -197,7 +197,7 @@ export default function WorkOrderFlow() {
             </Typography>
             <Grid container spacing={2}>
               {services.map((service) => (
-                <Grid item xs={12} sm={6} md={4} key={service.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={service.id} >
                   <Card
                     onClick={() => handleServiceToggle(service.id)}
                     sx={{
@@ -227,7 +227,7 @@ export default function WorkOrderFlow() {
             </Typography>
             <Grid container spacing={2}>
               {isAuthenticated && vesselsData && vesselsData.length > 0 ? (
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <TextField
                     fullWidth
                     select
@@ -256,7 +256,7 @@ export default function WorkOrderFlow() {
                   </TextField>
                 </Grid>
               ) : (
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <Alert severity="info">
                     No vessels found. Please add a vessel from your dashboard first.
                   </Alert>
@@ -276,7 +276,7 @@ export default function WorkOrderFlow() {
 
             {/* Diagnostic Fields */}
             <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField
                   fullWidth
                   select
@@ -290,7 +290,7 @@ export default function WorkOrderFlow() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField
                   fullWidth
                   select
@@ -421,11 +421,11 @@ export default function WorkOrderFlow() {
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <Typography variant="subtitle2">Issue Category</Typography>
                     <Typography paragraph>{formData.issueCategory || 'Not specified'}</Typography>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <Typography variant="subtitle2">Severity</Typography>
                     <Typography paragraph>
                       <Chip

@@ -120,7 +120,7 @@ export default function BoatDetail() {
         <Fade in timeout={500}>
           <Grid container spacing={4}>
             {/* Main column */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <BoatPhotoCarousel images={listing.mediaUrls || []} />
 
               <Grow in timeout={500} style={{ transitionDelay: '150ms' }}>
@@ -160,7 +160,7 @@ export default function BoatDetail() {
                     <Typography variant="h6" gutterBottom>{t('detail.specs')}</Typography>
                     <Divider sx={{ mb: 1 }} />
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }} >
                         <SpecRow label={t('specs.boatType')} value={listing.boatType} />
                         <SpecRow label={t('specs.brand')} value={listing.brand} />
                         <SpecRow label={t('specs.model')} value={listing.model} />
@@ -169,7 +169,7 @@ export default function BoatDetail() {
                         <SpecRow label={t('specs.beamMeters')} value={listing.beamMeters && `${listing.beamMeters} m`} />
                         <SpecRow label={t('specs.draftMeters')} value={listing.draftMeters && `${listing.draftMeters} m`} />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }} >
                         <SpecRow label={t('specs.displacementKg')} value={listing.displacementKg && `${listing.displacementKg} kg`} />
                         <SpecRow label={t('specs.hullMaterial')} value={listing.hullMaterial} />
                         <SpecRow label={t('specs.fuelCapacityLiters')} value={listing.fuelCapacityLiters && `${listing.fuelCapacityLiters} L`} />
@@ -188,7 +188,7 @@ export default function BoatDetail() {
                     <Typography variant="h6" gutterBottom>{t('detail.engineSystems')}</Typography>
                     <Divider sx={{ mb: 1 }} />
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }} >
                         <SpecRow label={t('specs.engineMake')} value={listing.engineMake} />
                         <SpecRow label={t('specs.engineModel')} value={listing.engineModel} />
                         <SpecRow label={t('specs.engineHours')} value={listing.engineHours} />
@@ -272,7 +272,7 @@ export default function BoatDetail() {
             </Grid>
 
             {/* Sticky CTA panel */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Card sx={{ position: { md: 'sticky' }, top: { md: 88 } }}>
                 <CardContent>
                   {listing.forSale && listing.salePrice != null && (

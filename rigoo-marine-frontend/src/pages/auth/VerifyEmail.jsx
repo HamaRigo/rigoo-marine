@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Container, Paper, Typography, Button, CircularProgress, Stack } from '@mui/material';
+import { Box, Container, Paper, Typography, Button, CircularProgress, Stack, Alert } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../../services/api';
@@ -9,6 +9,7 @@ export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [state, setState] = useState(token ? 'verifying' : 'missing');
+  const [errorDetail, setErrorDetail] = useState('');
   const calledRef = useRef(false);
 
   useEffect(() => {
@@ -17,7 +18,18 @@ export default function VerifyEmail() {
     authApi
       .verifyEmail(token)
       .then(() => setState('success'))
-      .catch(() => setState('error'));
+      .catch((err) => {
+        if (!err.response) {
+          setErrorDetail('Cannot reach the server. Make sure the backend is running.');
+        } else if (err.response.status === 400 || err.response.status === 422) {
+          setErrorDetail('This link is invalid or has already been used.');
+        } else if (err.response.status === 410) {
+          setErrorDetail('This link has expired. Please request a new verification email.');
+        } else {
+          setErrorDetail('Something went wrong. Please try again later.');
+        }
+        setState('error');
+      });
   }, [token]);
 
   return (
@@ -42,7 +54,8 @@ export default function VerifyEmail() {
           {state === 'error' && (
             <>
               <Typography variant="h5" gutterBottom>{t('verifyEmail.errorTitle')}</Typography>
-              <Typography color="text.secondary" sx={{ mb: 3 }}>{t('verifyEmail.errorBody')}</Typography>
+              <Typography color="text.secondary" sx={{ mb: errorDetail ? 1.5 : 3 }}>{t('verifyEmail.errorBody')}</Typography>
+              {errorDetail && <Alert severity="warning" sx={{ mb: 2, textAlign: 'left' }}>{errorDetail}</Alert>}
               <Button component={Link} to="/login" variant="contained" fullWidth>
                 {t('verifyEmail.loginCta')}
               </Button>

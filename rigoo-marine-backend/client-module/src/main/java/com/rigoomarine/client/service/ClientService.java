@@ -30,6 +30,10 @@ public class ClientService {
 
     @CacheEvict(value = "clients", allEntries = true)
     public ClientDTO createClient(CreateClientRequest request) {
+        return createClient(request, false);
+    }
+
+    public ClientDTO createClient(CreateClientRequest request, boolean autoVerifyEmail) {
         if (clientRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
@@ -46,6 +50,7 @@ public class ClientService {
             .role(request.getRole() != null ? Client.UserRole.valueOf(request.getRole()) : Client.UserRole.CLIENT)
             .address(request.getAddress())
             .company(request.getCompany())
+            .emailVerified(autoVerifyEmail)
             .build();
 
         Client saved = clientRepository.save(client);

@@ -155,44 +155,44 @@ export default function Settings() {
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>Company Information</Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Company Name" value={settings.companyName}
                   onChange={(e) => handleChange('companyName', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Company Website" value={settings.companyWebsite}
                   onChange={(e) => handleChange('companyWebsite', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Phone Number" value={settings.companyPhone}
                   onChange={(e) => handleChange('companyPhone', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Email Address" value={settings.companyEmail}
                   onChange={(e) => handleChange('companyEmail', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Tax ID / VAT Number" value={settings.companyTaxId}
                   onChange={(e) => handleChange('companyTaxId', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Company Logo URL" value={settings.companyLogo}
                   onChange={(e) => handleChange('companyLogo', e.target.value)}
                   placeholder="/brand/logo.PNG" />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField fullWidth label="Street Address" value={settings.companyAddress}
                   onChange={(e) => handleChange('companyAddress', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Postal Code" value={settings.companyPostalCode}
                   onChange={(e) => handleChange('companyPostalCode', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="City" value={settings.companyCity}
                   onChange={(e) => handleChange('companyCity', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Country" value={settings.companyCountry}
                   onChange={(e) => handleChange('companyCountry', e.target.value)} />
               </Grid>
@@ -207,19 +207,19 @@ export default function Settings() {
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>SMTP Configuration</Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="SMTP Host" value={settings.smtpHost}
                   onChange={(e) => handleChange('smtpHost', e.target.value)} placeholder="smtp.gmail.com" />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="SMTP Port" value={settings.smtpPort} type="number"
                   onChange={(e) => handleChange('smtpPort', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="SMTP Username" value={settings.smtpUser}
                   onChange={(e) => handleChange('smtpUser', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="SMTP Password" type="password" value={tempPassword}
                   onChange={(e) => setTempPassword(e.target.value)}
                   placeholder="Leave blank to keep current"
@@ -232,15 +232,15 @@ export default function Settings() {
                   }} />
               </Grid>
               <Divider sx={{ my: 2, width: '100%' }} />
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="From Name" value={settings.emailFromName}
                   onChange={(e) => handleChange('emailFromName', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="From Email" value={settings.emailFromAddress}
                   onChange={(e) => handleChange('emailFromAddress', e.target.value)} />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <FormControlLabel
                   control={<Switch checked={settings.enableEmailNotifications}
                     onChange={(e) => handleChange('enableEmailNotifications', e.target.checked)} />}
@@ -258,19 +258,19 @@ export default function Settings() {
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>Invoice Settings</Typography>
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Invoice Prefix" value={settings.invoicePrefix}
                   onChange={(e) => handleChange('invoicePrefix', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Default Due Days" type="number" value={settings.invoiceDefaultDueDays}
                   onChange={(e) => handleChange('invoiceDefaultDueDays', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Default Tax Rate (%)" type="number" value={settings.invoiceDefaultTaxRate}
                   onChange={(e) => handleChange('invoiceDefaultTaxRate', e.target.value)} />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <TextField fullWidth label="Default Terms & Conditions" multiline rows={3}
                   value={settings.invoiceTerms}
                   onChange={(e) => handleChange('invoiceTerms', e.target.value)} />
@@ -281,15 +281,15 @@ export default function Settings() {
 
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>Quotation Settings</Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Quotation Prefix" value={settings.quotationPrefix}
                   onChange={(e) => handleChange('quotationPrefix', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Validity Period (Days)" type="number" value={settings.quotationValidityDays}
                   onChange={(e) => handleChange('quotationValidityDays', e.target.value)} />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField fullWidth label="Default Tax Rate (%)" type="number" value={settings.quotationDefaultTaxRate}
                   onChange={(e) => handleChange('quotationDefaultTaxRate', e.target.value)} />
               </Grid>
@@ -304,7 +304,7 @@ export default function Settings() {
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>System Configuration</Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <FormControlLabel
                   control={<Switch checked={settings.enableRegistration}
                     onChange={(e) => handleChange('enableRegistration', e.target.checked)} />}
@@ -314,7 +314,7 @@ export default function Settings() {
                   Allow new users to register accounts on the platform
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <FormControlLabel
                   control={<Switch checked={settings.requireEmailVerification}
                     onChange={(e) => handleChange('requireEmailVerification', e.target.checked)} />}
@@ -324,7 +324,7 @@ export default function Settings() {
                   Users must verify their email before accessing the platform
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <FormControlLabel
                   control={<Switch checked={settings.enableMaintenanceMode}
                     onChange={(e) => handleChange('enableMaintenanceMode', e.target.checked)} />}
@@ -334,7 +334,7 @@ export default function Settings() {
                   Temporarily disable access to the platform for maintenance
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="Session Timeout (minutes)" type="number"
                   value={settings.sessionTimeoutMinutes}
                   onChange={(e) => handleChange('sessionTimeoutMinutes', e.target.value)} />
@@ -345,7 +345,7 @@ export default function Settings() {
 
             <Typography variant="h6" gutterBottom sx={{ mb: 3, color: 'error.main' }}>Danger Zone</Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <Button variant="outlined" color="error"
                   onClick={() => { localStorage.removeItem('rigoo_company_settings'); setSettings(DEFAULT_SETTINGS); toast.success('Reset to defaults'); }}>
                   Reset to Defaults

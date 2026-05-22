@@ -77,7 +77,7 @@ export default function DeliveryDashboard() {
 
       <Stagger>
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard
               label={t('dashboard.todayStops')}
               value={tasks.length}
@@ -86,7 +86,7 @@ export default function DeliveryDashboard() {
               onClick={() => navigate('/delivery/tasks')}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard
               label={t('dashboard.inTransit')}
               value={inTransit.length}
@@ -95,7 +95,7 @@ export default function DeliveryDashboard() {
               onClick={() => navigate('/delivery/tasks')}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard
               label={t('dashboard.completed')}
               value={completed.length}
@@ -103,7 +103,7 @@ export default function DeliveryDashboard() {
               icon={<CheckCircleIcon fontSize="inherit" />}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
             <StatCard
               label={t('dashboard.failed')}
               value={failed.length}

@@ -225,6 +225,10 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
+        - id: vessel-inspection-service
+          uri: lb://maintenance-service
+          predicates:
+            - Path=/api/vessel-inspections/**
         - id: maintenance-service
           uri: lb://maintenance-service
           predicates:

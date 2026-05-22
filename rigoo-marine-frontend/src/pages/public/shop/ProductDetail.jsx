@@ -112,7 +112,7 @@ export default function ProductDetail() {
         <Fade in timeout={500}>
           <Grid container spacing={4}>
             {/* Main column */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <ProductPhotoCarousel images={product.mediaUrls || []} />
 
               <Grow in timeout={500} style={{ transitionDelay: '150ms' }}>
@@ -172,7 +172,7 @@ export default function ProductDetail() {
             </Grid>
 
             {/* Sticky CTA panel */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Card sx={{ position: { md: 'sticky' }, top: { md: 88 } }}>
                 <CardContent>
                   <Box sx={{ mb: 2 }}>

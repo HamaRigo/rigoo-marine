@@ -102,6 +102,53 @@ public class AdminController {
         return ResponseEntity.ok(clientService.getClientById(id));
     }
 
+    @PostMapping("/users")
+    public ResponseEntity<ClientDTO> createUser(
+            @Valid @RequestBody CreateClientRequest body,
+            HttpServletRequest httpRequest
+    ) {
+        ClientDTO created = clientService.createClient(body, true);
+        log.info("Admin created user {} with role {}", created.getId(), created.getRole());
+        adminAuditService.record(
+            actorEmail(), actorId(),
+            AdminAuditService.ACTION_USER_CREATE, AdminAuditService.TARGET_USER, created.getId(),
+            "{\"email\":" + jsonString(created.getEmail()) + ",\"role\":" + jsonString(created.getRole()) + "}",
+            httpRequest.getRemoteAddr());
+        return ResponseEntity.status(201).body(created);
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<ClientDTO> updateUser(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest
+    ) {
+        ClientDTO existing = clientService.getClientById(id);
+        CreateClientRequest request = new CreateClientRequest();
+        request.setName(body.getOrDefault("name", existing.getName()));
+        request.setEmail(body.getOrDefault("email", existing.getEmail()));
+        request.setPhone(body.getOrDefault("phone", existing.getPhone()));
+        request.setAddress(body.getOrDefault("address", existing.getAddress()));
+        request.setCompany(body.getOrDefault("company", existing.getCompany()));
+        request.setRole(body.getOrDefault("role", existing.getRole()));
+        String lang = body.getOrDefault("preferredLanguage", existing.getPreferredLanguage());
+        request.setPreferredLanguage(lang);
+
+        ClientDTO updated;
+        if (body.containsKey("password") && !body.get("password").isBlank()) {
+            request.setPassword(body.get("password"));
+            updated = clientService.updateClientWithPassword(id, request);
+        } else {
+            updated = clientService.updateClient(id, request);
+        }
+        log.info("Admin updated user {}", id);
+        adminAuditService.record(
+            actorEmail(), actorId(),
+            AdminAuditService.ACTION_USER_UPDATE, AdminAuditService.TARGET_USER, id,
+            "{}", httpRequest.getRemoteAddr());
+        return ResponseEntity.ok(updated);
+    }
+
     @PutMapping("/users/{id}/role")
     public ResponseEntity<ClientDTO> updateUserRole(
             @PathVariable Long id,
@@ -110,9 +157,8 @@ public class AdminController {
     ) {
         String newRole = roleUpdate.get("role");
 
-        // Validate role
-        if (newRole == null || !List.of("CLIENT", "ADMIN", "TECHNICIAN").contains(newRole)) {
-            throw new IllegalArgumentException("Invalid role. Must be CLIENT, ADMIN, or TECHNICIAN");
+        if (newRole == null || !List.of("CLIENT", "ADMIN", "TECHNICIAN", "TEAM_LEAD", "DELIVERY").contains(newRole)) {
+            throw new IllegalArgumentException("Invalid role. Must be CLIENT, ADMIN, TECHNICIAN, TEAM_LEAD, or DELIVERY");
         }
 
         ClientDTO existing = clientService.getClientById(id);

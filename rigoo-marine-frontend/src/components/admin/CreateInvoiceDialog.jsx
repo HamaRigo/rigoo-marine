@@ -194,7 +194,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
 
           {/* ── Header ── */}
           <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                 <Box
                   component="img"
@@ -214,7 +214,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
                 placeholder="https://..."
               />
             </Grid>
-            <Grid item xs={12} md={6} sx={{ textAlign: { md: 'right' } }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ textAlign: { md: 'right' } }} >
               <Typography variant="h4" fontWeight="bold" color="primary.dark" gutterBottom>
                 {isInvoice ? 'INVOICE' : 'QUOTATION'}
               </Typography>
@@ -226,16 +226,16 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
                 sx={{ mb: 1 }}
               />
               <Grid container spacing={1} sx={{ mt: 1 }}>
-                <Grid item xs={6}>
+                <Grid size={6} >
                   <TextField size="small" fullWidth type="date" label="Issue Date"
                     InputLabelProps={{ shrink: true }} value={form.issueDate} onChange={set('issueDate')} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6} >
                   <TextField size="small" fullWidth type="date"
                     label={isInvoice ? 'Due Date' : 'Expiry Date'}
                     InputLabelProps={{ shrink: true }} value={form.dueDate} onChange={set('dueDate')} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12} >
                   <TextField size="small" fullWidth select label="Status"
                     value={form.status} onChange={set('status')}>
                     {(isInvoice ? INVOICE_STATUSES : QUOTATION_STATUSES).map((s) => (
@@ -251,7 +251,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
 
           {/* ── Bill To ── */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Typography variant="overline" color="text.secondary" fontWeight="bold">FROM</Typography>
               <Box sx={{ mt: 0.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography variant="body2" fontWeight="bold">Rigoo Marine LLC</Typography>
@@ -259,7 +259,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
                 <Typography variant="body2" color="text.secondary">info@rigoomarine.qa</Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
                 <Typography variant="overline" color="text.secondary" fontWeight="bold">BILL TO</Typography>
                 <ToggleButtonGroup
@@ -298,23 +298,23 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
                 </>
               ) : (
                 <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                  <Grid item xs={12}>
+                  <Grid size={12} >
                     <TextField size="small" fullWidth required label="Full Name"
                       value={manualBillTo.name} onChange={setManual('name')} />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <TextField size="small" fullWidth label="Email"
                       value={manualBillTo.email} onChange={setManual('email')} />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }} >
                     <TextField size="small" fullWidth label="Phone"
                       value={manualBillTo.phone} onChange={setManual('phone')} />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12} >
                     <TextField size="small" fullWidth label="Company (optional)"
                       value={manualBillTo.company} onChange={setManual('company')} />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12} >
                     <TextField size="small" fullWidth label="Address (optional)"
                       value={manualBillTo.address} onChange={setManual('address')} />
                   </Grid>
@@ -407,17 +407,17 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
 
           {/* ── Notes & Terms ── */}
           <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <TextField label="Notes" fullWidth multiline rows={3}
                 value={form.notes} onChange={set('notes')}
                 placeholder="Payment instructions, references…" size="small" />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <TextField label="Terms & Conditions (English)" fullWidth multiline rows={3}
                 value={form.terms} onChange={set('terms')}
                 placeholder="Standard Qatari terms…" size="small" />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <TextField label="الشروط والأحكام" fullWidth multiline rows={3}
                 value={form.termsArabic} onChange={set('termsArabic')}
                 dir="rtl" size="small" />

@@ -23,7 +23,7 @@ export function SkeletonCardGrid({ count = 6 }) {
   return (
     <Grid container spacing={3}>
       {Array.from({ length: count }).map((_, index) => (
-        <Grid item xs={12} sm={6} md={4} key={index}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} >
           <SkeletonCard />
         </Grid>
       ))}
@@ -39,16 +39,16 @@ export function SkeletonTableRows({ count = 5 }) {
     <>
       {Array.from({ length: count }).map((_, index) => (
         <Grid container spacing={2} key={index} sx={{ mb: 2, p: 2, alignItems: 'center' }}>
-          <Grid item xs={4}>
+          <Grid size={4} >
             <Skeleton variant="text" />
           </Grid>
-          <Grid item xs={3}>
+          <Grid size={3} >
             <Skeleton variant="text" />
           </Grid>
-          <Grid item xs={3}>
+          <Grid size={3} >
             <Skeleton variant="text" />
           </Grid>
-          <Grid item xs={2}>
+          <Grid size={2} >
             <Skeleton variant="text" />
           </Grid>
         </Grid>

@@ -604,7 +604,7 @@ export default function DashboardHome() {
             { icon: ReceiptRoundedIcon,        label: 'Pending Invoices',      value: kpi.pendingInvoices, accent: GOLD,  to: '/dashboard/invoices',    sub: 'Awaiting payment' },
             { icon: ShoppingBagOutlinedIcon,   label: 'Shop Orders',           value: kpi.shopTotal,      accent: '#7B1FA2', to: '/dashboard/shop-orders', sub: 'All time' },
           ].map((card) => (
-            <Grid item xs={6} md={3} key={card.label}>
+            <Grid size={{ xs: 6, md: 3 }} key={card.label} >
               <KpiCard {...card} loading={anyLoading} />
             </Grid>
           ))}
@@ -613,7 +613,7 @@ export default function DashboardHome() {
 
       {/* ── Charts row 1: area + donut ── */}
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }} >
           <Reveal variant="fade" timeout={500}>
             <ChartCard
               title="Service Orders — Last 6 Months"
@@ -629,7 +629,7 @@ export default function DashboardHome() {
             </ChartCard>
           </Reveal>
         </Grid>
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Reveal variant="fade" timeout={550}>
             <ChartCard
               title="Order Status Breakdown"
@@ -644,7 +644,7 @@ export default function DashboardHome() {
 
       {/* ── Charts row 2: maintenance cost + invoices + upcoming ── */}
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Reveal variant="fade" timeout={560}>
             <ChartCard
               title={`Maintenance Cost ${year}`}
@@ -675,7 +675,7 @@ export default function DashboardHome() {
           </Reveal>
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }} >
           <Reveal variant="fade" timeout={600}>
             <ChartCard
               title="Invoice Status"
@@ -692,7 +692,7 @@ export default function DashboardHome() {
           </Reveal>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }} >
           <Reveal variant="fade" timeout={620}>
             <ChartCard
               title="Upcoming Maintenance"

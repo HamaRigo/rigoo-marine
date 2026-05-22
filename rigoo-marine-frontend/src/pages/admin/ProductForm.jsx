@@ -152,35 +152,35 @@ export default function ProductForm() {
         <Box component="form" onSubmit={handleSubmit}>
           <Section title={t('admin.sections.basic')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField select label={t('admin.fields.status')} value={form.status} onChange={update('status')} fullWidth>
                   {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{t(`status.${s}`)}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField select label={t('admin.fields.category')} value={form.category} onChange={update('category')} fullWidth>
                   {CATEGORY_OPTIONS.map((c) => <MenuItem key={c} value={c}>{t(`categories.${c}`)}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }} >
                 <TextField label={t('admin.fields.brand')} value={form.brand} onChange={update('brand')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.sku')} value={form.sku} onChange={update('sku')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.slug')} value={form.slug} onChange={update('slug')} fullWidth />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.nameEn')} value={form.nameEn} onChange={update('nameEn')} fullWidth required />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.nameAr')} value={form.nameAr} onChange={update('nameAr')} fullWidth dir="rtl" />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.descriptionEn')} value={form.descriptionEn} onChange={update('descriptionEn')} fullWidth multiline minRows={4} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.descriptionAr')} value={form.descriptionAr} onChange={update('descriptionAr')} fullWidth multiline minRows={4} dir="rtl" />
               </Grid>
             </Grid>
@@ -188,10 +188,10 @@ export default function ProductForm() {
 
           <Section title={t('admin.sections.pricing')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.priceQar')} type="number" value={form.priceQar} onChange={update('priceQar')} fullWidth required inputProps={{ min: 0, step: '0.01' }} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.stockQty')} type="number" value={form.stockQty} onChange={update('stockQty')} fullWidth inputProps={{ min: 0 }} />
               </Grid>
             </Grid>
@@ -199,10 +199,10 @@ export default function ProductForm() {
 
           <Section title={t('admin.sections.specs')}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.specsEn')} value={form.specsEn} onChange={update('specsEn')} fullWidth multiline minRows={4} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.specsAr')} value={form.specsAr} onChange={update('specsAr')} fullWidth multiline minRows={4} dir="rtl" />
               </Grid>
             </Grid>

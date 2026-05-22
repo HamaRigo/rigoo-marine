@@ -221,19 +221,19 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
           />
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField select fullWidth label={t('vessels.form.type')} value={form.type} onChange={set('type')}>
                 <MenuItem value=""><em>{t('vessels.form.none')}</em></MenuItem>
                 {VESSEL_TYPES.map(tp => <MenuItem key={tp} value={tp}>{tp}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.brand')} value={form.brand} onChange={set('brand')} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.model')} value={form.model} onChange={set('model')} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.year')} value={form.year} onChange={set('year')}
                 type="number" inputProps={{ min: 1900, max: new Date().getFullYear() + 1 }} />
             </Grid>
@@ -243,19 +243,19 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
           <SectionLabel label={t('vessels.form.sectionSpecs')} />
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField select fullWidth label={t('vessels.form.engineType')} value={form.engineType} onChange={set('engineType')}>
                 <MenuItem value=""><em>{t('vessels.form.none')}</em></MenuItem>
                 {ENGINE_TYPES.map(tp => <MenuItem key={tp} value={tp}>{tp}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField select fullWidth label={t('vessels.form.hullMaterial')} value={form.hullMaterial} onChange={set('hullMaterial')}>
                 <MenuItem value=""><em>{t('vessels.form.none')}</em></MenuItem>
                 {HULL_MATERIALS.map(tp => <MenuItem key={tp} value={tp}>{tp}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.length')} value={form.length}
                 onChange={set('length')} type="number" inputProps={{ min: 0 }}
                 InputProps={{
@@ -265,7 +265,7 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.registration')} value={form.registrationNumber}
                 onChange={set('registrationNumber')}
                 InputProps={{
@@ -281,7 +281,7 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
           <SectionLabel label={t('vessels.form.sectionDetails')} />
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField select fullWidth label={t('vessels.form.status')} value={form.status} onChange={set('status')}>
                 {VESSEL_STATUSES.map(s => (
                   <MenuItem key={s} value={s}>
@@ -293,7 +293,7 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }} >
               <TextField fullWidth label={t('vessels.form.photoUrl')} value={form.photoUrl}
                 onChange={(e) => { set('photoUrl')(e); setImgError(false); }}
                 placeholder={t('vessels.form.photoUrlPlaceholder')}
@@ -307,7 +307,7 @@ function VesselFormDialog({ open, initial, onClose, onSave, saving }) {
 
             {/* Photo preview */}
             {hasPhoto && (
-              <Grid item xs={12}>
+              <Grid size={12} >
                 <Box sx={{
                   borderRadius: 2, overflow: 'hidden', height: 140,
                   border: '1px solid', borderColor: 'divider', position: 'relative',
