@@ -2,6 +2,7 @@ package com.rigoomarine.shop.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ public class Cart {
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 30)
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 

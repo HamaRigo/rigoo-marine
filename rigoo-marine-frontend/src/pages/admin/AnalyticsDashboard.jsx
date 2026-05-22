@@ -15,7 +15,7 @@
  * - Empty top-clients list shows a placeholder row.
  * - All currency values formatted as "X,XXX.XX QAR".
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Stack, Chip,
   ToggleButton, ToggleButtonGroup, Table, TableBody, TableCell,
@@ -115,13 +115,18 @@ export default function AnalyticsDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const summary  = data?.summary  ?? {};
+  const summary    = data?.summary  ?? {};
   const topClients = data?.topClients ?? [];
-  const statusBD = data?.invoiceStatusBreakdown ?? {};
-  const monthly  = padMonths(data?.monthlyRevenue, months);
 
-  // Pie chart data from status breakdown
-  const pieData = Object.entries(statusBD).map(([name, value]) => ({ name, value }));
+  const monthly = useMemo(
+    () => padMonths(data?.monthlyRevenue, months),
+    [data?.monthlyRevenue, months]
+  );
+
+  const pieData = useMemo(
+    () => Object.entries(data?.invoiceStatusBreakdown ?? {}).map(([name, value]) => ({ name, value })),
+    [data?.invoiceStatusBreakdown]
+  );
 
   return (
     <Box>

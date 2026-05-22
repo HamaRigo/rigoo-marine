@@ -15,8 +15,9 @@ setupInterceptors();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 3,
+      staleTime: 5 * 60_000,        // 5 min — no refetch on remount/tab-switch
+      gcTime:    10 * 60_000,       // 10 min — keep unused cache entries longer
+      retry: 1,                     // one retry; 401/404 don't benefit from 3
       refetchOnWindowFocus: false,
     },
   },

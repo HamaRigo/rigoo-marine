@@ -5,6 +5,9 @@ import com.rigoomarine.service.repository.ServiceRepository;
 import com.rigoomarine.service.dto.ServiceDTO;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,6 +24,9 @@ public class ServiceService {
 
     private final ServiceRepository serviceRepository;
 
+    @Caching(evict = {
+        @CacheEvict(value = "services", allEntries = true)
+    })
     public ServiceDTO createService(ServiceDTO dto) {
         ServiceEntity entity = ServiceEntity.builder()
             .name(dto.getName())
@@ -34,6 +40,7 @@ public class ServiceService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "services", key = "'all-active'")
     public List<ServiceDTO> getAllServices() {
         return serviceRepository.findByActiveTrue().stream()
             .map(this::toDTO)
@@ -63,6 +70,7 @@ public class ServiceService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "services", key = "#category")
     public List<ServiceDTO> getServicesByCategory(String category) {
         return serviceRepository.findByCategory(category).stream()
             .map(this::toDTO)
@@ -76,6 +84,7 @@ public class ServiceService {
             .orElseThrow(() -> new RuntimeException("Service not found"));
     }
 
+    @CacheEvict(value = "services", allEntries = true)
     public ServiceDTO updateService(Long id, ServiceDTO dto) {
         ServiceEntity entity = serviceRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -90,6 +99,7 @@ public class ServiceService {
         return toDTO(updated);
     }
 
+    @CacheEvict(value = "services", allEntries = true)
     public void deleteService(Long id) {
         serviceRepository.deleteById(id);
     }

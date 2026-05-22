@@ -2,6 +2,7 @@ package com.rigoomarine.shop.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -57,7 +58,8 @@ public class Order {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 30)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 

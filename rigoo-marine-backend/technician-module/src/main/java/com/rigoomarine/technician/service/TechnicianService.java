@@ -4,6 +4,9 @@ import com.rigoomarine.technician.entity.Technician;
 import com.rigoomarine.technician.repository.TechnicianRepository;
 import com.rigoomarine.technician.dto.TechnicianDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -16,6 +19,10 @@ public class TechnicianService {
 
     private final TechnicianRepository technicianRepository;
 
+    @Caching(evict = {
+        @CacheEvict(value = "technicians", key = "'all'"),
+        @CacheEvict(value = "technicians", key = "'available'")
+    })
     public TechnicianDTO createTechnician(TechnicianDTO dto) {
         Technician technician = Technician.builder()
             .name(dto.getName())
@@ -32,6 +39,7 @@ public class TechnicianService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "technicians", key = "'all'")
     public List<TechnicianDTO> getAllTechnicians() {
         return technicianRepository.findAll().stream()
             .map(this::toDTO)
@@ -39,6 +47,7 @@ public class TechnicianService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "technicians", key = "'available'")
     public List<TechnicianDTO> getAvailableTechnicians() {
         return technicianRepository.findByAvailableTrue().stream()
             .map(this::toDTO)
@@ -52,6 +61,10 @@ public class TechnicianService {
             .orElseThrow(() -> new RuntimeException("Technician not found"));
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "technicians", key = "'all'"),
+        @CacheEvict(value = "technicians", key = "'available'")
+    })
     public TechnicianDTO updateTechnician(Long id, TechnicianDTO dto) {
         Technician technician = technicianRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Technician not found"));
@@ -68,6 +81,10 @@ public class TechnicianService {
         return toDTO(updated);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "technicians", key = "'all'"),
+        @CacheEvict(value = "technicians", key = "'available'")
+    })
     public void deleteTechnician(Long id) {
         technicianRepository.deleteById(id);
     }
