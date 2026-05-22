@@ -120,6 +120,7 @@ import TeamLeadQuotations from './pages/team-lead/TeamLeadQuotations';
 import TeamLeadHistory from './pages/team-lead/TeamLeadHistory';
 import TeamLeadTechnicians  from './pages/team-lead/TeamLeadTechnicians';
 import TeamLeadInspections  from './pages/team-lead/TeamLeadInspections';
+import TeamLeadApprovals    from './pages/team-lead/TeamLeadApprovals';
 
 // Error Pages
 import NotFound from './pages/error/NotFound';
@@ -259,6 +260,7 @@ function App() {
                 }
               >
                 <Route index                  element={<TeamLeadDashboard />} />
+                <Route path="approvals"       element={<TeamLeadApprovals />} />
                 <Route path="orders"          element={<TeamLeadOrders />} />
                 <Route path="orders/:id"      element={<TeamLeadOrderDetail />} />
                 <Route path="team-requests"   element={<TeamLeadTeamRequests />} />

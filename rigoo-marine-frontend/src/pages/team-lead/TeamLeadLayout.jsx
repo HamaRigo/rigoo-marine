@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import {
   Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  AppBar, Toolbar, Typography, IconButton, Container, Fade,
+  AppBar, Toolbar, Typography, IconButton, Container, Fade, Badge,
 } from '@mui/material';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '../../services/api';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
@@ -15,6 +17,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
@@ -22,6 +25,7 @@ const drawerWidth = 240;
 
 const navItems = [
   { name: 'Dashboard',      path: '/team-lead',                icon: <DashboardIcon /> },
+  { name: 'Approvals',      path: '/team-lead/approvals',      icon: <PendingActionsIcon />, badgeKey: 'approvals' },
   { name: 'Orders',         path: '/team-lead/orders',         icon: <BuildIcon /> },
   { name: 'Team Requests',  path: '/team-lead/team-requests',  icon: <GroupWorkIcon /> },
   { name: 'Invoices',       path: '/team-lead/invoices',       icon: <ReceiptIcon /> },
@@ -36,6 +40,13 @@ export default function TeamLeadLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  const { data: pendingApprovals } = useQuery({
+    queryKey: ['tl-pending-approvals-count'],
+    queryFn: () => adminApi.searchOrders({ status: 'PENDING_APPROVAL', size: 1 }),
+    refetchInterval: 60_000,
+    select: (d) => d?.totalElements ?? 0,
+  });
 
   const drawer = (
     <Box>
@@ -79,7 +90,11 @@ export default function TeamLeadLayout() {
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 36, color: selected ? '#00796b' : 'inherit' }}>
-                  {item.icon}
+                  {item.badgeKey === 'approvals' && pendingApprovals > 0 ? (
+                    <Badge badgeContent={pendingApprovals} color="warning" max={99}>
+                      {item.icon}
+                    </Badge>
+                  ) : item.icon}
                 </ListItemIcon>
                 <ListItemText primary={item.name} />
               </ListItemButton>

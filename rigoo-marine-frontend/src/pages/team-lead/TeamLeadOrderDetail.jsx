@@ -43,6 +43,10 @@ export default function TeamLeadOrderDetail() {
   const [selectedTech, setSelectedTech] = useState('');
   const [assigning, setAssigning]       = useState(false);
 
+  const [rejectDialog, setRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejecting, setRejecting]       = useState(false);
+
   const load = useCallback(async () => {
     try {
       setLoading(true);
@@ -80,6 +84,21 @@ export default function TeamLeadOrderDetail() {
       toast.success('Order approved');
     } catch {
       toast.error('Failed to approve order');
+    }
+  };
+
+  const handleReject = async () => {
+    setRejecting(true);
+    try {
+      const updated = await workOrderApi.reject(id, user?.id, rejectReason);
+      setOrder(updated);
+      setRejectDialog(false);
+      setRejectReason('');
+      toast.success('Order rejected');
+    } catch {
+      toast.error('Failed to reject order');
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -148,6 +167,7 @@ export default function TeamLeadOrderDetail() {
 
               <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
                 {canApprove  && <Button variant="contained" color="success" size="small" onClick={handleApprove}>Approve</Button>}
+                {canApprove  && <Button variant="outlined"  color="error"   size="small" onClick={() => { setRejectReason(''); setRejectDialog(true); }}>Reject</Button>}
                 {canStart    && <Button variant="contained" color="primary" size="small" onClick={() => handleStatusUpdate('IN_PROGRESS')}>Start Work</Button>}
                 {canComplete && <Button variant="contained" color="success" size="small" onClick={() => handleStatusUpdate('COMPLETED')}>Mark Complete</Button>}
                 <Button
@@ -234,6 +254,28 @@ export default function TeamLeadOrderDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Reject dialog */}
+      <Dialog open={rejectDialog} onClose={() => setRejectDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Reject Order #{order.id}</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            label="Reason (optional)"
+            multiline
+            rows={3}
+            fullWidth
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
+            placeholder="Let the client know why this request can't be processed…"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectDialog(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleReject} disabled={rejecting}>
+            {rejecting ? <CircularProgress size={18} /> : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Assign dialog */}
       <Dialog open={assignDialog} onClose={() => setAssignDialog(false)} maxWidth="xs" fullWidth>
