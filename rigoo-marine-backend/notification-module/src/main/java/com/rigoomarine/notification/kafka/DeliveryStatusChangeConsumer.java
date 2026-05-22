@@ -3,7 +3,7 @@ package com.rigoomarine.notification.kafka;
 import com.rigoomarine.notification.entity.Notification;
 import com.rigoomarine.notification.recipient.RecipientLookup;
 import com.rigoomarine.notification.repository.NotificationRepository;
-import com.rigoomarine.notification.whatsapp.WhatsAppSender;
+import com.rigoomarine.notification.whatsapp.WhatsAppPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +29,9 @@ public class DeliveryStatusChangeConsumer {
     private final EventDedupe eventDedupe;
     private final NotificationMetrics metrics;
 
-    // Optional — only wired when app.whatsapp.enabled=true
+    // Optional — only wired when app.whatsapp.enabled=true (any provider)
     @Autowired(required = false)
-    private WhatsAppSender whatsAppSender;
+    private WhatsAppPort whatsAppSender;
 
     private static final String TYPE = "DELIVERY_STATUS_CHANGE";
 

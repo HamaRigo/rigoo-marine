@@ -362,6 +362,12 @@ spring:
           predicates:
             - Path=/api/team-requests/**
         # Delivery — tech task/position endpoints + admin task management.
+        # Meta WhatsApp webhook — public, HMAC-verified at the controller.
+        # Must be accessible without authentication so Meta can POST delivery receipts.
+        - id: whatsapp-webhook
+          uri: lb://notification-service
+          predicates:
+            - Path=/whatsapp/webhook
         - id: delivery-service
           uri: lb://delivery-service
           predicates:

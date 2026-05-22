@@ -78,6 +78,9 @@ app:
   # recipients alongside email + in-app notifications.
   whatsapp:
     enabled:  ${WHATSAPP_ENABLED:false}
+    # provider=log  → logs to stdout (dev/test, no credentials needed)
+    # provider=twilio → Twilio Messaging API (set WHATSAPP_TWILIO_* vars)
+    # provider=meta  → Meta Cloud API (set WHATSAPP_META_* vars)
     provider: ${WHATSAPP_PROVIDER:twilio}
 
     # ── Twilio credentials (used when provider=twilio) ──
