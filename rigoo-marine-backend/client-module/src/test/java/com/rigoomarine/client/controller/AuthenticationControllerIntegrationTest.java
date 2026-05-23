@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -44,11 +45,21 @@ class AuthenticationControllerIntegrationTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired(required = false)
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
     private String authToken;
 
     @BeforeEach
     void setUp() {
         clientRepository.deleteAll();
+        // Clear rate limiter Redis keys so registration tests are idempotent across runs.
+        if (redisTemplate != null) {
+            Set<String> keys = redisTemplate.keys("register:rate:*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        }
     }
 
     @Test
@@ -56,7 +67,7 @@ class AuthenticationControllerIntegrationTest {
         CreateClientRequest request = CreateClientRequest.builder()
                 .name("Test User")
                 .email("test@example.com")
-                .phone("1234567890")
+                .phone("+97466000001")
                 .password("password123")
                 .role("CLIENT")
                 .build();
@@ -81,7 +92,7 @@ class AuthenticationControllerIntegrationTest {
         CreateClientRequest request = CreateClientRequest.builder()
                 .name("Test User")
                 .email("duplicate@example.com")
-                .phone("1234567890")
+                .phone("+97455000002")
                 .password("password123")
                 .build();
 
@@ -177,7 +188,7 @@ class AuthenticationControllerIntegrationTest {
 
         Map<String, String> updates = Map.of(
                 "name", "Updated Name",
-                "phone", "9876543210",
+                "phone", "+97466000007",
                 "company", "New Company"
         );
 
@@ -187,7 +198,7 @@ class AuthenticationControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(updates)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.name").value("Updated Name"))
-                .andExpect(jsonPath("$.user.phone").value("9876543210"))
+                .andExpect(jsonPath("$.user.phone").value("+97466000007"))
                 .andExpect(jsonPath("$.user.company").value("New Company"));
     }
 
@@ -207,7 +218,7 @@ class AuthenticationControllerIntegrationTest {
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+                .andExpect(jsonPath("$.message").value("Logged out"));
     }
 
     @Test
@@ -221,6 +232,6 @@ class AuthenticationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(jsonPath("$.fieldErrors").exists());
     }
 }

@@ -35,11 +35,11 @@ public class ClientService {
 
     public ClientDTO createClient(CreateClientRequest request, boolean autoVerifyEmail) {
         if (clientRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
         String normalizedPhone = phoneNumberService.normalize(request.getPhone());
         if (clientRepository.existsByPhone(normalizedPhone)) {
-            throw new RuntimeException("Phone already exists");
+            throw new IllegalArgumentException("Phone already exists");
         }
 
         Client client = Client.builder()

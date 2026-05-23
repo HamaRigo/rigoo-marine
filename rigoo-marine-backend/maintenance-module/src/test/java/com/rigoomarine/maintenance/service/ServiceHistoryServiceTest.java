@@ -30,6 +30,7 @@ class ServiceHistoryServiceTest {
     private ServiceHistoryRecordRepository historyRepo;
     private com.rigoomarine.maintenance.repository.ServiceHistoryAttachmentRepository attachmentRepo;
     private ServiceScheduleService scheduleService;
+    private DossierCacheService dossierCache;
     private VesselClient vesselClient;
     private MaintenanceAuditLogger auditLogger;
     private ServiceHistoryService service;
@@ -39,9 +40,10 @@ class ServiceHistoryServiceTest {
         historyRepo = mock(ServiceHistoryRecordRepository.class);
         attachmentRepo = mock(com.rigoomarine.maintenance.repository.ServiceHistoryAttachmentRepository.class);
         scheduleService = mock(ServiceScheduleService.class);
+        dossierCache = mock(DossierCacheService.class);
         vesselClient = mock(VesselClient.class);
         auditLogger = mock(MaintenanceAuditLogger.class);
-        service = new ServiceHistoryService(historyRepo, attachmentRepo, scheduleService, vesselClient, FIXED, auditLogger);
+        service = new ServiceHistoryService(historyRepo, attachmentRepo, scheduleService, dossierCache, vesselClient, FIXED, auditLogger);
 
         when(historyRepo.save(any(ServiceHistoryRecord.class)))
             .thenAnswer(inv -> {

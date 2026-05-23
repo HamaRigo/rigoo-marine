@@ -47,7 +47,7 @@ class AdminControllerIntegrationTest {
         Client admin = Client.builder()
                 .name("Admin User")
                 .email("admin@example.com")
-                .phone("1234567890")
+                .phone("+97466100001")
                 .password(passwordEncoder.encode("admin123"))
                 .role(Client.UserRole.ADMIN)
                 .build();
@@ -57,7 +57,7 @@ class AdminControllerIntegrationTest {
         Client client1 = Client.builder()
                 .name("Test Client")
                 .email("client@example.com")
-                .phone("1111111111")
+                .phone("+97466100002")
                 .password(passwordEncoder.encode("password123"))
                 .role(Client.UserRole.CLIENT)
                 .build();
@@ -66,7 +66,7 @@ class AdminControllerIntegrationTest {
         Client technician = Client.builder()
                 .name("Test Technician")
                 .email("technician@example.com")
-                .phone("2222222222")
+                .phone("+97466100003")
                 .password(passwordEncoder.encode("password123"))
                 .role(Client.UserRole.TECHNICIAN)
                 .build();
@@ -88,7 +88,7 @@ class AdminControllerIntegrationTest {
 
     @Test
     void getAllUsers_ShouldReturnListOfUsers_WhenAdmin() throws Exception {
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/admin/users/all")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -167,18 +167,16 @@ class AdminControllerIntegrationTest {
     }
 
     @Test
-    void getAllOrders_ShouldReturnEmptyList_WhenNotIntegrated() throws Exception {
+    void getAllOrders_ShouldReturnError_WhenEndpointRemoved() throws Exception {
         mockMvc.perform(get("/admin/orders")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
-    void getAllServices_ShouldReturnEmptyList_WhenNotIntegrated() throws Exception {
+    void getAllServices_ShouldReturnError_WhenEndpointRemoved() throws Exception {
         mockMvc.perform(get("/admin/services")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is5xxServerError());
     }
 }

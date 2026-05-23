@@ -66,7 +66,7 @@ class ClientControllerIntegrationTest {
         CreateClientRequest request = CreateClientRequest.builder()
                 .name("New Client")
                 .email("newclient@example.com")
-                .phone("1234567890")
+                .phone("+97466000003")
                 .password("password123")
                 .role("CLIENT")
                 .build();
@@ -112,7 +112,7 @@ class ClientControllerIntegrationTest {
         Client client = Client.builder()
                 .name("Get Client")
                 .email("getclient@example.com")
-                .phone("1234567890")
+                .phone("9111111111")
                 .password(passwordEncoder.encode("password123"))
                 .role(Client.UserRole.CLIENT)
                 .build();
@@ -136,7 +136,7 @@ class ClientControllerIntegrationTest {
         Client client = Client.builder()
                 .name("Update Client")
                 .email("updateclient@example.com")
-                .phone("1234567890")
+                .phone("9222222222")
                 .password(passwordEncoder.encode("password123"))
                 .role(Client.UserRole.CLIENT)
                 .build();
@@ -145,7 +145,7 @@ class ClientControllerIntegrationTest {
         CreateClientRequest updateRequest = CreateClientRequest.builder()
                 .name("Updated Name")
                 .email("updatedemail@example.com")
-                .phone("9876543210")
+                .phone("+97466000004")
                 .password("newpassword")
                 .role("CLIENT")
                 .address("New Address")
@@ -158,7 +158,7 @@ class ClientControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"))
-                .andExpect(jsonPath("$.phone").value("9876543210"))
+                .andExpect(jsonPath("$.phone").value("+97466000004"))
                 .andExpect(jsonPath("$.company").value("New Company"));
     }
 
@@ -167,7 +167,7 @@ class ClientControllerIntegrationTest {
         Client client = Client.builder()
                 .name("Delete Client")
                 .email("deleteclient@example.com")
-                .phone("1234567890")
+                .phone("9333333333")
                 .password(passwordEncoder.encode("password123"))
                 .role(Client.UserRole.CLIENT)
                 .build();

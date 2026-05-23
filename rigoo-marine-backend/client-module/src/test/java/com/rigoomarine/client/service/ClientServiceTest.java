@@ -1,5 +1,6 @@
 package com.rigoomarine.client.service;
 
+import com.rigoomarine.client.auth.PhoneNumberService;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import com.rigoomarine.client.entity.Client;
@@ -27,6 +28,9 @@ class ClientServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private PhoneNumberService phoneNumberService;
 
     @InjectMocks
     private ClientService clientService;
@@ -61,6 +65,7 @@ class ClientServiceTest {
 
     @Test
     void createClient_ShouldReturnClientDTO_WhenEmailNotExists() {
+        when(phoneNumberService.normalize(createRequest.getPhone())).thenReturn(createRequest.getPhone());
         when(clientRepository.existsByEmail(createRequest.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(createRequest.getPassword())).thenReturn("encodedPassword");
         when(clientRepository.save(any(Client.class))).thenReturn(client);

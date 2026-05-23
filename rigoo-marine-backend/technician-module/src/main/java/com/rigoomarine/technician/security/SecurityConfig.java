@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -44,6 +45,10 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -33,7 +34,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
-                    "/api/auth/**",
+                    // Public auth endpoints (no JWT required)
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/otp/**",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
+                    "/api/auth/verify-email",
+                    "/api/auth/resend-verification",
                     // Public read-only data (footer contact info, etc.) — no auth.
                     "/api/public/**",
                     // Team requests are open to guests (no JWT required).
@@ -58,6 +66,10 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
