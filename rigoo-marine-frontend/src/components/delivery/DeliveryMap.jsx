@@ -30,20 +30,24 @@ function driverIcon(color, name) {
   });
 }
 
-function stopIcon(n, done) {
-  const fill = done ? '#9e9e9e' : '#1565c0';
+function stopIcon(n, done, selected) {
+  const fill   = done ? '#9e9e9e' : selected ? '#e65100' : '#1565c0';
+  const border = selected ? '3px solid #ff9800' : '2px solid #fff';
+  const shadow = selected
+    ? '0 0 0 3px rgba(255,152,0,0.4),0 2px 8px rgba(0,0,0,.4)'
+    : '0 2px 6px rgba(0,0,0,.3)';
+  const size = selected ? 30 : 24;
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:24px;height:24px;border-radius:50%;
-      background:${fill};border:2px solid #fff;
-      box-shadow:0 2px 6px rgba(0,0,0,.3);
-      color:#fff;font-weight:700;font-size:11px;
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${fill};border:${border};box-shadow:${shadow};
+      color:#fff;font-weight:700;font-size:${selected ? 13 : 11}px;
       display:flex;align-items:center;justify-content:center;
       ${done ? 'opacity:0.65' : ''}
     ">${done ? '✓' : n}</div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
@@ -55,10 +59,13 @@ export default function DeliveryMap({
   height = '360px',
   showStops = false,
   selectedDriverId,
+  selectedStopId,
+  onStopSelect,
 }) {
-  const containerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markersRef = useRef([]);
+  const containerRef        = useRef(null);
+  const mapRef              = useRef(null);
+  const markersRef          = useRef([]);
+  const stopMarkersByIdRef  = useRef({});
 
   // Init map once
   useEffect(() => {
@@ -131,22 +138,37 @@ export default function DeliveryMap({
 
     // Stop markers
     if (showStops) {
+      stopMarkersByIdRef.current = {};
       tasks
         .filter(t => t.deliveryLat && t.deliveryLng)
         .forEach((t, i) => {
-          const done = t.status === 'DELIVERED';
-          const marker = L.marker(
+          const done     = t.status === 'DELIVERED';
+          const selected = t.id === selectedStopId;
+          const marker   = L.marker(
             [parseFloat(t.deliveryLat), parseFloat(t.deliveryLng)],
-            { icon: stopIcon(t.stopOrder ?? i + 1, done) }
+            { icon: stopIcon(t.stopOrder ?? i + 1, done, selected) }
           );
           marker.bindPopup(`
-            <div style="font-family:inherit">
-              <strong style="font-size:13px">Stop ${t.stopOrder ?? i + 1} — ${t.status}</strong><br/>
-              <span style="font-size:12px">${t.deliveryAddress ?? ''}</span>
+            <div style="font-family:inherit;min-width:140px">
+              <strong style="font-size:13px">Stop ${t.stopOrder ?? i + 1}</strong><br/>
+              <span style="font-size:12px">${t.deliveryAddress ?? ''}</span><br/>
+              <span style="display:inline-block;margin-top:4px;font-size:11px;
+                padding:2px 6px;border-radius:3px;background:#e3f2fd;color:#1565c0">
+                ${t.status}
+              </span>
             </div>
           `);
+          if (onStopSelect) {
+            marker.on('click', () => onStopSelect(t.id === selectedStopId ? null : t.id));
+          }
           marker.addTo(map);
           markersRef.current.push(marker);
+          stopMarkersByIdRef.current[t.id] = marker;
+
+          if (selected) {
+            map.setView([parseFloat(t.deliveryLat), parseFloat(t.deliveryLng)], 16);
+            marker.openPopup();
+          }
         });
     }
 
@@ -154,7 +176,7 @@ export default function DeliveryMap({
     if (positions.length > 0) {
       map.setView([parseFloat(positions[0].lat), parseFloat(positions[0].lng)], map.getZoom());
     }
-  }, [positions, tasks, driverById, onDriverClick, showStops, selectedDriverId]);
+  }, [positions, tasks, driverById, onDriverClick, showStops, selectedDriverId, selectedStopId, onStopSelect]);
 
   return <Box ref={containerRef} sx={{ height, borderRadius: 2, overflow: 'hidden' }} />;
 }

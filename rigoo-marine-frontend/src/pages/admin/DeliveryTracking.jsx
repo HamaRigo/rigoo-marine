@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Grid, Stack, Card, CardContent, CardActionArea,
-  Chip, Alert, LinearProgress, Button, Divider, IconButton, Tooltip,
+  Chip, Alert, LinearProgress, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, FormControl, InputLabel, Select, MenuItem,
   CircularProgress, Collapse,
@@ -55,13 +55,14 @@ export default function DeliveryTracking() {
   const navigate   = useNavigate();
   const qc         = useQueryClient();
 
-  const [createOpen, setCreateOpen]         = useState(false);
-  const [assignTarget, setAssignTarget]     = useState(null);
-  const [assignDriverId, setAssignDriverId] = useState('');
-  const [cancelTarget, setCancelTarget]     = useState(null);
-  const [cancelReason, setCancelReason]     = useState('');
-  const [forceTarget, setForceTarget]       = useState(null);
-  const [forceStatus, setForceStatus]       = useState('');
+  const [createOpen, setCreateOpen]             = useState(false);
+  const [assignTarget, setAssignTarget]         = useState(null);
+  const [assignDriverId, setAssignDriverId]     = useState('');
+  const [cancelTarget, setCancelTarget]         = useState(null);
+  const [cancelReason, setCancelReason]         = useState('');
+  const [forceTarget, setForceTarget]           = useState(null);
+  const [forceStatus, setForceStatus]           = useState('');
+  const [selectedStopId, setSelectedStopId]     = useState(null);
 
   /* ── Data ── */
   const queryKey = techId ? ['admin-delivery-driver', techId] : ['admin-delivery-all'];
@@ -235,6 +236,8 @@ export default function DeliveryTracking() {
           selectedDriverId={techId ? Number(techId) : undefined}
           showStops={!!techId}
           height="420px"
+          selectedStopId={techId ? selectedStopId : undefined}
+          onStopSelect={techId ? (id) => setSelectedStopId(prev => prev === id ? null : id) : undefined}
         />
       </Box>
 
@@ -245,6 +248,8 @@ export default function DeliveryTracking() {
           openAssign={openAssign}
           openForce={openForce}
           setCancelTarget={t => { setCancelReason(''); setCancelTarget(t); }}
+          selectedStopId={selectedStopId}
+          onSelectStop={(id) => setSelectedStopId(prev => prev === id ? null : id)}
         />
       ) : (
         <AllDriversGrid
@@ -347,21 +352,46 @@ export default function DeliveryTracking() {
 
 /* ── Sub-components ──────────────────────────────────────────────────────── */
 
-function SingleDriverDetail({ tasks, openAssign, openForce, setCancelTarget }) {
+function SingleDriverDetail({ tasks, openAssign, openForce, setCancelTarget, selectedStopId, onSelectStop }) {
   if (tasks.length === 0) {
     return <Typography color="text.disabled">No stops assigned to this driver today.</Typography>;
   }
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography variant="h6" fontWeight={600} gutterBottom>Stop List</Typography>
-        <Stack spacing={0.5}>
-          {tasks.map((task, i) => (
-            <Box key={task.id}>
-              {i > 0 && <Divider sx={{ my: 0.5 }} />}
+    <Stack spacing={1}>
+      <Typography variant="h6" fontWeight={600}>Stop List</Typography>
+      {tasks.map((task, i) => {
+        const done      = ['DELIVERED', 'FAILED'].includes(task.status);
+        const selected  = task.id === selectedStopId;
+        const hasCoords = task.deliveryLat && task.deliveryLng;
+        const canAct    = task.status === 'FAILED' || task.status === 'PENDING';
+
+        return (
+          <Card
+            key={task.id}
+            variant="outlined"
+            onClick={() => hasCoords && onSelectStop?.(task.id)}
+            sx={{
+              cursor: hasCoords ? 'pointer' : 'default',
+              borderColor: selected ? 'warning.main' : 'divider',
+              borderWidth: selected ? 2 : 1,
+              bgcolor: selected ? 'warning.50' : 'background.paper',
+              opacity: done ? 0.75 : 1,
+              transition: 'border-color .2s, background-color .2s',
+              '&:hover': hasCoords ? { borderColor: 'primary.main', bgcolor: 'action.hover' } : {},
+            }}
+          >
+            <CardContent sx={{ py: '8px !important', px: 2 }}>
               <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
-                <Typography variant="body2" sx={{ flex: 1, minWidth: 200 }} noWrap>
-                  Stop {task.stopOrder ?? i + 1} — {task.deliveryAddress}
+                <Box sx={{
+                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  bgcolor: selected ? 'warning.main' : done ? 'grey.400' : 'primary.main',
+                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700,
+                }}>
+                  {done ? '✓' : task.stopOrder ?? i + 1}
+                </Box>
+                <Typography variant="body2" sx={{ flex: 1, minWidth: 120 }} noWrap>
+                  {task.deliveryAddress}
                 </Typography>
                 <Chip
                   label={STATUS_LABEL[task.status] ?? task.status}
@@ -369,8 +399,8 @@ function SingleDriverDetail({ tasks, openAssign, openForce, setCancelTarget }) {
                   color={STATUS_COLOR[task.status] ?? 'default'}
                   sx={{ flexShrink: 0, fontSize: 10 }}
                 />
-                {(task.status === 'FAILED' || task.status === 'PENDING') && (
-                  <Stack direction="row" spacing={0.5} flexShrink={0}>
+                {canAct && (
+                  <Stack direction="row" spacing={0.5} flexShrink={0} onClick={e => e.stopPropagation()}>
                     <Tooltip title="Reassign driver">
                       <IconButton size="small" onClick={() => openAssign(task)}>
                         <PersonAddRoundedIcon fontSize="small" />
@@ -390,15 +420,15 @@ function SingleDriverDetail({ tasks, openAssign, openForce, setCancelTarget }) {
                 )}
               </Stack>
               {task.failedReason && (
-                <Typography variant="caption" color="error" sx={{ ml: 2, display: 'block' }}>
+                <Typography variant="caption" color="error" sx={{ ml: 4.5, display: 'block', mt: 0.5 }}>
                   {task.failedReason}
                 </Typography>
               )}
-            </Box>
-          ))}
-        </Stack>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </Stack>
   );
 }
 
