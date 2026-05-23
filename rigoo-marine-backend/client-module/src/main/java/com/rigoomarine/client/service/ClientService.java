@@ -65,6 +65,13 @@ public class ClientService {
             .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<ClientDTO> getClientsByRole(String role) {
+        return clientRepository.findByRole(Client.UserRole.valueOf(role)).stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+    }
+
     /**
      * Filterable + paginated client list for the admin user-management table.
      * @param q         free-text matched against name + email + phone (case-insensitive)

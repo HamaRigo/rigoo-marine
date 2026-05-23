@@ -4,6 +4,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { defaultPathForRole } from '../../utils/routes';
+import PhoneField from '../../components/common/PhoneField';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { required, email, nameMin, passwordMin, passwordMatch, requiredPhone } from '../../utils/validators';
+import { getApiError } from '../../utils/apiError';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -21,28 +25,38 @@ export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('auth');
+  const { t: tv } = useTranslation('validation');
+
+  const { touch, revalidate, validateAll, fieldError } = useFormValidation({
+    name:            [required, nameMin],
+    email:           [required, email],
+    phone:           [requiredPhone],
+    password:        [required, passwordMin],
+    confirmPassword: [required, passwordMatch('password')],
+  });
 
   const userTypes = [
     { value: 'CLIENT', label: t('register.roles.client') },
     { value: 'TECHNICIAN', label: t('register.roles.technician') },
   ];
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const updated = { ...formData, [name]: value };
+    setFormData(updated);
+    revalidate(name, value, updated);
+  };
+
+  const handleBlur = (e) => {
+    touch(e.target.name, e.target.value, formData);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError(t('register.errors.passwordMismatch'));
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError(t('register.errors.passwordTooShort'));
-      return;
-    }
+    if (!validateAll(formData)) return;
 
     setLoading(true);
-
     try {
       const { confirmPassword, userType, ...rest } = formData;
       const newUser = await register({ ...rest, role: userType });
@@ -53,15 +67,11 @@ export default function Register() {
       if (err.response?.status === 400 && /already exists/i.test(backendMessage || '')) {
         setDuplicateEmailOpen(true);
       } else {
-        setError(backendMessage || err.message || t('register.errors.fallback'));
+        setError(getApiError(err));
       }
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
@@ -81,43 +91,48 @@ export default function Register() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <TextField
               fullWidth
               label={t('register.fullName')}
               name="name"
               value={formData.name}
               onChange={handleChange}
+              onBlur={handleBlur}
               margin="normal"
               required
               autoComplete="name"
+              inputProps={{ maxLength: 100 }}
+              error={!!fieldError('name')}
+              helperText={fieldError('name') ? tv(fieldError('name')) : undefined}
             />
-            <TextField
+            <PhoneField
               fullWidth
               label={t('register.phone')}
-              helperText={t('register.phoneHelper')}
+              helperText={fieldError('phone') ? tv(fieldError('phone')) : t('register.phoneHelper')}
               name="phone"
-              type="tel"
-              inputMode="tel"
               value={formData.phone}
               onChange={handleChange}
+              onBlur={() => touch('phone', formData.phone)}
               margin="normal"
               required
               autoComplete="tel"
-              dir="ltr"
-              placeholder="+97412345678"
+              error={!!fieldError('phone')}
             />
             <TextField
               fullWidth
               label={t('register.email')}
-              helperText={t('register.emailHelper')}
+              helperText={fieldError('email') ? tv(fieldError('email')) : t('register.emailHelper')}
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               margin="normal"
               required
               autoComplete="email"
+              inputProps={{ maxLength: 255 }}
+              error={!!fieldError('email')}
             />
             <FormControl fullWidth margin="normal">
               <InputLabel>{t('register.accountType')}</InputLabel>
@@ -141,9 +156,13 @@ export default function Register() {
               type="password"
               value={formData.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               margin="normal"
               required
               autoComplete="new-password"
+              inputProps={{ maxLength: 128 }}
+              error={!!fieldError('password')}
+              helperText={fieldError('password') ? tv(fieldError('password')) : undefined}
             />
             <TextField
               fullWidth
@@ -152,9 +171,13 @@ export default function Register() {
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
+              onBlur={(e) => touch('confirmPassword', e.target.value, formData)}
               margin="normal"
               required
               autoComplete="new-password"
+              inputProps={{ maxLength: 128 }}
+              error={!!fieldError('confirmPassword')}
+              helperText={fieldError('confirmPassword') ? tv(fieldError('confirmPassword')) : undefined}
             />
 
             <Button

@@ -1,174 +1,203 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Typography, Card, CardContent, Grid, Chip, Button,
-  TextField, MenuItem, CircularProgress, Alert,
+  Box, Typography, Card, CardContent, Chip, Button,
+  IconButton, Tooltip, CircularProgress, Alert, Stack,
 } from '@mui/material';
+import OpenInNewRoundedIcon   from '@mui/icons-material/OpenInNewRounded';
+import PlayArrowRoundedIcon   from '@mui/icons-material/PlayArrowRounded';
+import CheckRoundedIcon       from '@mui/icons-material/CheckRounded';
+import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
+import ReplayRoundedIcon      from '@mui/icons-material/ReplayRounded';
 import toast from 'react-hot-toast';
 import { technicianApi } from '../../services/api';
+import { Reveal } from '../../components/common/Motion';
 
-const STATUS_OPTIONS = ['ALL', 'PENDING', 'IN_PROGRESS', 'WAITING_PARTS', 'COMPLETED', 'CANCELLED'];
+const COLS = [
+  { status: 'PENDING',       label: 'To Do',         color: '#E65100', bg: '#FFF3E0' },
+  { status: 'IN_PROGRESS',   label: 'In Progress',   color: '#1565C0', bg: '#E3F2FD' },
+  { status: 'WAITING_PARTS', label: 'Waiting Parts', color: '#B71C1C', bg: '#FFEBEE' },
+  { status: 'COMPLETED',     label: 'Done',          color: '#1B5E20', bg: '#F1F8E9' },
+];
 
-const STATUS_COLORS = {
-  PENDING_APPROVAL: 'default',
-  PENDING: 'warning',
-  IN_PROGRESS: 'info',
-  WAITING_PARTS: 'error',
-  COMPLETED: 'success',
-  CANCELLED: 'default',
-};
+function WOCard({ order, onStatus }) {
+  const navigate = useNavigate();
 
-const PRIORITY_COLORS = {
-  HIGH: 'error',
-  NORMAL: 'info',
-  LOW: 'default',
-};
+  return (
+    <Card variant="outlined" sx={{
+      transition: 'transform 150ms, box-shadow 150ms',
+      '&:hover': { transform: 'translateY(-2px)', boxShadow: 4 },
+    }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={0.5}>
+          <Typography variant="subtitle2" fontWeight={700}>#{order.id}</Typography>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            {order.priority === 'HIGH' && (
+              <Chip label="HIGH" size="small" color="error" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
+            )}
+            <Tooltip title="Open detail">
+              <IconButton size="small" onClick={() => navigate(`/technician/orders/${order.id}`)}>
+                <OpenInNewRoundedIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </Stack>
+
+        {order.serviceType && (
+          <Typography variant="caption" color="primary" fontWeight={600} display="block" mb={0.5}>
+            {order.serviceType.replace(/_/g, ' ')}
+          </Typography>
+        )}
+
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12, mb: 1, lineHeight: 1.4 }}>
+          {order.description?.slice(0, 90)}{order.description?.length > 90 ? '…' : ''}
+        </Typography>
+
+        <Typography variant="caption" color="text.disabled">
+          🚢 {order.vesselName ?? `#${order.vesselId}`}
+        </Typography>
+
+        {order.createdAt && (
+          <Typography variant="caption" color="text.disabled" display="block">
+            {new Date(order.createdAt).toLocaleDateString()}
+          </Typography>
+        )}
+
+        <Stack direction="row" spacing={0.5} mt={1.5} flexWrap="wrap" useFlexGap>
+          {order.status === 'PENDING' && (
+            <Button size="small" variant="contained" color="primary"
+              startIcon={<PlayArrowRoundedIcon />}
+              onClick={() => onStatus(order.id, 'IN_PROGRESS')} sx={{ fontSize: 11 }}>
+              Start
+            </Button>
+          )}
+          {order.status === 'IN_PROGRESS' && <>
+            <Button size="small" variant="contained" color="success"
+              startIcon={<CheckRoundedIcon />}
+              onClick={() => onStatus(order.id, 'COMPLETED')} sx={{ fontSize: 11 }}>
+              Done
+            </Button>
+            <Button size="small" variant="outlined" color="warning"
+              startIcon={<HourglassEmptyRoundedIcon />}
+              onClick={() => onStatus(order.id, 'WAITING_PARTS')} sx={{ fontSize: 11 }}>
+              Parts
+            </Button>
+          </>}
+          {order.status === 'WAITING_PARTS' && <>
+            <Button size="small" variant="outlined" color="primary"
+              startIcon={<ReplayRoundedIcon />}
+              onClick={() => onStatus(order.id, 'IN_PROGRESS')} sx={{ fontSize: 11 }}>
+              Resume
+            </Button>
+            <Button size="small" variant="contained" color="success"
+              startIcon={<CheckRoundedIcon />}
+              onClick={() => onStatus(order.id, 'COMPLETED')} sx={{ fontSize: 11 }}>
+              Done
+            </Button>
+          </>}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function KanbanCol({ col, cards, onStatus }) {
+  return (
+    <Box sx={{ minWidth: 268, flex: '0 0 268px' }}>
+      <Box sx={{
+        bgcolor: 'background.paper',
+        borderRadius: '6px 6px 0 0',
+        borderTop: `4px solid ${col.color}`,
+        border: '1px solid', borderColor: 'divider',
+        px: 1.5, py: 1,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <Typography variant="subtitle2" fontWeight={700}>{col.label}</Typography>
+        <Box sx={{
+          bgcolor: col.color, color: '#fff',
+          borderRadius: 10, minWidth: 22, height: 22, px: 0.75,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 12, fontWeight: 800,
+        }}>
+          {cards.length}
+        </Box>
+      </Box>
+
+      <Box sx={{
+        border: '1px solid', borderTop: 0, borderColor: 'divider',
+        borderRadius: '0 0 6px 6px',
+        bgcolor: col.bg,
+        p: 1, minHeight: 260,
+        display: 'flex', flexDirection: 'column', gap: 1,
+      }}>
+        {cards.length === 0 ? (
+          <Typography variant="caption" color="text.disabled"
+            sx={{ textAlign: 'center', pt: 5, display: 'block' }}>
+            Empty
+          </Typography>
+        ) : cards.map(o => (
+          <WOCard key={o.id} order={o} onStatus={onStatus} />
+        ))}
+      </Box>
+    </Box>
+  );
+}
 
 export default function WorkOrderQueue() {
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const qc = useQueryClient();
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await technicianApi.getMyOrders();
-      setOrders(data || []);
-    } catch {
-      setError('Failed to load work orders.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: orders = [], isLoading, isError } = useQuery({
+    queryKey: ['tech-orders'],
+    queryFn: technicianApi.getMyOrders,
+    select: d => d ?? [],
+  });
 
-  useEffect(() => { load(); }, [load]);
+  const updateStatus = useMutation({
+    mutationFn: ({ id, status }) => technicianApi.updateStatus(id, status),
+    onSuccess: updated => {
+      qc.setQueryData(['tech-orders'], prev =>
+        (prev ?? []).map(o => o.id === updated.id ? updated : o),
+      );
+      toast.success(`→ ${updated.status.replace(/_/g, ' ')}`);
+    },
+    onError: () => toast.error('Failed to update status'),
+  });
 
-  const handleStatusUpdate = async (orderId, newStatus) => {
-    try {
-      await technicianApi.updateStatus(orderId, newStatus);
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
-    } catch {
-      toast.error('Failed to update status');
-    }
-  };
-
-  const filtered = filterStatus === 'ALL'
-    ? orders
-    : orders.filter(o => o.status === filterStatus);
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
         <CircularProgress />
       </Box>
     );
   }
 
+  const active  = orders.filter(o => o.status !== 'COMPLETED').length;
+  const total   = orders.length;
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">Work Order Queue</Typography>
-        <TextField
-          select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          size="small"
-          sx={{ minWidth: 160 }}
-        >
-          {STATUS_OPTIONS.map(s => (
-            <MenuItem key={s} value={s}>
-              {s === 'ALL' ? 'All Status' : s.replace(/_/g, ' ')}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Box>
+      <Reveal variant="fade">
+        <Stack direction="row" justifyContent="space-between" alignItems="baseline" mb={3}>
+          <Typography variant="h5" fontWeight={700}>My Work Orders</Typography>
+          <Stack direction="row" spacing={2}>
+            <Typography variant="body2" color="text.secondary">{active} active</Typography>
+            <Typography variant="body2" color="text.disabled">{total} total</Typography>
+          </Stack>
+        </Stack>
+      </Reveal>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {isError && <Alert severity="error" sx={{ mb: 2 }}>Failed to load work orders.</Alert>}
 
-      {filtered.length === 0 && !error && (
-        <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>
-          No work orders found.
-        </Typography>
-      )}
-
-      <Grid container spacing={3}>
-        {filtered.map((order) => (
-          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={order.id} >
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                  <Typography variant="h6">#{order.id}</Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {order.priority && (
-                      <Chip
-                        label={order.priority}
-                        color={PRIORITY_COLORS[order.priority] || 'default'}
-                        size="small"
-                      />
-                    )}
-                    <Chip
-                      label={order.status.replace(/_/g, ' ')}
-                      color={STATUS_COLORS[order.status] || 'default'}
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-
-                <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }}>
-                  <strong>Vessel:</strong> #{order.vesselId}
-                </Typography>
-
-                <Typography color="text.secondary" variant="body2" paragraph>
-                  {order.description?.slice(0, 120)}{order.description?.length > 120 ? '…' : ''}
-                </Typography>
-
-                {order.locationText && (
-                  <Typography variant="caption" color="text.secondary">
-                    📍 {order.locationText}
-                  </Typography>
-                )}
-              </CardContent>
-
-              <CardContent sx={{ pt: 1.5, borderTop: '1px solid #eee' }}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => navigate(`/technician/orders/${order.id}`)}
-                  >
-                    Details
-                  </Button>
-                  {order.status === 'PENDING' && (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleStatusUpdate(order.id, 'IN_PROGRESS')}
-                    >
-                      Start
-                    </Button>
-                  )}
-                  {order.status === 'IN_PROGRESS' && (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="success"
-                      onClick={() => handleStatusUpdate(order.id, 'COMPLETED')}
-                    >
-                      Done
-                    </Button>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+      <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, alignItems: 'flex-start' }}>
+        {COLS.map(col => (
+          <KanbanCol
+            key={col.status}
+            col={col}
+            cards={orders.filter(o => o.status === col.status)}
+            onStatus={(id, status) => updateStatus.mutate({ id, status })}
+          />
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 }

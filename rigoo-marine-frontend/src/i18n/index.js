@@ -15,6 +15,7 @@ import enMaintenance from './locales/en/maintenance.json';
 import enDashboard from './locales/en/dashboard.json';
 import enNotifications from './locales/en/notifications.json';
 import enDelivery from './locales/en/delivery.json';
+import enValidation from './locales/en/validation.json';
 import arCommon from './locales/ar/common.json';
 import arNavbar from './locales/ar/navbar.json';
 import arHome from './locales/ar/home.json';
@@ -28,6 +29,7 @@ import arMaintenance from './locales/ar/maintenance.json';
 import arDashboard from './locales/ar/dashboard.json';
 import arNotifications from './locales/ar/notifications.json';
 import arDelivery from './locales/ar/delivery.json';
+import arValidation from './locales/ar/validation.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'];
 export const RTL_LANGUAGES = ['ar'];
@@ -40,11 +42,11 @@ i18n
   .init({
     fallbackLng: 'en',
     supportedLngs: SUPPORTED_LANGUAGES,
-    ns: ['common', 'navbar', 'home', 'auth', 'workorder', 'admin', 'marketplace', 'shop', 'public', 'maintenance', 'notifications', 'dashboard', 'delivery'],
+    ns: ['common', 'navbar', 'home', 'auth', 'workorder', 'admin', 'marketplace', 'shop', 'public', 'maintenance', 'notifications', 'dashboard', 'delivery', 'validation'],
     defaultNS: 'common',
     resources: {
-      en: { common: enCommon, navbar: enNavbar, home: enHome, auth: enAuth, workorder: enWorkOrder, admin: enAdmin, marketplace: enMarketplace, shop: enShop, public: enPublic, maintenance: enMaintenance, notifications: enNotifications, dashboard: enDashboard, delivery: enDelivery },
-      ar: { common: arCommon, navbar: arNavbar, home: arHome, auth: arAuth, workorder: arWorkOrder, admin: arAdmin, marketplace: arMarketplace, shop: arShop, public: arPublic, maintenance: arMaintenance, notifications: arNotifications, dashboard: arDashboard, delivery: arDelivery },
+      en: { common: enCommon, navbar: enNavbar, home: enHome, auth: enAuth, workorder: enWorkOrder, admin: enAdmin, marketplace: enMarketplace, shop: enShop, public: enPublic, maintenance: enMaintenance, notifications: enNotifications, dashboard: enDashboard, delivery: enDelivery, validation: enValidation },
+      ar: { common: arCommon, navbar: arNavbar, home: arHome, auth: arAuth, workorder: arWorkOrder, admin: arAdmin, marketplace: arMarketplace, shop: arShop, public: arPublic, maintenance: arMaintenance, notifications: arNotifications, dashboard: arDashboard, delivery: arDelivery, validation: arValidation },
     },
     detection: {
       order: ['localStorage', 'navigator'],

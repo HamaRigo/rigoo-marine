@@ -1,156 +1,153 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Typography, Chip, Button, Stack, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField,
+  Box, Typography, CircularProgress, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, FormControl, InputLabel, Select, MenuItem, Button,
 } from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { adminApi, workOrderApi, technicianApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { adminApi, workOrderApi } from '../../services/api';
-import FilterableTable from '../../components/admin/FilterableTable';
-
-const STATUSES = [
-  'PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS',
-  'WAITING_PARTS', 'COMPLETED', 'CANCELLED',
-];
-const ROLES = ['CLIENT', 'TECHNICIAN'];
-
-const STATUS_COLORS = {
-  PENDING_APPROVAL: 'default',
-  PENDING: 'warning',
-  IN_PROGRESS: 'info',
-  WAITING_PARTS: 'warning',
-  COMPLETED: 'success',
-  CANCELLED: 'error',
-};
+import WorkOrderKanban from '../../components/common/WorkOrderKanban';
 
 export default function OrderManagement() {
-  const { t } = useTranslation('admin');
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [rejecting, setRejecting] = useState(null); // {id} or null
-  const [reason, setReason] = useState('');
+  const { t }     = useTranslation('admin');
+  const qc        = useQueryClient();
+  const { user }  = useAuth();
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [assignTarget, setAssignTarget] = useState(null);
+  const [assignTechId, setAssignTechId] = useState('');
+
+  /* ── Data ── */
+  const { data: pageData, isLoading, isError } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: () => adminApi.searchOrders({ size: 300, sort: 'createdAt,desc' }),
+  });
+  const orders = pageData?.content ?? [];
+
+  const { data: technicians = [] } = useQuery({
+    queryKey: ['staff-technicians'],
+    queryFn: technicianApi.getAll,
+  });
+
+  /* ── Optimistic cache patch ── */
+  const patch = (updated) =>
+    qc.setQueryData(['admin-orders'], prev => ({
+      ...prev,
+      content: (prev?.content ?? []).map(o => o.id === updated.id ? updated : o),
+    }));
+
+  /* ── Mutations ── */
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => workOrderApi.updateStatus(id, status),
+    onSuccess: updated => { patch(updated); toast.success(`→ ${updated.status.replace(/_/g, ' ')}`); },
+    onError: () => toast.error('Failed to update'),
+  });
 
   const approveMutation = useMutation({
-    mutationFn: ({ id }) => workOrderApi.approve(id, user.id),
-    onSuccess: () => { toast.success(t('orders.approveSuccess')); refresh(); },
+    mutationFn: id => workOrderApi.approve(id, user?.id),
+    onSuccess: updated => { patch(updated); toast.success(t('orders.approveSuccess')); },
     onError: () => toast.error(t('orders.actionFailed')),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }) => workOrderApi.reject(id, user.id, reason || undefined),
-    onSuccess: () => {
+    mutationFn: ({ id, reason }) => workOrderApi.reject(id, user?.id, reason || undefined),
+    onSuccess: updated => {
+      patch(updated);
+      setRejectTarget(null);
+      setRejectReason('');
       toast.success(t('orders.rejectSuccess'));
-      setRejecting(null);
-      setReason('');
-      refresh();
     },
     onError: () => toast.error(t('orders.actionFailed')),
   });
 
-  const columns = [
-    { id: 'id', label: t('orders.columns.id'), render: (r) => `#${r.id}` },
-    { id: 'clientId', label: t('orders.columns.client') },
-    { id: 'vesselId', label: t('orders.columns.vessel') },
-    { id: 'issueCategory', label: t('orders.columns.category'),
-      render: (r) => r.issueCategory || '—' },
-    { id: 'submittedByRole', label: t('orders.columns.submittedBy'),
-      render: (r) => r.submittedByRole || '—' },
-    { id: 'createdAt', label: t('orders.columns.createdAt'),
-      render: (r) => r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—' },
-    { id: 'status', label: t('orders.columns.status'),
-      render: (r) => (
-        <Chip
-          size="small"
-          label={r.status?.replace(/_/g, ' ')}
-          color={STATUS_COLORS[r.status] || 'default'}
-        />
-      ) },
-  ];
+  const assignMutation = useMutation({
+    mutationFn: ({ id, technicianId }) => workOrderApi.assignTechnician(id, technicianId),
+    onSuccess: updated => {
+      patch(updated);
+      setAssignTarget(null);
+      toast.success('Technician assigned');
+    },
+    onError: () => toast.error('Failed to assign'),
+  });
 
-  const renderActions = (row) => {
-    if (row.status === 'PENDING_APPROVAL') {
-      return (
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button
-            size="small"
-            variant="contained"
-            color="success"
-            startIcon={<CheckIcon />}
-            onClick={() => approveMutation.mutate({ id: row.id })}
-            disabled={approveMutation.isPending}
-          >
-            {t('orders.approve')}
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            color="error"
-            startIcon={<CloseIcon />}
-            onClick={() => { setRejecting({ id: row.id }); setReason(''); }}
-          >
-            {t('orders.reject')}
-          </Button>
-        </Stack>
-      );
-    }
-    return (
-      <Button size="small" variant="outlined" href={`/admin/orders/${row.id}`}>
-        {t('orders.manage')}
-      </Button>
-    );
+  /* ── Handlers passed to kanban ── */
+  const handleStatusChange = (orderId, newStatus) => {
+    statusMutation.mutate({ id: orderId, status: newStatus });
   };
+
+  const handleAction = (action, order) => {
+    if (action === 'approve') approveMutation.mutate(order.id);
+    if (action === 'reject')  { setRejectReason(''); setRejectTarget(order); }
+    if (action === 'assign')  { setAssignTechId(order.assignedTechnicianId?.toString() || ''); setAssignTarget(order); }
+  };
+
+  /* ── Render ── */
+  if (isLoading) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}><CircularProgress /></Box>;
+  }
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>{t('orders.title')}</Typography>
-      <FilterableTable
-        queryKey={['admin', 'orders']}
-        fetchPage={adminApi.searchOrders}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultFilters={{ status: 'PENDING_APPROVAL' }}
-        filters={[
-          { id: 'status', label: t('filters.status'),
-            options: STATUSES.map((s) => ({ value: s, label: s.replace(/_/g, ' ') })) },
-          { id: 'submittedByRole', label: t('filters.role'),
-            options: ROLES.map((r) => ({ value: r, label: r })) },
-        ]}
-        renderActions={renderActions}
+      <Typography variant="h4" fontWeight={700} sx={{ mb: 3 }}>
+        {t('orders.title')}
+      </Typography>
+
+      {isError && <Alert severity="error" sx={{ mb: 2 }}>Failed to load orders.</Alert>}
+
+      <WorkOrderKanban
+        orders={orders}
+        technicians={technicians}
+        onStatusChange={handleStatusChange}
+        onAction={handleAction}
+        detailBasePath="/team-lead/orders"
       />
 
-      <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>{t('orders.rejectDialog.title', { id: rejecting?.id })}</DialogTitle>
+      {/* Reject dialog */}
+      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('orders.rejectDialog.title', { id: rejectTarget?.id })}</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>{t('orders.rejectDialog.body')}</DialogContentText>
           <TextField
-            autoFocus
-            fullWidth
-            multiline
-            minRows={3}
+            autoFocus fullWidth multiline minRows={3}
             label={t('orders.rejectDialog.reasonLabel')}
             placeholder={t('orders.rejectDialog.reasonPlaceholder')}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            inputProps={{ maxLength: 1000 }}
+            value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+            inputProps={{ maxLength: 1000 }} sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejecting(null)} disabled={rejectMutation.isPending}>
+          <Button onClick={() => setRejectTarget(null)} disabled={rejectMutation.isPending}>
             {t('orders.rejectDialog.cancel')}
           </Button>
-          <Button
-            onClick={() => rejectMutation.mutate({ id: rejecting.id, reason: reason.trim() })}
-            color="error"
-            variant="contained"
-            disabled={rejectMutation.isPending}
-          >
+          <Button variant="contained" color="error" disabled={rejectMutation.isPending}
+            onClick={() => rejectMutation.mutate({ id: rejectTarget.id, reason: rejectReason.trim() })}>
             {t('orders.rejectDialog.confirm')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Assign dialog */}
+      <Dialog open={!!assignTarget} onClose={() => setAssignTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Assign Technician — Order #{assignTarget?.id}</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 1 }}>
+            <InputLabel>Technician</InputLabel>
+            <Select value={assignTechId} label="Technician"
+              onChange={e => setAssignTechId(e.target.value)}>
+              {technicians.map(t => (
+                <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignTarget(null)}>Cancel</Button>
+          <Button variant="contained" disabled={!assignTechId || assignMutation.isPending}
+            onClick={() => assignMutation.mutate({ id: assignTarget.id, technicianId: Number(assignTechId) })}>
+            Assign
           </Button>
         </DialogActions>
       </Dialog>

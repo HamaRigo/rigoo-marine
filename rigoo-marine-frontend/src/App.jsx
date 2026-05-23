@@ -207,6 +207,7 @@ function App() {
               >
                 <Route index element={<AdminDashboard />} />
                 <Route path="orders" element={<OrderManagement />} />
+                <Route path="orders/:id" element={<TeamLeadOrderDetail />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="audit" element={<AuditLog />} />
                 <Route path="services" element={<ServiceManagement />} />

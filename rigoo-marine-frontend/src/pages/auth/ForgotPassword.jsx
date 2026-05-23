@@ -3,26 +3,35 @@ import { Box, Container, Paper, Typography, TextField, Button, Alert, Link as Mu
 import { Link } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { authApi } from '../../services/api';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { required, email } from '../../utils/validators';
+import { getApiError } from '../../utils/apiError';
 
 export default function ForgotPassword() {
   const { t } = useTranslation('auth');
-  const [email, setEmail] = useState('');
+  const { t: tv } = useTranslation('validation');
+  const [emailValue, setEmailValue] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { touch, revalidate, validateAll, fieldError } = useFormValidation({
+    email: [required, email],
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!validateAll({ email: emailValue })) return;
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(emailValue);
       setSuccess(true);
     } catch (err) {
       if (err.response?.status === 429) {
         setError(t('forgotPassword.rateLimit'));
       } else {
-        setError(err.response?.data?.message || err.message || t('forgotPassword.errorFallback'));
+        setError(getApiError(err));
       }
     } finally {
       setLoading(false);
@@ -36,7 +45,7 @@ export default function ForgotPassword() {
           <Paper elevation={3} sx={{ p: { xs: 2.5, sm: 4 }, textAlign: 'center', borderRadius: { xs: 2, sm: 3 } }}>
             <Typography variant="h5" gutterBottom>{t('forgotPassword.successTitle')}</Typography>
             <Typography color="text.secondary" sx={{ mb: 3 }}>
-              <Trans i18nKey="forgotPassword.successBody" t={t} values={{ email }} components={{ strong: <strong /> }} />
+              <Trans i18nKey="forgotPassword.successBody" t={t} values={{ email: emailValue }} components={{ strong: <strong /> }} />
             </Typography>
             <Button component={Link} to="/login" variant="contained" fullWidth>
               {t('forgotPassword.successBack')}
@@ -60,24 +69,28 @@ export default function ForgotPassword() {
 
           {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <TextField
               fullWidth
               label={t('forgotPassword.email')}
               name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={emailValue}
+              onChange={(e) => { setEmailValue(e.target.value); revalidate('email', e.target.value); }}
+              onBlur={(e) => touch('email', e.target.value)}
               margin="normal"
               required
               autoComplete="email"
+              inputProps={{ maxLength: 255 }}
+              error={!!fieldError('email')}
+              helperText={fieldError('email') ? tv(fieldError('email')) : undefined}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
-              disabled={loading || !email}
+              disabled={loading}
               sx={{ mt: 3 }}
             >
               {loading ? t('forgotPassword.submitting') : t('forgotPassword.submit')}

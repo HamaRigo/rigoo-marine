@@ -16,12 +16,18 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import { defaultPathForRole } from '../../utils/routes';
+import PhoneField from '../../components/common/PhoneField';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { required, requiredPhone } from '../../utils/validators';
+import { getApiError } from '../../utils/apiError';
+import { consumeSessionExpiredFlag } from '../../services/interceptors';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function Login() {
   const [tab, setTab] = useState('password');
   const { t } = useTranslation('auth');
+  const [sessionBanner, setSessionBanner] = useState(() => consumeSessionExpiredFlag());
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: { xs: 3, sm: 6 }, px: { xs: 1.5, sm: 3 } }}>
@@ -33,6 +39,12 @@ export default function Login() {
           <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
             {t('login.subtitle')}
           </Typography>
+
+          {sessionBanner && (
+            <Alert severity="warning" onClose={() => setSessionBanner(false)} sx={{ mb: 3 }}>
+              {t('login.sessionExpired')}
+            </Alert>
+          )}
 
           <Tabs
             value={tab}
@@ -58,7 +70,7 @@ export default function Login() {
   );
 }
 
-// ─── Password form (existing flow, lifted into its own component) ─────────────
+// ─── Password form ────────────────────────────────────────────────────────────
 
 function PasswordForm() {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
@@ -68,10 +80,23 @@ function PasswordForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('auth');
+  const { t: tv } = useTranslation('validation');
+
+  const { touch, revalidate, validateAll, fieldError } = useFormValidation({
+    identifier: [required],
+    password:   [required],
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    revalidate(name, value);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!validateAll(formData)) return;
     setLoading(true);
     try {
       const userData = await login(formData.identifier.trim(), formData.password);
@@ -80,33 +105,35 @@ function PasswordForm() {
     } catch (err) {
       if (err.response?.status === 429) {
         setError(t('login.tooManyAttempts'));
+      } else if (err.response?.status === 401) {
+        setError(t('login.invalidCredentials'));
       } else {
-        setError(err.response?.data?.message || err.message || t('login.errorFallback'));
+        setError(getApiError(err));
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
   return (
     <>
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <TextField
           fullWidth
           label={t('login.identifier')}
-          helperText={t('login.identifierHelper')}
+          helperText={fieldError('identifier') ? tv(fieldError('identifier')) : t('login.identifierHelper')}
           name="identifier"
           type="text"
           inputMode="text"
           value={formData.identifier}
           onChange={handleChange}
+          onBlur={(e) => touch('identifier', e.target.value)}
           margin="normal"
           required
           autoComplete="username"
           dir="ltr"
+          error={!!fieldError('identifier')}
         />
         <TextField
           fullWidth
@@ -115,9 +142,12 @@ function PasswordForm() {
           type="password"
           value={formData.password}
           onChange={handleChange}
+          onBlur={(e) => touch('password', e.target.value)}
           margin="normal"
           required
           autoComplete="current-password"
+          error={!!fieldError('password')}
+          helperText={fieldError('password') ? tv(fieldError('password')) : undefined}
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
           <MuiLink component={Link} to="/forgot-password" underline="hover">
@@ -132,10 +162,10 @@ function PasswordForm() {
   );
 }
 
-// ─── SMS-code form: phone → request code → enter code → verify ─────────────────
+// ─── SMS-code form ────────────────────────────────────────────────────────────
 
 function OtpForm() {
-  const [step, setStep] = useState('request'); // 'request' | 'verify'
+  const [step, setStep] = useState('request');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -147,29 +177,29 @@ function OtpForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('auth');
+  const { t: tv } = useTranslation('validation');
+
+  const { touch, revalidate, validateAll, fieldError, reset } = useFormValidation({
+    phone: [requiredPhone],
+  });
 
   const startCooldown = () => {
     setResendIn(RESEND_COOLDOWN_SECONDS);
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       setResendIn((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(intervalRef.current); intervalRef.current = null; return 0; }
         return prev - 1;
       });
     }, 1000);
   };
 
-  useEffect(() => () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
   const sendCode = async (e) => {
     if (e) e.preventDefault();
     setError('');
+    if (!validateAll({ phone })) return;
     setLoading(true);
     try {
       await authApi.requestOtp(phone.trim());
@@ -179,7 +209,7 @@ function OtpForm() {
       const status = err.response?.status;
       if (status === 400) setError(t('otp.errors.invalidPhone'));
       else if (status === 429) setError(t('otp.errors.rateLimited'));
-      else setError(t('otp.errors.fallback'));
+      else setError(getApiError(err));
     } finally {
       setLoading(false);
     }
@@ -197,14 +227,13 @@ function OtpForm() {
       const status = err.response?.status;
       if (status === 401) setError(t('otp.errors.invalidCode'));
       else if (status === 400) setError(t('otp.errors.invalidPhone'));
-      else setError(t('otp.errors.fallback'));
+      else setError(getApiError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCodeChange = (e) => {
-    // Strip non-digits so SMS auto-fill of "Your code is 123456" still works.
     const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
     setCode(cleaned);
   };
@@ -213,19 +242,19 @@ function OtpForm() {
     return (
       <>
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-        <form onSubmit={sendCode}>
-          <TextField
+        <form onSubmit={sendCode} noValidate>
+          <PhoneField
             fullWidth
             label={t('otp.phoneLabel')}
-            helperText={t('otp.phoneHelper')}
+            helperText={fieldError('phone') ? tv(fieldError('phone')) : t('otp.phoneHelper')}
+            name="phone"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => { setPhone(e.target.value); revalidate('phone', e.target.value); }}
+            onBlur={() => touch('phone', phone)}
             margin="normal"
             required
             autoComplete="tel"
-            type="tel"
-            inputMode="tel"
-            dir="ltr"
+            error={!!fieldError('phone')}
           />
           <Button type="submit" fullWidth variant="contained" size="large" disabled={loading} sx={{ mt: 2 }}>
             {loading ? t('otp.sending') : t('otp.sendCode')}
@@ -235,14 +264,13 @@ function OtpForm() {
     );
   }
 
-  // step === 'verify'
   return (
     <>
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       <Alert severity="info" sx={{ mb: 3 }}>
         {t('otp.codeSentTo', { phone: maskPhone(phone) })}
       </Alert>
-      <form onSubmit={verify}>
+      <form onSubmit={verify} noValidate>
         <TextField
           fullWidth
           label={t('otp.codeLabel')}
@@ -272,11 +300,7 @@ function OtpForm() {
         <MuiLink
           component="button"
           type="button"
-          onClick={() => {
-            setStep('request');
-            setCode('');
-            setError('');
-          }}
+          onClick={() => { setStep('request'); setCode(''); setError(''); reset(); }}
           underline="hover"
           sx={{ fontSize: '0.875rem' }}
         >

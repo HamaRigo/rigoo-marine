@@ -14,7 +14,6 @@ import java.time.LocalDate;
 public class CreateDeliveryTaskRequest {
     @NotNull
     private DeliveryTaskType type;
-    @NotNull
     private Long referenceId;
     @NotBlank
     private String deliveryAddress;

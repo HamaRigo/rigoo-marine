@@ -145,7 +145,19 @@
     },
     "actions": "الإجراءات",
     "edit": "تعديل",
-    "delete": "حذف"
+    "delete": "حذف",
+    "deleteTitle": "حذف الخدمة",
+    "deleteConfirm": "هل تريد حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا.",
+    "deleteError": "تعذّر حذف الخدمة. يرجى المحاولة مجدداً.",
+    "form": {
+      "titleCreate": "إضافة خدمة",
+      "titleEdit": "تعديل الخدمة",
+      "description": "الوصف",
+      "uploadPhoto": "رفع صورة",
+      "uploading": "جارٍ الرفع…",
+      "uploadError": "فشل رفع الصورة. يرجى المحاولة مجدداً.",
+      "errorFallback": "تعذّر حفظ الخدمة. يرجى المحاولة مجدداً."
+    }
   },
   "invoices": {
     "title": "الفواتير",

@@ -34,6 +34,7 @@ public class ServiceService {
             .description(dto.getDescription())
             .price(dto.getPrice())
             .active(dto.getActive() != null ? dto.getActive() : true)
+            .imageUrl(dto.getImageUrl())
             .build();
         ServiceEntity saved = serviceRepository.save(entity);
         return toDTO(saved);
@@ -94,6 +95,9 @@ public class ServiceService {
         entity.setDescription(dto.getDescription());
         entity.setPrice(dto.getPrice());
         entity.setActive(dto.getActive());
+        if (dto.getImageUrl() != null) {
+            entity.setImageUrl(dto.getImageUrl());
+        }
 
         ServiceEntity updated = serviceRepository.save(entity);
         return toDTO(updated);
@@ -112,6 +116,7 @@ public class ServiceService {
             .description(entity.getDescription())
             .price(entity.getPrice())
             .active(entity.getActive())
+            .imageUrl(entity.getImageUrl())
             .createdAt(entity.getCreatedAt())
             .build();
     }

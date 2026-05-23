@@ -6,5 +6,6 @@ public enum DeliveryTaskStatus {
     PICKED_UP,
     IN_TRANSIT,
     DELIVERED,
-    FAILED
+    FAILED,
+    CANCELLED
 }

@@ -108,7 +108,7 @@
     }
   },
   "orders": {
-    "title": "Order Management",
+    "title": "Work Order Management",
     "columns": {
       "id": "Order #",
       "client": "Client",
@@ -145,7 +145,19 @@
     },
     "actions": "Actions",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleteTitle": "Delete service",
+    "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+    "deleteError": "Could not delete service. Please try again.",
+    "form": {
+      "titleCreate": "Add service",
+      "titleEdit": "Edit service",
+      "description": "Description",
+      "uploadPhoto": "Upload photo",
+      "uploading": "Uploading…",
+      "uploadError": "Photo upload failed. Please try again.",
+      "errorFallback": "Could not save service. Please try again."
+    }
   },
   "invoices": {
     "title": "Invoices",

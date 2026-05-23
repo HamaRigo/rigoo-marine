@@ -9,7 +9,6 @@ import LanguageRoundedIcon    from '@mui/icons-material/LanguageRounded';
 import WhatsAppIcon           from '@mui/icons-material/WhatsApp';
 import PersonRoundedIcon      from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon       from '@mui/icons-material/EmailRounded';
-import PhoneRoundedIcon       from '@mui/icons-material/PhoneRounded';
 import LockRoundedIcon        from '@mui/icons-material/LockRounded';
 import DirectionsBoatRoundedIcon from '@mui/icons-material/DirectionsBoatRounded';
 import BuildRoundedIcon       from '@mui/icons-material/BuildRounded';
@@ -20,11 +19,16 @@ import { useAuth }    from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Reveal } from '../../components/common/Motion';
+import PhoneField from '../../components/common/PhoneField';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { required, passwordMin, passwordMatch } from '../../utils/validators';
+import { getApiError } from '../../utils/apiError';
 
 export default function Profile() {
   const { user, updateProfile } = useAuth();
   const queryClient = useQueryClient();
   const { i18n, t } = useTranslation('dashboard');
+  const { t: tv } = useTranslation('validation');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -37,6 +41,12 @@ export default function Profile() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw,     setShowNewPw]     = useState(false);
+
+  const { touch: pwTouch, revalidate: pwRevalidate, validateAll: pwValidateAll, fieldError: pwFieldError, reset: pwReset } = useFormValidation({
+    currentPassword: [required],
+    newPassword:     [required, passwordMin],
+    confirmPassword: [required, passwordMatch('newPassword')],
+  });
   const [preferredLanguage, setPreferredLanguage] = useState(user?.preferredLanguage || 'en');
   const [whatsappOptIn, setWhatsappOptIn] = useState(Boolean(user?.whatsappOptIn));
 
@@ -67,7 +77,7 @@ export default function Profile() {
       toast.success(t('profile.savedSuccess'));
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || t('profile.saveFailed'));
+      toast.error(getApiError(err));
     },
   });
 
@@ -80,7 +90,7 @@ export default function Profile() {
       setShowPasswordSection(false);
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || t('profile.passwordFailed'));
+      toast.error(getApiError(err));
     },
   });
 
@@ -96,13 +106,17 @@ export default function Profile() {
   };
 
   const handlePasswordChange = () => {
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast.error(t('profile.passwordMismatch')); return;
-    }
-    if (formData.newPassword.length < 6) {
-      toast.error(t('profile.passwordTooShort')); return;
-    }
+    const pwValues = {
+      currentPassword: formData.currentPassword,
+      newPassword:     formData.newPassword,
+      confirmPassword: formData.confirmPassword,
+    };
+    if (!pwValidateAll(pwValues)) return;
     passwordMutation.mutate({ currentPassword: formData.currentPassword, newPassword: formData.newPassword });
+  };
+
+  const handlePasswordSectionToggle = () => {
+    setShowPasswordSection(v => { if (v) pwReset(); return !v; });
   };
 
   if (!user) {
@@ -200,9 +214,11 @@ export default function Profile() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }} >
-                  <TextField fullWidth label={t('profile.phone')} value={formData.phone}
+                  <PhoneField
+                    fullWidth
+                    label={t('profile.phone')}
+                    value={formData.phone}
                     onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><PhoneRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} /></InputAdornment> }}
                   />
                 </Grid>
               </Grid>
@@ -269,7 +285,7 @@ export default function Profile() {
             </Stack>
             <Button size="small" variant={showPasswordSection ? 'outlined' : 'text'} color="inherit"
               sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.8rem' }}
-              onClick={() => setShowPasswordSection(v => !v)}>
+              onClick={handlePasswordSectionToggle}>
               {showPasswordSection ? t('profile.cancelEdit') : t('profile.editPassword')}
             </Button>
           </Box>
@@ -290,7 +306,15 @@ export default function Profile() {
                 <Grid size={12} >
                   <TextField fullWidth label={t('profile.currentPassword')} value={formData.currentPassword}
                     type={showCurrentPw ? 'text' : 'password'}
-                    onChange={(e) => setFormData(f => ({ ...f, currentPassword: e.target.value }))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData(f => ({ ...f, currentPassword: v }));
+                      pwRevalidate('currentPassword', v);
+                    }}
+                    onBlur={(e) => pwTouch('currentPassword', e.target.value)}
+                    error={!!pwFieldError('currentPassword')}
+                    helperText={pwFieldError('currentPassword') ? tv(pwFieldError('currentPassword')) : undefined}
+                    inputProps={{ maxLength: 128 }}
                     InputProps={{
                       startAdornment: <InputAdornment position="start"><LockRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} /></InputAdornment>,
                       endAdornment: <InputAdornment position="end">
@@ -304,7 +328,17 @@ export default function Profile() {
                 <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.newPassword')} value={formData.newPassword}
                     type={showNewPw ? 'text' : 'password'}
-                    onChange={(e) => setFormData(f => ({ ...f, newPassword: e.target.value }))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const updated = { ...formData, newPassword: v };
+                      setFormData(f => ({ ...f, newPassword: v }));
+                      pwRevalidate('newPassword', v, updated);
+                      pwRevalidate('confirmPassword', formData.confirmPassword, updated);
+                    }}
+                    onBlur={(e) => pwTouch('newPassword', e.target.value, formData)}
+                    error={!!pwFieldError('newPassword')}
+                    helperText={pwFieldError('newPassword') ? tv(pwFieldError('newPassword')) : undefined}
+                    inputProps={{ maxLength: 128 }}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">
                         <IconButton size="small" onClick={() => setShowNewPw(v => !v)} edge="end">
@@ -317,7 +351,15 @@ export default function Profile() {
                 <Grid size={{ xs: 12, sm: 6 }} >
                   <TextField fullWidth label={t('profile.confirmPassword')} type="password"
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData(f => ({ ...f, confirmPassword: e.target.value }))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData(f => ({ ...f, confirmPassword: v }));
+                      pwRevalidate('confirmPassword', v, { ...formData, confirmPassword: v });
+                    }}
+                    onBlur={(e) => pwTouch('confirmPassword', e.target.value, formData)}
+                    error={!!pwFieldError('confirmPassword')}
+                    helperText={pwFieldError('confirmPassword') ? tv(pwFieldError('confirmPassword')) : undefined}
+                    inputProps={{ maxLength: 128 }}
                   />
                 </Grid>
                 <Grid size={12} >

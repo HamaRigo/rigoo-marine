@@ -1,5 +1,6 @@
 package com.rigoomarine.delivery.security;
 
+import com.rigoomarine.common.security.AuthenticatedUser;
 import com.rigoomarine.common.security.TokenRevocationCheck;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            String email = jwtTokenProvider.getEmailFromToken(token);
+            String email = claims.getSubject();
             List<String> roles = claims.get("roles", List.class);
             if (roles == null) roles = List.of("ROLE_DELIVERY");
 
@@ -51,8 +52,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
+            Long clientId = claims.get("clientId", Long.class);
+            AuthenticatedUser principal = new AuthenticatedUser(email, clientId,
+                    roles.stream().map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r).toList());
+
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

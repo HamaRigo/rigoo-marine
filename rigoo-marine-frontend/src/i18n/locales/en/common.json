@@ -9,5 +9,20 @@
     "cancel": "Cancel",
     "submit": "Submit",
     "loading": "Loading..."
+  },
+  "phone": {
+    "countryCode": "Country code"
+  },
+  "errors": {
+    "network":       "Unable to connect. Please check your internet connection.",
+    "badRequest":    "Invalid request. Please check your information.",
+    "unauthorized":  "Session expired. Please sign in again.",
+    "forbidden":     "You don't have permission to perform this action.",
+    "notFound":      "The requested resource was not found.",
+    "conflict":      "This record already exists.",
+    "validation":    "Please check the form for errors.",
+    "rateLimit":     "Too many attempts. Please try again later.",
+    "server":        "A server error occurred. Please try again.",
+    "unknown":       "Something went wrong. Please try again."
   }
 }

@@ -1,4 +1,5 @@
 package com.rigoomarine.shop.security;
+import com.rigoomarine.common.security.AuthenticatedUser;
 import com.rigoomarine.common.security.TokenRevocationCheck;
 
 import io.jsonwebtoken.Claims;
@@ -62,8 +63,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
+            Long clientId = claims.get("clientId", Long.class);
+            AuthenticatedUser principal = new AuthenticatedUser(email, clientId,
+                    roles.stream().map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r).toList());
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

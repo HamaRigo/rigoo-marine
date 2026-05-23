@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,6 +58,18 @@ public class ClientController {
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.deleteClient(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/staff/technicians")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
+    public ResponseEntity<List<ClientDTO>> getTechnicianUsers() {
+        return ResponseEntity.ok(clientService.getClientsByRole("TECHNICIAN"));
+    }
+
+    @GetMapping("/staff/drivers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
+    public ResponseEntity<List<ClientDTO>> getDeliveryDrivers() {
+        return ResponseEntity.ok(clientService.getClientsByRole("DELIVERY"));
     }
 
     // ============== File Upload Endpoints ==============

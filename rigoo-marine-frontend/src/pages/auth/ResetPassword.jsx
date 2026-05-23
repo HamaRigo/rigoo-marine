@@ -3,40 +3,48 @@ import { Box, Container, Paper, Typography, TextField, Button, Alert } from '@mu
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../../services/api';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { required, passwordMin, passwordMatch } from '../../utils/validators';
+import { getApiError } from '../../utils/apiError';
 
 export default function ResetPassword() {
   const { t } = useTranslation('auth');
+  const { t: tv } = useTranslation('validation');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
 
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwords, setPasswords] = useState({ password: '', confirmPassword: '' });
   const [error, setError] = useState(token ? '' : t('resetPassword.errors.missingToken'));
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { touch, revalidate, validateAll, fieldError } = useFormValidation({
+    password:        [required, passwordMin],
+    confirmPassword: [required, passwordMatch('password')],
+  });
+
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    const updated = { ...passwords, [field]: value };
+    setPasswords(updated);
+    revalidate(field, value, updated);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (newPassword.length < 6) {
-      setError(t('resetPassword.errors.passwordTooShort'));
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError(t('resetPassword.errors.passwordMismatch'));
-      return;
-    }
+    if (!validateAll(passwords)) return;
     setLoading(true);
     try {
-      await authApi.resetPasswordWithToken(token, newPassword);
+      await authApi.resetPasswordWithToken(token, passwords.password);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       if (err.response?.status === 400) {
         setError(t('resetPassword.errors.invalidToken'));
       } else {
-        setError(err.response?.data?.message || err.message || t('resetPassword.errors.fallback'));
+        setError(getApiError(err));
       }
     } finally {
       setLoading(false);
@@ -72,33 +80,41 @@ export default function ResetPassword() {
 
           {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <TextField
               fullWidth
               label={t('resetPassword.newPassword')}
               type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              value={passwords.password}
+              onChange={handleChange('password')}
+              onBlur={(e) => touch('password', e.target.value, passwords)}
               margin="normal"
               required
               autoComplete="new-password"
+              inputProps={{ maxLength: 128 }}
+              error={!!fieldError('password')}
+              helperText={fieldError('password') ? tv(fieldError('password')) : undefined}
             />
             <TextField
               fullWidth
               label={t('resetPassword.confirmPassword')}
               type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={passwords.confirmPassword}
+              onChange={handleChange('confirmPassword')}
+              onBlur={(e) => touch('confirmPassword', e.target.value, passwords)}
               margin="normal"
               required
               autoComplete="new-password"
+              inputProps={{ maxLength: 128 }}
+              error={!!fieldError('confirmPassword')}
+              helperText={fieldError('confirmPassword') ? tv(fieldError('confirmPassword')) : undefined}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
-              disabled={loading || !token || !newPassword || !confirmPassword}
+              disabled={loading || !token}
               sx={{ mt: 3 }}
             >
               {loading ? t('resetPassword.submitting') : t('resetPassword.submit')}

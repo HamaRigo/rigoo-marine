@@ -15,5 +15,6 @@ public class ServiceDTO {
     private String description;
     private BigDecimal price;
     private Boolean active;
+    private String imageUrl;
     private LocalDateTime createdAt;
 }

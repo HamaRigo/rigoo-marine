@@ -3,6 +3,7 @@ package com.rigoomarine.delivery.controller;
 import com.rigoomarine.delivery.dto.AssignTaskRequest;
 import com.rigoomarine.delivery.dto.CreateDeliveryTaskRequest;
 import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
+import com.rigoomarine.delivery.dto.UpdateStatusRequest;
 import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
 import com.rigoomarine.delivery.service.DeliveryTaskService;
 import jakarta.validation.Valid;
@@ -43,7 +44,7 @@ public class DeliveryAdminController {
     }
 
     @PostMapping("/tasks")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")
     public DeliveryTaskDTO create(@Valid @RequestBody CreateDeliveryTaskRequest req) {
         return taskService.create(req);
     }
@@ -52,5 +53,18 @@ public class DeliveryAdminController {
     @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
     public DeliveryTaskDTO assign(@PathVariable Long id, @Valid @RequestBody AssignTaskRequest req) {
         return taskService.assign(id, req);
+    }
+
+    @PatchMapping("/tasks/{id}/cancel")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public DeliveryTaskDTO cancel(@PathVariable Long id,
+                                  @RequestParam(required = false) String reason) {
+        return taskService.cancelTask(id, reason);
+    }
+
+    @PatchMapping("/tasks/{id}/status")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public DeliveryTaskDTO forceStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest req) {
+        return taskService.adminForceStatus(id, req.getStatus());
     }
 }

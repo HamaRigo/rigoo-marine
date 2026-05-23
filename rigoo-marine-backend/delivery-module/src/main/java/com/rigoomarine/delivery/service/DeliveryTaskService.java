@@ -114,7 +114,7 @@ public class DeliveryTaskService {
     public DeliveryTaskDTO create(CreateDeliveryTaskRequest req) {
         DeliveryTask task = new DeliveryTask();
         task.setType(req.getType());
-        task.setReferenceId(req.getReferenceId());
+        task.setReferenceId(req.getReferenceId() != null ? req.getReferenceId() : 0L);
         task.setDeliveryAddress(req.getDeliveryAddress());
         task.setScheduledDate(req.getScheduledDate());
         task.setPickupLabel(req.getPickupLabel());
@@ -146,6 +146,32 @@ public class DeliveryTaskService {
         return repo.findById(id)
                 .map(DeliveryTaskDTO::new)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+    }
+
+    @Transactional
+    public DeliveryTaskDTO cancelTask(Long id, String reason) {
+        DeliveryTask task = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+        if (task.getStatus() == DeliveryTaskStatus.DELIVERED || task.getStatus() == DeliveryTaskStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot cancel a task that is already " + task.getStatus());
+        }
+        task.setStatus(DeliveryTaskStatus.CANCELLED);
+        if (reason != null && !reason.isBlank()) {
+            task.setFailedReason(reason);
+        }
+        return new DeliveryTaskDTO(repo.save(task));
+    }
+
+    @Transactional
+    public DeliveryTaskDTO adminForceStatus(Long id, DeliveryTaskStatus newStatus) {
+        DeliveryTask task = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+        task.setStatus(newStatus);
+        if (newStatus == DeliveryTaskStatus.DELIVERED) {
+            task.setDeliveredAt(LocalDateTime.now());
+        }
+        return new DeliveryTaskDTO(repo.save(task));
     }
 
     private void validateTransition(DeliveryTaskStatus current, DeliveryTaskStatus next) {

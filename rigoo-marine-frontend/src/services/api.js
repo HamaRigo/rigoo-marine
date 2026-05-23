@@ -1154,10 +1154,10 @@ export const vesselInspectionApi = {
 
 // ============== TECHNICIAN APIs ==============
 export const technicianApi = {
-  // List all technicians — accessible to TEAM_LEAD, ADMIN, and TECHNICIAN
+  // Returns users with role=TECHNICIAN from the clients table (source of truth)
   getAll: async () => {
-    const response = await httpClient.get('/api/technicians');
-    return response.data; // List<TechnicianDTO>
+    const response = await httpClient.get('/api/clients/staff/technicians');
+    return response.data; // List<ClientDTO>
   },
 
   getAvailable: async () => {
@@ -1187,6 +1187,13 @@ export const technicianApi = {
   getWorkHistory: async () => {
     const orders = await workOrderApi.getAssigned();
     return (orders || []).filter(o => o.status === 'COMPLETED');
+  },
+};
+
+export const driverApi = {
+  getAll: async () => {
+    const res = await httpClient.get('/api/clients/staff/drivers');
+    return res.data; // List<ClientDTO>
   },
 };
 
@@ -1253,6 +1260,18 @@ export const deliveryApi = {
 
   adminAssignTask: async (id, technicianId) => {
     const res = await httpClient.patch(`/api/delivery/admin/tasks/${id}/assign`, { technicianId });
+    return res.data;
+  },
+
+  adminCancelTask: async (id, reason) => {
+    const res = await httpClient.patch(`/api/delivery/admin/tasks/${id}/cancel`, null, {
+      params: reason ? { reason } : undefined,
+    });
+    return res.data;
+  },
+
+  adminForceStatus: async (id, status) => {
+    const res = await httpClient.patch(`/api/delivery/admin/tasks/${id}/status`, { status });
     return res.data;
   },
 };

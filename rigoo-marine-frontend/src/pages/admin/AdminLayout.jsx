@@ -28,7 +28,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 const drawerWidth = 240;
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
-  { name: 'Orders', path: '/admin/orders', icon: <BuildIcon /> },
+  { name: 'Work Orders', path: '/admin/orders', icon: <BuildIcon /> },
   { name: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
   { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
   { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
