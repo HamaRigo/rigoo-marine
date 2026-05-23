@@ -1,5 +1,5 @@
 server:
-  port: 8092
+  port: ${SERVER_PORT:8092}
 
 spring:
   application:
@@ -39,6 +39,26 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: delivery-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+
+management:
+  health:
+    redis:
+      enabled: false
+
 eureka:
   client:
     service-url:
@@ -46,8 +66,8 @@ eureka:
   instance:
     prefer-ip-address: true
 
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+jwt:
+  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
 
 app:
   delivery:

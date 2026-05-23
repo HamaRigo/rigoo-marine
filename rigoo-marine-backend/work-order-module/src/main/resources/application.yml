@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: ${SERVER_PORT:8084}
 
 internal:
   # Shared-secret token for service-to-service calls (e.g. vessel ownership lookup).
@@ -47,6 +47,15 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+
+management:
+  health:
+    redis:
+      enabled: false
 
 eureka:
   client:

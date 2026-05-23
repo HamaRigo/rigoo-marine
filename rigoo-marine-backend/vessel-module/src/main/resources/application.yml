@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 internal:
   # Shared-secret token for service-to-service calls (work-order → vessel
@@ -45,6 +45,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+
+management:
+  health:
+    redis:
+      enabled: false
 
 eureka:
   client:

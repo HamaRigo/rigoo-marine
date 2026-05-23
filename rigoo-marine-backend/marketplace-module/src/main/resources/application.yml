@@ -1,5 +1,5 @@
 server:
-  port: 8088
+  port: ${SERVER_PORT:8088}
 
 spring:
   application:
@@ -40,6 +40,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+
+management:
+  health:
+    redis:
+      enabled: false
 
 eureka:
   client:
