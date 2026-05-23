@@ -22,19 +22,25 @@ const STATUS_COLORS = {
 
 const DOHA = [25.2854, 51.531];
 
-function numberedIcon(n, done) {
+function numberedIcon(n, done, selected) {
+  const bg = done ? '#9e9e9e' : selected ? '#e65100' : '#1565c0';
+  const border = selected ? '3px solid #ff9800' : '2px solid white';
+  const shadow = selected
+    ? '0 0 0 3px rgba(255,152,0,0.4), 0 2px 8px rgba(0,0,0,0.4)'
+    : '0 2px 6px rgba(0,0,0,0.3)';
+  const size = selected ? 32 : 28;
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:28px;height:28px;border-radius:50%;
-      background:${done ? '#9e9e9e' : '#1565c0'};
-      color:white;font-weight:700;font-size:13px;
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${bg};color:white;font-weight:700;font-size:${selected ? 14 : 13}px;
       display:flex;align-items:center;justify-content:center;
-      border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);
+      border:${border};box-shadow:${shadow};
       ${done ? 'opacity:0.6' : ''}
+      transition:all .2s;
     ">${done ? '✓' : n}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
@@ -75,19 +81,21 @@ function liveIcon(name) {
 export default function DeliveryRoute() {
   const { t } = useTranslation('delivery');
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [myPos, setMyPos] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [gpsError, setGpsError] = useState(false);
+  const [tasks, setTasks]               = useState([]);
+  const [myPos, setMyPos]               = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const [gpsError, setGpsError]         = useState(false);
+  const [selectedStopId, setSelectedStopId] = useState(null);
   const watchRef = useRef(null);
 
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef  = useRef(null);
-  const markersRef      = useRef([]);
-  const polylineRef     = useRef(null);
-  const liveDotRef      = useRef(null);
-  const myPosRef        = useRef(null);
+  const mapContainerRef  = useRef(null);
+  const mapInstanceRef   = useRef(null);
+  const markersRef       = useRef([]);
+  const markersByIdRef   = useRef({});
+  const polylineRef      = useRef(null);
+  const liveDotRef       = useRef(null);
+  const myPosRef         = useRef(null);
   const centeredOnGpsRef = useRef(false);
 
   // Fetch today's tasks
@@ -162,22 +170,24 @@ export default function DeliveryRoute() {
     };
   }, []);
 
-  // Re-render stop markers + polyline when tasks change
+  // Re-render stop markers + polyline when tasks or selection changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+    markersByIdRef.current = {};
     if (polylineRef.current) { polylineRef.current.remove(); polylineRef.current = null; }
 
     const stops = tasks.filter(t => t.deliveryLat && t.deliveryLng);
 
     stops.forEach((task, i) => {
       const done = ['DELIVERED', 'FAILED'].includes(task.status);
+      const selected = task.id === selectedStopId;
       const marker = L.marker(
         [parseFloat(task.deliveryLat), parseFloat(task.deliveryLng)],
-        { icon: numberedIcon(task.stopOrder ?? i + 1, done) }
+        { icon: numberedIcon(task.stopOrder ?? i + 1, done, selected) }
       );
       marker.bindPopup(`
         <div style="font-family:inherit;min-width:160px">
@@ -196,6 +206,9 @@ export default function DeliveryRoute() {
       `);
       marker.addTo(map);
       markersRef.current.push(marker);
+      markersByIdRef.current[task.id] = marker;
+
+      if (selected) marker.openPopup();
     });
 
     if (stops.length > 1) {
@@ -205,11 +218,10 @@ export default function DeliveryRoute() {
       ).addTo(map);
     }
 
-    // Center on first stop only if we don't have GPS yet
     if (stops.length > 0 && !myPosRef.current) {
       map.setView([parseFloat(stops[0].deliveryLat), parseFloat(stops[0].deliveryLng)], 13);
     }
-  }, [tasks]);
+  }, [tasks, selectedStopId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update live GPS dot and auto-center on first fix
   useEffect(() => {
@@ -260,20 +272,51 @@ export default function DeliveryRoute() {
       <Stack spacing={1}>
         {tasks.map((task, i) => {
           const done = ['DELIVERED', 'FAILED'].includes(task.status);
+          const selected = task.id === selectedStopId;
+          const hasCoords = task.deliveryLat && task.deliveryLng;
+
+          const handleCardClick = () => {
+            const map = mapInstanceRef.current;
+            if (!hasCoords || !map) return;
+            const isAlreadySelected = task.id === selectedStopId;
+            setSelectedStopId(isAlreadySelected ? null : task.id);
+            if (!isAlreadySelected) {
+              map.setView([parseFloat(task.deliveryLat), parseFloat(task.deliveryLng)], 16);
+            }
+          };
+
           return (
-            <Card key={task.id} variant="outlined" sx={{ opacity: done ? 0.6 : 1 }}>
+            <Card
+              key={task.id}
+              variant="outlined"
+              onClick={handleCardClick}
+              sx={{
+                opacity: done ? 0.7 : 1,
+                cursor: hasCoords ? 'pointer' : 'default',
+                borderColor: selected ? 'warning.main' : 'divider',
+                borderWidth: selected ? 2 : 1,
+                bgcolor: selected ? 'warning.50' : 'background.paper',
+                transition: 'border-color .2s, background-color .2s',
+                '&:hover': hasCoords ? { borderColor: 'primary.main', bgcolor: 'action.hover' } : {},
+              }}
+            >
               <CardContent sx={{ py: '8px !important', px: 2 }}>
                 <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-                  <Typography variant="body2" fontWeight={700} sx={{ minWidth: 56 }}>
-                    Stop {task.stopOrder ?? i + 1}
-                  </Typography>
+                  <Box sx={{
+                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                    bgcolor: selected ? 'warning.main' : done ? 'grey.400' : 'primary.main',
+                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700,
+                  }}>
+                    {done ? '✓' : task.stopOrder ?? i + 1}
+                  </Box>
                   <Typography variant="body2" sx={{ flex: 1 }} noWrap>{task.deliveryAddress}</Typography>
                   <Chip
                     label={t(`status.${task.status}`)}
                     color={STATUS_COLORS[task.status] || 'default'}
                     size="small"
                   />
-                  {task.deliveryLat && task.deliveryLng && (
+                  {hasCoords && (
                     <Tooltip title={t('tasks.openMaps')}>
                       <IconButton
                         size="small"
@@ -281,6 +324,7 @@ export default function DeliveryRoute() {
                         href={`https://www.google.com/maps/dir/?api=1&destination=${task.deliveryLat},${task.deliveryLng}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <MapIcon fontSize="small" />
                       </IconButton>
