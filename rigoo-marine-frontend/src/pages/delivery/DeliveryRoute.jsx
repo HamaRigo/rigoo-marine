@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { deliveryApi } from '../../services/api';
+import { useAuth } from '../../hooks';
 
 const STATUS_COLORS = {
   PENDING:    'default',
@@ -37,32 +38,43 @@ function numberedIcon(n, done) {
   });
 }
 
-function liveIcon() {
+function liveIcon(name) {
+  const short = name ? name.split(' ')[0] : 'You';
   return L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;width:36px;height:36px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="
-          position:absolute;inset:0;border-radius:50%;
-          background:rgba(229,57,53,0.25);
-          animation:pulse 1.8s ease-out infinite;
-        "></div>
-        <div style="
-          position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-          width:16px;height:16px;border-radius:50%;
-          background:#e53935;border:3px solid white;
-          box-shadow:0 2px 6px rgba(229,57,53,0.6);
-        "></div>
+          background:rgba(0,0,0,0.55);color:#fff;
+          font-size:9px;font-weight:600;line-height:1;
+          padding:1px 4px;border-radius:3px;
+          white-space:nowrap;max-width:64px;
+          overflow:hidden;text-overflow:ellipsis;
+        ">${short}</div>
+        <div style="position:relative;width:28px;height:28px">
+          <div style="
+            position:absolute;inset:0;border-radius:50%;
+            background:rgba(229,57,53,0.25);
+            animation:pulse 1.8s ease-out infinite;
+          "></div>
+          <div style="
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            width:14px;height:14px;border-radius:50%;
+            background:#e53935;border:3px solid white;
+            box-shadow:0 2px 6px rgba(229,57,53,0.6);
+          "></div>
+        </div>
       </div>
       <style>@keyframes pulse{0%{transform:scale(0.6);opacity:1}100%{transform:scale(2.2);opacity:0}}</style>
     `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    iconSize: [66, 44],
+    iconAnchor: [33, 44],
   });
 }
 
 export default function DeliveryRoute() {
   const { t } = useTranslation('delivery');
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [myPos, setMyPos] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -207,8 +219,8 @@ export default function DeliveryRoute() {
     if (liveDotRef.current) {
       liveDotRef.current.setLatLng([myPos.lat, myPos.lng]);
     } else {
-      liveDotRef.current = L.marker([myPos.lat, myPos.lng], { icon: liveIcon() })
-        .bindPopup('<strong>You are here</strong>')
+      liveDotRef.current = L.marker([myPos.lat, myPos.lng], { icon: liveIcon(user?.name) })
+        .bindPopup(`<strong>${user?.name ?? 'You'} — here</strong>`)
         .addTo(map);
     }
 

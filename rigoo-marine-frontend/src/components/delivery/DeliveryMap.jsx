@@ -5,13 +5,28 @@ import { Box } from '@mui/material';
 
 const DOHA = [25.2854, 51.531];
 
-function driverIcon(color) {
+function driverIcon(color, name) {
   const fill = { green: '#43a047', yellow: '#fb8c00', red: '#e53935', grey: '#90a4ae' }[color] ?? '#1565c0';
+  const short = name ? name.split(' ')[0] : '';
   return L.divIcon({
     className: '',
-    html: `<div style="width:22px;height:22px;border-radius:50%;background:${fill};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="
+          background:rgba(0,0,0,0.55);color:#fff;
+          font-size:9px;font-weight:600;line-height:1;
+          padding:1px 4px;border-radius:3px;
+          white-space:nowrap;max-width:64px;
+          overflow:hidden;text-overflow:ellipsis;
+        ">${short}</div>
+        <div style="
+          width:16px;height:16px;border-radius:50%;
+          background:${fill};border:2px solid #fff;
+          box-shadow:0 2px 6px rgba(0,0,0,.45);
+        "></div>
+      </div>`,
+    iconSize: [66, 30],
+    iconAnchor: [33, 30],
   });
 }
 
@@ -79,7 +94,7 @@ export default function DeliveryMap({
 
       const marker = L.marker(
         [parseFloat(pos.lat), parseFloat(pos.lng)],
-        { icon: driverIcon(isSelected ? 'yellow' : color) }
+        { icon: driverIcon(isSelected ? 'yellow' : color, name) }
       );
 
       const clickLink = onDriverClick
