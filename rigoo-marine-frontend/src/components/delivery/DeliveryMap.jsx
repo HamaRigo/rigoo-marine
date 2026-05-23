@@ -30,13 +30,20 @@ function driverIcon(color, name) {
   });
 }
 
-function stopIcon(done) {
-  const fill = done ? '#43a047' : '#1565c0';
+function stopIcon(n, done) {
+  const fill = done ? '#9e9e9e' : '#1565c0';
   return L.divIcon({
     className: '',
-    html: `<div style="width:12px;height:12px;border-radius:50%;background:${fill};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
+    html: `<div style="
+      width:24px;height:24px;border-radius:50%;
+      background:${fill};border:2px solid #fff;
+      box-shadow:0 2px 6px rgba(0,0,0,.3);
+      color:#fff;font-weight:700;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      ${done ? 'opacity:0.65' : ''}
+    ">${done ? '✓' : n}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 }
 
@@ -126,14 +133,15 @@ export default function DeliveryMap({
     if (showStops) {
       tasks
         .filter(t => t.deliveryLat && t.deliveryLng)
-        .forEach(t => {
+        .forEach((t, i) => {
+          const done = t.status === 'DELIVERED';
           const marker = L.marker(
             [parseFloat(t.deliveryLat), parseFloat(t.deliveryLng)],
-            { icon: stopIcon(t.status === 'DELIVERED') }
+            { icon: stopIcon(t.stopOrder ?? i + 1, done) }
           );
           marker.bindPopup(`
             <div style="font-family:inherit">
-              <strong style="font-size:13px">Stop ${t.stopOrder} — ${t.status}</strong><br/>
+              <strong style="font-size:13px">Stop ${t.stopOrder ?? i + 1} — ${t.status}</strong><br/>
               <span style="font-size:12px">${t.deliveryAddress ?? ''}</span>
             </div>
           `);
