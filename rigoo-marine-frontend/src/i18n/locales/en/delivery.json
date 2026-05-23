@@ -26,7 +26,8 @@
     "noTasks": "No deliveries assigned.",
     "openMaps": "Open in Google Maps",
     "openWaze": "Open in Waze",
-    "call": "Call Client"
+    "call": "Call Client",
+    "viewDetails": "View Details"
   },
   "detail": {
     "title": "Delivery #{{id}}",
