@@ -504,12 +504,14 @@ export default function VesselOverviewTab({ vessel, vesselId, dossier }) {
   const records  = d.recentHistory || [];
   const schedule = d.schedule || [];
 
-  // Per-vessel fuel analytics
+  // Per-vessel fuel analytics (backend may return 500 if no data — treat as unavailable)
   const { data: fuelAnalytics, isLoading: fuelLoading } = useQuery({
     queryKey: ['fuel-analytics', vesselId],
     queryFn:  () => vesselApi.getFuelAnalytics(vesselId),
     enabled:  !!vesselId,
     staleTime: 5 * 60_000,
+    retry: false,
+    throwOnError: false,
   });
 
   // Compute derived KPI values

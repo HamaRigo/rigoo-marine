@@ -231,6 +231,8 @@ export default function FuelLogPanel({ vesselId }) {
     queryKey: ['fuel-analytics', vesselId],
     queryFn: () => vesselApi.getFuelAnalytics(vesselId),
     enabled: !!vesselId,
+    retry: false,
+    throwOnError: false,
   });
 
   const logs = logsPage?.content ?? [];

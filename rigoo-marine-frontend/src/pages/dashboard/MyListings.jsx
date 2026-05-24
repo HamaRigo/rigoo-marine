@@ -351,13 +351,14 @@ export default function MyListings() {
   const { t } = useTranslation('marketplace');
   const [submitOpen, setSubmitOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['my-listings'],
     queryFn: marketplaceApi.getMyListings,
     staleTime: 2 * 60_000,
+    retry: false,
   });
 
-  const listings = Array.isArray(data) ? data : data?.content ?? [];
+  const listings = isError ? [] : (Array.isArray(data) ? data : data?.content ?? []);
 
   const counts = listings.reduce((acc, l) => {
     acc[l.status] = (acc[l.status] || 0) + 1;
