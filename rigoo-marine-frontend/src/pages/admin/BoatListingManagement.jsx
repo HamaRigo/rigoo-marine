@@ -1,10 +1,17 @@
-import { Box, Button, Chip, Stack, Typography, IconButton, Tooltip } from '@mui/material';
+import { useState } from 'react';
+import {
+  Box, Button, Chip, Stack, Typography, IconButton, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  InputAdornment, Alert, CircularProgress,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import FilterableTable from '../../components/admin/FilterableTable';
 import { marketplaceApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
@@ -16,7 +23,126 @@ const STATUS_COLORS = {
   SOLD: 'default',
   ARCHIVED: 'default',
   DRAFT: 'info',
+  PENDING_REVIEW: 'warning',
+  REJECTED: 'error',
 };
+
+// ── Approve dialog ────────────────────────────────────────────────────────
+
+function ApproveDialog({ listing, onClose }) {
+  const { t } = useTranslation('marketplace');
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+  const [gainPct, setGainPct] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: () => marketplaceApi.approveListing(listing.id, {
+      companyGainPct: gainPct !== '' ? parseFloat(gainPct) : 0,
+    }),
+    onSuccess: () => {
+      success(t('admin.approveListing') + ' ✓');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'boat-listings'] });
+      onClose();
+    },
+    onError: () => error('Failed to approve listing'),
+  });
+
+  return (
+    <Dialog open={!!listing} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle fontWeight={700}>{t('admin.approveDialog.title')}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {t('admin.approveDialog.body')}
+        </Typography>
+        <TextField
+          label={t('admin.companyGainPct')}
+          type="number"
+          value={gainPct}
+          onChange={e => setGainPct(e.target.value)}
+          fullWidth
+          autoFocus
+          inputProps={{ min: 0, max: 100, step: 0.5 }}
+          InputProps={{
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+          }}
+          helperText={t('admin.companyGainPctHelp')}
+        />
+        {gainPct !== '' && listing && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {listing.salePrice && (
+              <span>Sale: {formatPrice(listing.salePrice * (1 + parseFloat(gainPct || 0) / 100), { maximumFractionDigits: 0 })} effective price</span>
+            )}
+            {listing.dailyRate && (
+              <span>Daily: {formatPrice(listing.dailyRate * (1 + parseFloat(gainPct || 0) / 100), { maximumFractionDigits: 0 })} / day effective</span>
+            )}
+          </Alert>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <Button onClick={onClose} color="inherit" disabled={mutation.isPending}>{t('admin.cancel')}</Button>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={mutation.isPending ? <CircularProgress size={14} color="inherit" /> : <CheckCircleOutlineIcon />}
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+        >
+          {t('admin.approveDialog.confirm')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ── Reject dialog ─────────────────────────────────────────────────────────
+
+function RejectDialog({ listing, onClose }) {
+  const { t } = useTranslation('marketplace');
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+  const [reason, setReason] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: () => marketplaceApi.rejectListing(listing.id, reason),
+    onSuccess: () => {
+      success('Listing rejected');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'boat-listings'] });
+      onClose();
+    },
+    onError: () => error('Failed to reject listing'),
+  });
+
+  return (
+    <Dialog open={!!listing} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle fontWeight={700}>{t('admin.rejectDialog.title')}</DialogTitle>
+      <DialogContent>
+        <TextField
+          label={t('admin.rejectDialog.reason')}
+          multiline
+          rows={3}
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          fullWidth
+          autoFocus
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <Button onClick={onClose} color="inherit" disabled={mutation.isPending}>{t('admin.cancel')}</Button>
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={mutation.isPending ? <CircularProgress size={14} color="inherit" /> : <CancelOutlinedIcon />}
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+        >
+          {t('admin.rejectDialog.confirm')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────
 
 export default function BoatListingManagement() {
   const { t, i18n } = useTranslation('marketplace');
@@ -24,6 +150,9 @@ export default function BoatListingManagement() {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
   const isAr = i18n.language === 'ar';
+
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   const handleDelete = async (id) => {
     if (!window.confirm(t('admin.deleteConfirm'))) return;
@@ -69,6 +198,11 @@ export default function BoatListingManagement() {
           : '—',
     },
     {
+      id: 'companyGainPct',
+      label: t('admin.listingColumns.gain'),
+      render: (r) => r.companyGainPct != null ? `${r.companyGainPct}%` : '—',
+    },
+    {
       id: 'status',
       label: t('admin.listingColumns.status'),
       render: (r) => (
@@ -96,7 +230,7 @@ export default function BoatListingManagement() {
           {
             id: 'status',
             label: t('admin.fields.status'),
-            options: ['DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'].map((s) => ({
+            options: ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'].map((s) => ({
               value: s,
               label: t(`status.${s}`),
             })),
@@ -112,6 +246,20 @@ export default function BoatListingManagement() {
         ]}
         renderActions={(row) => (
           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+            {row.status === 'PENDING_REVIEW' && (
+              <>
+                <Tooltip title={t('admin.approveListing')}>
+                  <IconButton size="small" color="success" onClick={() => setApproveTarget(row)}>
+                    <CheckCircleOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('admin.rejectListing')}>
+                  <IconButton size="small" color="error" onClick={() => setRejectTarget(row)}>
+                    <CancelOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
             <Tooltip title={t('admin.editListing')}>
               <IconButton size="small" onClick={() => navigate(`/admin/boats/${row.id}/edit`)}>
                 <EditIcon fontSize="small" />
@@ -125,6 +273,9 @@ export default function BoatListingManagement() {
           </Stack>
         )}
       />
+
+      <ApproveDialog listing={approveTarget} onClose={() => setApproveTarget(null)} />
+      <RejectDialog listing={rejectTarget} onClose={() => setRejectTarget(null)} />
     </Box>
   );
 }

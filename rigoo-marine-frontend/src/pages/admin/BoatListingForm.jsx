@@ -24,13 +24,14 @@ import SaveIcon from '@mui/icons-material/Save';
 import { marketplaceApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 
-const STATUS_OPTIONS = ['DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'];
+const STATUS_OPTIONS = ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'];
 const SELLER_TYPES = ['DEALER', 'PRIVATE'];
 const CAPTAIN_OPTIONS = ['NEVER', 'OPTIONAL', 'INCLUDED'];
 
 const EMPTY = {
   slug: '',
   status: 'DRAFT',
+  companyGainPct: '',
   sellerType: 'DEALER',
   titleEn: '',
   titleAr: '',
@@ -116,6 +117,9 @@ function toPayload(form) {
   });
   // captainRequired empty → undefined
   if (!payload.captainRequired) payload.captainRequired = undefined;
+  // companyGainPct
+  if (payload.companyGainPct === '' || payload.companyGainPct == null) payload.companyGainPct = undefined;
+  else payload.companyGainPct = parseFloat(payload.companyGainPct);
 
   // mediaUrlsText (newline-separated) → mediaUrls array
   payload.mediaUrls = (payload.mediaUrlsText || '')
@@ -150,6 +154,7 @@ function fromDTO(dto) {
     engineHours: dto.engineHours ?? '',
     batteryCount: dto.batteryCount ?? '',
     captainRequired: dto.captainRequired ?? '',
+    companyGainPct: dto.companyGainPct ?? '',
     lastSurveyDate: dto.lastSurveyDate ?? '',
     lastAntifoulDate: dto.lastAntifoulDate ?? '',
     lastEngineServiceDate: dto.lastEngineServiceDate ?? '',
@@ -322,6 +327,23 @@ export default function BoatListingForm() {
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField label={t('admin.fields.captainDailyFee')} type="number" value={form.captainDailyFee} onChange={update('captainDailyFee')} fullWidth disabled={!form.forRent} />
+              </Grid>
+            </Grid>
+          </Section>
+
+          <Section title={t('admin.sections.commission')}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 4 }} >
+                <TextField
+                  label={t('admin.fields.companyGainPct')}
+                  type="number"
+                  value={form.companyGainPct}
+                  onChange={update('companyGainPct')}
+                  fullWidth
+                  inputProps={{ min: 0, max: 100, step: 0.5 }}
+                  InputProps={{ endAdornment: <Box component="span" sx={{ mr: 1, color: 'text.secondary' }}>%</Box> }}
+                  helperText={t('admin.companyGainPctHelp')}
+                />
               </Grid>
             </Grid>
           </Section>

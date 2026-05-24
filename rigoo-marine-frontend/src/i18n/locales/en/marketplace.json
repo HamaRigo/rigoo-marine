@@ -92,7 +92,9 @@
     "AVAILABLE": "Available",
     "RESERVED": "Reserved",
     "SOLD": "Sold",
-    "ARCHIVED": "Archived"
+    "ARCHIVED": "Archived",
+    "PENDING_REVIEW": "Pending Review",
+    "REJECTED": "Rejected"
   },
   "captainOptions": {
     "NEVER": "Not allowed",
@@ -154,7 +156,8 @@
       "condition": "Condition & history",
       "location": "Location",
       "documents": "Documents & extras",
-      "media": "Media (one URL per line)"
+      "media": "Media (one URL per line)",
+      "commission": "Commission"
     },
     "fields": {
       "slug": "Slug (auto if blank)",
@@ -182,7 +185,8 @@
       "mediaUrls": "Image URLs",
       "videoUrl": "Video URL",
       "specSheetUrl": "Spec sheet URL",
-      "sellerVerified": "Verified seller"
+      "sellerVerified": "Verified seller",
+      "companyGainPct": "Company gain (%)"
     },
     "sellerType": {
       "DEALER": "Dealer",
@@ -205,7 +209,46 @@
       "modes": "Modes",
       "price": "Price",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "gain": "Gain %",
+      "submittedBy": "Submitted by"
+    },
+    "approveListing": "Approve & Publish",
+    "rejectListing": "Reject",
+    "companyGainPct": "Company gain (%)",
+    "companyGainPctHelp": "Added on top of the seller price before publishing",
+    "approveDialog": {
+      "title": "Approve Listing",
+      "body": "Set the company commission and publish this listing to the marketplace.",
+      "confirm": "Approve & Publish"
+    },
+    "rejectDialog": {
+      "title": "Reject Listing",
+      "reason": "Reason (shown to client)",
+      "confirm": "Reject"
+    }
+  },
+  "client": {
+    "myListings": "My Listings",
+    "submitNew": "List My Vessel",
+    "noListings": "No listings yet",
+    "noListingsHint": "Submit your vessel to rent or sell it through the Rigoo Marine marketplace.",
+    "submitDialog": {
+      "title": "List My Vessel",
+      "subtitle": "Submit your vessel for marketplace review",
+      "sectionMode": "Listing type",
+      "sectionBasic": "Vessel details",
+      "sectionPricing": "Pricing",
+      "sectionMedia": "Photos",
+      "submit": "Submit for Review",
+      "submitting": "Submitting…",
+      "success": "Your listing was submitted and is pending review.",
+      "error": "Could not submit listing. Please try again."
+    },
+    "status": {
+      "pending": "Under review — our team will contact you shortly.",
+      "published": "Your listing is live on the marketplace.",
+      "rejected": "Your listing was not approved."
     }
   }
 }

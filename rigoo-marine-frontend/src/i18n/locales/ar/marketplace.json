@@ -92,7 +92,9 @@
     "AVAILABLE": "متاح",
     "RESERVED": "محجوز",
     "SOLD": "تم البيع",
-    "ARCHIVED": "مؤرشف"
+    "ARCHIVED": "مؤرشف",
+    "PENDING_REVIEW": "قيد المراجعة",
+    "REJECTED": "مرفوض"
   },
   "captainOptions": {
     "NEVER": "غير مسموح",
@@ -154,7 +156,8 @@
       "condition": "الحالة والسجل",
       "location": "الموقع",
       "documents": "الوثائق وإضافات",
-      "media": "الوسائط (رابط واحد في كل سطر)"
+      "media": "الوسائط (رابط واحد في كل سطر)",
+      "commission": "العمولة"
     },
     "fields": {
       "slug": "المعرّف (تلقائي إذا فارغ)",
@@ -182,7 +185,8 @@
       "mediaUrls": "روابط الصور",
       "videoUrl": "رابط الفيديو",
       "specSheetUrl": "رابط ورقة المواصفات",
-      "sellerVerified": "بائع موثّق"
+      "sellerVerified": "بائع موثّق",
+      "companyGainPct": "نسبة أرباح الشركة (%)"
     },
     "sellerType": {
       "DEALER": "تاجر",
@@ -205,7 +209,46 @@
       "modes": "الأنماط",
       "price": "السعر",
       "status": "الحالة",
-      "actions": "إجراءات"
+      "actions": "إجراءات",
+      "gain": "الربح %",
+      "submittedBy": "مقدّم من"
+    },
+    "approveListing": "موافقة ونشر",
+    "rejectListing": "رفض",
+    "companyGainPct": "نسبة أرباح الشركة (%)",
+    "companyGainPctHelp": "تُضاف على سعر البائع قبل النشر",
+    "approveDialog": {
+      "title": "الموافقة على القائمة",
+      "body": "حدّد عمولة الشركة وانشر هذه القائمة في السوق.",
+      "confirm": "موافقة ونشر"
+    },
+    "rejectDialog": {
+      "title": "رفض القائمة",
+      "reason": "السبب (يُظهر للعميل)",
+      "confirm": "رفض"
+    }
+  },
+  "client": {
+    "myListings": "قوائمي",
+    "submitNew": "إدراج مركبتي",
+    "noListings": "لا توجد قوائم بعد",
+    "noListingsHint": "أرسل مركبتك لتأجيرها أو بيعها عبر سوق ريجو مارين.",
+    "submitDialog": {
+      "title": "إدراج مركبتي",
+      "subtitle": "أرسل مركبتك لمراجعتها في السوق",
+      "sectionMode": "نوع الإدراج",
+      "sectionBasic": "تفاصيل المركبة",
+      "sectionPricing": "التسعير",
+      "sectionMedia": "الصور",
+      "submit": "إرسال للمراجعة",
+      "submitting": "جارٍ الإرسال…",
+      "success": "تم إرسال قائمتك وهي قيد المراجعة.",
+      "error": "تعذّر إرسال القائمة. يرجى المحاولة مجدداً."
+    },
+    "status": {
+      "pending": "قيد المراجعة — سيتواصل معك فريقنا قريباً.",
+      "published": "قائمتك منشورة في السوق.",
+      "rejected": "لم تتم الموافقة على قائمتك."
     }
   }
 }

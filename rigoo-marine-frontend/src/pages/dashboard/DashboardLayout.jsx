@@ -18,6 +18,7 @@ import PersonRoundedIcon     from '@mui/icons-material/PersonRounded';
 import LogoutRoundedIcon     from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon        from '@mui/icons-material/MenuRounded';
 import CloseRoundedIcon      from '@mui/icons-material/CloseRounded';
+import SellRoundedIcon       from '@mui/icons-material/SellRounded';
 
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 import NotificationBell      from '../../components/notifications/NotificationBell';
@@ -25,14 +26,16 @@ import NotificationBell      from '../../components/notifications/NotificationBe
 // ── Nav items ──────────────────────────────────────────────────────────────
 
 const NAV_KEYS = [
-  { key: 'fleet',   path: '/dashboard/vessels', icon: DirectionsBoatRoundedIcon },
-  { key: 'account', path: '/dashboard/account',  icon: AccountCircleRoundedIcon  },
-  { key: 'profile', path: '/dashboard/profile',  icon: PersonRoundedIcon         },
+  { key: 'fleet',     path: '/dashboard/vessels',      icon: DirectionsBoatRoundedIcon },
+  { key: 'listings',  path: '/dashboard/my-listings',  icon: SellRoundedIcon           },
+  { key: 'account',   path: '/dashboard/account',      icon: AccountCircleRoundedIcon  },
+  { key: 'profile',   path: '/dashboard/profile',      icon: PersonRoundedIcon         },
 ];
 
 function pathToTab(pathname) {
-  if (pathname.startsWith('/dashboard/account'))  return 1;
-  if (pathname.startsWith('/dashboard/profile'))  return 2;
+  if (pathname.startsWith('/dashboard/my-listings')) return 1;
+  if (pathname.startsWith('/dashboard/account'))     return 2;
+  if (pathname.startsWith('/dashboard/profile'))     return 3;
   return 0;
 }
 

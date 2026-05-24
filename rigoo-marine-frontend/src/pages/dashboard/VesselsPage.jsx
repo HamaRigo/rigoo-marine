@@ -620,19 +620,19 @@ export default function VesselsPage() {
   );
 
   const addMutation = useMutation({
-    mutationFn: (data) => vesselApi.createVessel({ ...data, clientId: user?.id }),
+    mutationFn: (data) => vesselApi.create({ ...data, clientId: user?.id }),
     onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['vessels', 'my'] }); setFormOpen(false); toast.success(t('vessels.toast.added')); },
     onError:    (e) => toast.error(e.response?.data?.message || t('vessels.toast.addFailed')),
   });
 
   const editMutation = useMutation({
-    mutationFn: (data) => vesselApi.updateVessel(editTarget.id, data),
+    mutationFn: (data) => vesselApi.update(editTarget.id, data),
     onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['vessels', 'my'] }); setEditTarget(null); toast.success(t('vessels.toast.updated')); },
     onError:    (e) => toast.error(e.response?.data?.message || t('vessels.toast.updateFailed')),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => vesselApi.deleteVessel(deleteTarget.id),
+    mutationFn: () => vesselApi.delete(deleteTarget.id),
     onSuccess:  () => {
       queryClient.invalidateQueries({ queryKey: ['vessels', 'my'] });
       if (selectedId === deleteTarget.id) setSelectedId(null);

@@ -37,6 +37,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 
 // Dashboard Pages
 import VesselsPage  from './pages/dashboard/VesselsPage';
+import MyListings   from './pages/dashboard/MyListings';
 import AccountPage  from './pages/dashboard/AccountPage';
 import ClientOrderDetail from './pages/dashboard/ClientOrderDetail';
 import Profile      from './pages/dashboard/Profile';
@@ -166,6 +167,7 @@ function App() {
                 {/* Default → vessels */}
                 <Route index element={<Navigate to="/dashboard/vessels" replace />} />
                 <Route path="vessels"       element={<VesselsPage  />} />
+                <Route path="my-listings"   element={<MyListings   />} />
                 <Route path="account"       element={<AccountPage  />} />
                 <Route path="orders/:id"    element={<ClientOrderDetail />} />
                 <Route path="profile"       element={<Profile      />} />

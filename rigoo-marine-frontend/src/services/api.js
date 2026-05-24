@@ -892,6 +892,30 @@ export const marketplaceApi = {
     return response.data;
   },
 
+  /** Client submits their own vessel for marketplace review. Creates with PENDING_REVIEW status. */
+  submitClientListing: async (dto) => {
+    const response = await httpClient.post('/api/listings/submit', dto);
+    return response.data;
+  },
+
+  /** Client views their own submitted listings. */
+  getMyListings: async () => {
+    const response = await httpClient.get('/api/listings/my');
+    return response.data;
+  },
+
+  /** Admin / Team Lead approves a pending listing and sets company gain percentage. */
+  approveListing: async (id, { companyGainPct }) => {
+    const response = await httpClient.put(`/api/listings/${id}/approve`, { companyGainPct });
+    return response.data;
+  },
+
+  /** Admin / Team Lead rejects a pending listing. */
+  rejectListing: async (id, reason = '') => {
+    const response = await httpClient.put(`/api/listings/${id}/reject`, { reason });
+    return response.data;
+  },
+
   /**
    * Public inquiry submit. listingId is required for BUY/RENT/INSPECTION,
    * optional for GENERAL (homepage Contact us).
