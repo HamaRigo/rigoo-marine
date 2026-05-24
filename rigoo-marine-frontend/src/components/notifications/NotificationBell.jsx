@@ -20,7 +20,7 @@ import { useUnreadCount, useUnreadList, useMarkRead, useMarkAllRead } from '../.
  * Click a row → mark-read + close popover (the user has acknowledged it).
  * The full feed lives at /dashboard/notifications.
  */
-export default function NotificationBell() {
+export default function NotificationBell({ viewAllPath = '/dashboard/notifications' }) {
   const { t } = useTranslation('notifications');
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -124,17 +124,21 @@ export default function NotificationBell() {
           </List>
         )}
 
-        <Divider />
-        <Button
-          component={Link}
-          to="/dashboard/notifications"
-          onClick={handleClose}
-          fullWidth
-          startIcon={<OpenInNewRoundedIcon />}
-          sx={{ borderRadius: 0, py: 1.25 }}
-        >
-          {t('bell.viewAll')}
-        </Button>
+        {viewAllPath && (
+          <>
+            <Divider />
+            <Button
+              component={Link}
+              to={viewAllPath}
+              onClick={handleClose}
+              fullWidth
+              startIcon={<OpenInNewRoundedIcon />}
+              sx={{ borderRadius: 0, py: 1.25 }}
+            >
+              {t('bell.viewAll')}
+            </Button>
+          </>
+        )}
       </Popover>
     </>
   );

@@ -14,6 +14,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
+import NotificationBell from '../../components/notifications/NotificationBell';
 
 const drawerWidth = 240;
 
@@ -99,6 +100,7 @@ export default function DeliveryLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Delivery'}
           </Typography>
+          <NotificationBell viewAllPath={null} />
           <IconButton color="inherit" component={Link} to="/" title="Go to Home">
             <HomeIcon />
           </IconButton>
