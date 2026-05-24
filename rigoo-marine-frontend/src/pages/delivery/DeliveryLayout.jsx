@@ -12,6 +12,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import MapIcon from '@mui/icons-material/Map';
 import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
@@ -71,6 +72,12 @@ export default function DeliveryLayout() {
           );
         })}
         <ListItem disablePadding sx={{ mt: 1 }}>
+          <ListItemButton component={Link} to="/" onClick={() => setMobileOpen(false)}>
+            <ListItemIcon sx={{ minWidth: 36 }}><HomeIcon /></ListItemIcon>
+            <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
