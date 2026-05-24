@@ -14,6 +14,8 @@ public interface BoatListingRepository extends JpaRepository<BoatListing, Long>,
     Optional<BoatListing> findBySlug(String slug);
     boolean existsBySlug(String slug);
 
+    List<BoatListing> findByCreatedByOrderByCreatedAtDesc(Long createdBy);
+
     @Query("SELECT DISTINCT b.boatType FROM BoatListing b WHERE b.boatType IS NOT NULL AND b.boatType <> '' ORDER BY b.boatType")
     List<String> findDistinctBoatTypes();
 }

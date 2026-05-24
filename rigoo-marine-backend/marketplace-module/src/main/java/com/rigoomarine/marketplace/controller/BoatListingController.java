@@ -1,5 +1,6 @@
 package com.rigoomarine.marketplace.controller;
 
+import com.rigoomarine.common.security.AuthenticatedUser;
 import com.rigoomarine.marketplace.dto.BoatListingDTO;
 import com.rigoomarine.marketplace.service.BoatListingService;
 import jakarta.validation.Valid;
@@ -10,10 +11,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/listings")
@@ -61,6 +64,40 @@ public class BoatListingController {
     @GetMapping("/by-slug/{slug}")
     public ResponseEntity<BoatListingDTO> getBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(service.getBySlug(slug));
+    }
+
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN','TEAM_LEAD')")
+    @GetMapping("/my")
+    public ResponseEntity<List<BoatListingDTO>> getMyListings(
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        return ResponseEntity.ok(service.getMyListings(principal.getClientId()));
+    }
+
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN','TEAM_LEAD')")
+    @PostMapping("/submit")
+    public ResponseEntity<BoatListingDTO> submit(
+            @RequestBody BoatListingDTO dto,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        return ResponseEntity.ok(service.submit(dto, principal.getClientId()));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD')")
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<BoatListingDTO> approve(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        BigDecimal pct = body.get("companyGainPct") == null ? null
+                : new BigDecimal(body.get("companyGainPct").toString());
+        return ResponseEntity.ok(service.approve(id, pct));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD')")
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<BoatListingDTO> reject(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body) {
+        String reason = body != null && body.get("reason") != null ? body.get("reason").toString() : null;
+        return ResponseEntity.ok(service.reject(id, reason));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

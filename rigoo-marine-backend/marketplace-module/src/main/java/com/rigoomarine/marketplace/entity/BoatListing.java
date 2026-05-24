@@ -237,6 +237,12 @@ public class BoatListing {
     @Column(name = "view_count", nullable = false)
     private Long viewCount;
 
+    @Column(name = "company_gain_pct", precision = 5, scale = 2)
+    private java.math.BigDecimal companyGainPct;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -260,7 +266,7 @@ public class BoatListing {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum ListingStatus { DRAFT, AVAILABLE, RESERVED, SOLD, ARCHIVED }
+    public enum ListingStatus { DRAFT, PENDING_REVIEW, AVAILABLE, RESERVED, SOLD, ARCHIVED, REJECTED }
     public enum SellerType { DEALER, PRIVATE }
     public enum CaptainRequired { NEVER, OPTIONAL, INCLUDED }
 }

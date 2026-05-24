@@ -54,6 +54,40 @@ public class BoatListingService {
         repository.deleteById(id);
     }
 
+    public BoatListingDTO submit(BoatListingDTO dto, Long submitterId) {
+        BoatListing entity = fromDTO(dto, new BoatListing());
+        if (entity.getSlug() == null || entity.getSlug().isBlank()) {
+            entity.setSlug(generateSlug(entity.getTitleEn()));
+        }
+        entity.setStatus(BoatListing.ListingStatus.PENDING_REVIEW);
+        entity.setSellerType(BoatListing.SellerType.PRIVATE);
+        entity.setCreatedBy(submitterId);
+        return toDTO(repository.save(entity));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BoatListingDTO> getMyListings(Long userId) {
+        return repository.findByCreatedByOrderByCreatedAtDesc(userId)
+                .stream().map(this::toDTO).toList();
+    }
+
+    public BoatListingDTO approve(Long id, java.math.BigDecimal companyGainPct) {
+        BoatListing entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+        entity.setStatus(BoatListing.ListingStatus.AVAILABLE);
+        entity.setCompanyGainPct(companyGainPct);
+        entity.setRejectionReason(null);
+        return toDTO(repository.save(entity));
+    }
+
+    public BoatListingDTO reject(Long id, String reason) {
+        BoatListing entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+        entity.setStatus(BoatListing.ListingStatus.REJECTED);
+        entity.setRejectionReason(reason);
+        return toDTO(repository.save(entity));
+    }
+
     @Transactional(readOnly = true)
     public BoatListingDTO getById(Long id) {
         BoatListing entity = repository.findById(id)
@@ -236,6 +270,8 @@ public class BoatListingService {
         e.setVideoUrl(d.getVideoUrl());
         e.setSellerVerified(d.getSellerVerified());
         if (d.getViewCount() != null) e.setViewCount(d.getViewCount());
+        if (d.getCompanyGainPct() != null) e.setCompanyGainPct(d.getCompanyGainPct());
+        if (d.getRejectionReason() != null) e.setRejectionReason(d.getRejectionReason());
 
         return e;
     }
@@ -313,6 +349,8 @@ public class BoatListingService {
                 .videoUrl(e.getVideoUrl())
                 .sellerVerified(e.getSellerVerified())
                 .viewCount(e.getViewCount())
+                .companyGainPct(e.getCompanyGainPct())
+                .rejectionReason(e.getRejectionReason())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();

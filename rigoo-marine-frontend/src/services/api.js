@@ -892,39 +892,16 @@ export const marketplaceApi = {
     return response.data;
   },
 
-  /** Client submits their own vessel for marketplace review. Creates with PENDING_REVIEW status. */
+  /** Client submits their own vessel for marketplace review. */
   submitClientListing: async (dto) => {
-    // Try the dedicated client-submission endpoint first; fall back to the
-    // generic listings endpoint (sets PENDING_REVIEW so it still queues for review).
-    try {
-      const response = await httpClient.post('/api/listings/submit', dto);
-      return response.data;
-    } catch (err) {
-      if (err?.response?.status === 403 || err?.response?.status === 404 || err?.response?.status === 405) {
-        const response = await httpClient.post('/api/listings', {
-          ...dto,
-          status: 'PENDING_REVIEW',
-          sellerType: dto.sellerType || 'PRIVATE',
-        });
-        return response.data;
-      }
-      throw err;
-    }
+    const response = await httpClient.post('/api/listings/submit', dto);
+    return response.data;
   },
 
-  /** Client views their own submitted listings. Returns empty array if backend endpoint is not yet available. */
+  /** Client views their own submitted listings. */
   getMyListings: async () => {
-    try {
-      const response = await httpClient.get('/api/listings/my');
-      return response.data;
-    } catch (err) {
-      // Endpoint not yet implemented on this backend — return empty list
-      // so the UI shows the empty state instead of an error.
-      if (err?.response?.status === 400 || err?.response?.status === 404 || err?.response?.status === 405) {
-        return [];
-      }
-      throw err;
-    }
+    const response = await httpClient.get('/api/listings/my');
+    return response.data;
   },
 
   /** Admin / Team Lead approves a pending listing and sets company gain percentage. */

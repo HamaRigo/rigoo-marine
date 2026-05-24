@@ -92,6 +92,9 @@ public class BoatListingDTO {
     private Boolean sellerVerified;
     private Long viewCount;
 
+    private BigDecimal companyGainPct;
+    private String rejectionReason;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
