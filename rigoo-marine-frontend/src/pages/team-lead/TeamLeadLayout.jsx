@@ -19,6 +19,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
@@ -135,6 +136,9 @@ export default function TeamLeadLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Team Lead'}
           </Typography>
+          <IconButton component={Link} to="/" color="inherit">
+            <HomeIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
