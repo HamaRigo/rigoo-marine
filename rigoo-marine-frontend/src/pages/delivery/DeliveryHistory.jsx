@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, Chip, Stack,
   CircularProgress, Alert, Button, Divider,
@@ -29,6 +30,15 @@ const localDateStr = (offsetDays = 0) => {
 const formatDate = (dateStr) => {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+// Outside component — pure function, no closure dependencies
+const groupByDate = (list) => {
+  const map = {};
+  for (const tk of list) {
+    (map[tk.scheduledDate] ??= []).push(tk);
+  }
+  return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
 };
 
 function TaskRow({ task, onNavigate, t }) {
@@ -65,13 +75,14 @@ function TaskRow({ task, onNavigate, t }) {
 }
 
 function DateGroup({ date, tasks, t, onNavigate }) {
+  const delivered = useMemo(() => tasks.filter(tk => tk.status === 'DELIVERED').length, [tasks]);
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
       <CardContent sx={{ pb: '12px !important' }}>
         <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1 }}>
           {formatDate(date)}
           <Chip
-            label={`${tasks.filter(tk => tk.status === 'DELIVERED').length}/${tasks.length}`}
+            label={`${delivered}/${tasks.length}`}
             size="small"
             color="success"
             variant="outlined"
@@ -91,62 +102,47 @@ function DateGroup({ date, tasks, t, onNavigate }) {
 export default function DeliveryHistory() {
   const navigate = useNavigate();
   const { t }    = useTranslation('delivery');
+  const [showArchive, setShowArchive] = useState(false);
 
-  const [tasks,          setTasks]          = useState([]);
-  const [archiveTasks,   setArchiveTasks]   = useState([]);
-  const [historyDays,    setHistoryDays]    = useState(7);
-  const [loading,        setLoading]        = useState(true);
-  const [archiveLoading, setArchiveLoading] = useState(false);
-  const [showArchive,    setShowArchive]    = useState(false);
-  const [error,          setError]          = useState(null);
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['delivery-settings'],
+    queryFn: deliveryApi.getDeliverySettings,
+    staleTime: 10 * 60_000,
+  });
+
+  const historyDays = settings?.historyDays ?? 7;
 
   // exclude today and yesterday — those live in My Deliveries
   const toDate   = localDateStr(-2);
-  const fromDate = localDateStr(-(historyDays));
+  const fromDate = localDateStr(-historyDays);
+  const archiveFrom = localDateStr(-365);
+  const archiveTo   = localDateStr(-(historyDays + 1));
 
-  useEffect(() => {
-    Promise.all([deliveryApi.getDeliverySettings(), deliveryApi.getTasksInRange(fromDate, toDate)])
-      .then(([settings, data]) => {
-        setHistoryDays(settings.historyDays ?? 7);
-        setTasks(data);
-      })
-      .catch(() => setError(t('dashboard.loadError')))
-      .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
+  const { data: tasks = [], isLoading: histLoading, isError } = useQuery({
+    queryKey: ['delivery-history', fromDate, toDate],
+    queryFn: () => deliveryApi.getTasksInRange(fromDate, toDate),
+    enabled: !settingsLoading,
+    staleTime: 5 * 60_000,
+  });
 
-  const loadArchive = async () => {
-    setArchiveLoading(true);
-    try {
-      const archiveTo   = localDateStr(-(historyDays + 1));
-      const archiveFrom = localDateStr(-365);
-      const data = await deliveryApi.getTasksInRange(archiveFrom, archiveTo);
-      setArchiveTasks(data);
-      setShowArchive(true);
-    } catch {
-      setError(t('dashboard.loadError'));
-    } finally {
-      setArchiveLoading(false);
-    }
-  };
+  const { data: archiveTasks = [], isLoading: archiveLoading } = useQuery({
+    queryKey: ['delivery-archive', archiveFrom, archiveTo],
+    queryFn: () => deliveryApi.getTasksInRange(archiveFrom, archiveTo),
+    enabled: showArchive,
+    staleTime: 10 * 60_000,
+  });
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
-  if (error)   return <Alert severity="error">{error}</Alert>;
+  const groups        = useMemo(() => groupByDate(tasks),        [tasks]);
+  const archiveGroups = useMemo(() => groupByDate(archiveTasks), [archiveTasks]);
 
-  // Group tasks by scheduledDate
-  const groupByDate = (list) => {
-    const map = {};
-    list.forEach(tk => {
-      if (!map[tk.scheduledDate]) map[tk.scheduledDate] = [];
-      map[tk.scheduledDate].push(tk);
-    });
-    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
-  };
+  const periodLabel = historyDays === 7
+    ? t('history.lastWeek')
+    : `${t('history.last')} ${historyDays} ${t('history.days')}`;
 
-  const groups        = groupByDate(tasks);
-  const archiveGroups = groupByDate(archiveTasks);
-
-  const periodLabel = historyDays === 7 ? t('history.lastWeek') : `${t('history.last')} ${historyDays} ${t('history.days')}`;
+  if (settingsLoading || histLoading) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
+  }
+  if (isError) return <Alert severity="error">{t('dashboard.loadError')}</Alert>;
 
   return (
     <Box>
@@ -175,7 +171,7 @@ export default function DeliveryHistory() {
               variant="outlined"
               startIcon={archiveLoading ? <CircularProgress size={16} /> : <ArchiveIcon />}
               disabled={archiveLoading}
-              onClick={loadArchive}
+              onClick={() => setShowArchive(true)}
             >
               {t('history.loadArchive')}
             </Button>
@@ -194,7 +190,13 @@ export default function DeliveryHistory() {
             </Stack>
           </Reveal>
 
-          {archiveGroups.length === 0 && (
+          {archiveLoading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
+
+          {!archiveLoading && archiveGroups.length === 0 && (
             <Typography variant="body2" color="text.disabled">{t('history.noArchive')}</Typography>
           )}
 

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, Chip, Stack,
   CircularProgress, Alert, Divider, IconButton, Tooltip,
@@ -36,15 +37,20 @@ const TRANSITIONS = {
   ],
 };
 
+const DONE_SET = new Set(['DELIVERED', 'FAILED', 'CANCELLED']);
+
 const localDate = (offsetDays = 0) => {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-function TaskCard({ task, isToday, busyId, onAction, onNavigate }) {
+const TODAY_STR     = localDate(0);
+const YESTERDAY_STR = localDate(-1);
+
+const TaskCard = memo(function TaskCard({ task, isToday, busyId, onAction, onNavigate }) {
   const { t } = useTranslation('delivery');
-  const done        = ['DELIVERED', 'FAILED', 'CANCELLED'].includes(task.status);
+  const done        = DONE_SET.has(task.status);
   const transitions = isToday ? (TRANSITIONS[task.status] ?? []) : [];
   const isBusy      = busyId === task.id;
 
@@ -143,65 +149,72 @@ function TaskCard({ task, isToday, busyId, onAction, onNavigate }) {
       </CardContent>
     </Card>
   );
-}
+});
 
 export default function DeliveryTasks() {
   const navigate = useNavigate();
   const { t }    = useTranslation('delivery');
+  const qc       = useQueryClient();
 
-  const todayStr     = localDate(0);
-  const yesterdayStr = localDate(-1);
-
-  const [tasks,        setTasks]        = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
   const [busyId,       setBusyId]       = useState(null);
   const [failedDialog, setFailedDialog] = useState(null);
   const [failedReason, setFailedReason] = useState('');
 
-  useEffect(() => {
-    Promise.all([
-      deliveryApi.getTodayTasks(),
-      deliveryApi.getTasksInRange(yesterdayStr, yesterdayStr),
-    ])
-      .then(([today, yesterday]) => setTasks([...today, ...yesterday]))
-      .catch(() => setError(t('dashboard.loadError')))
-      .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
+  const { data: todayTasks = [], isLoading: todayLoading, isError: todayError } = useQuery({
+    queryKey: ['delivery-tasks-today'],
+    queryFn: deliveryApi.getTodayTasks,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
 
-  const updateStatus = async (taskId, status, reason) => {
-    setBusyId(taskId);
-    try {
-      const updated = await deliveryApi.updateStatus(taskId, status, reason);
-      setTasks(prev => prev.map(tk => tk.id === updated.id ? updated : tk));
-    } catch {
-      setError('Failed to update status.');
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const { data: yesterdayTasks = [], isLoading: yestLoading, isError: yestError } = useQuery({
+    queryKey: ['delivery-tasks-yesterday', YESTERDAY_STR],
+    queryFn: () => deliveryApi.getTasksInRange(YESTERDAY_STR, YESTERDAY_STR),
+    staleTime: 5 * 60_000,
+  });
+
+  const loading = todayLoading || yestLoading;
+  const error   = todayError || yestError;
+
+  const todayActive = useMemo(
+    () => todayTasks.filter(tk => !DONE_SET.has(tk.status)).length,
+    [todayTasks],
+  );
+  const todayDone = todayTasks.length - todayActive;
+
+  const statusMutation = useMutation({
+    mutationFn: ({ taskId, status, reason }) =>
+      deliveryApi.updateStatus(taskId, status, reason),
+
+    onMutate: async ({ taskId }) => {
+      setBusyId(taskId);
+    },
+    onSuccess: (updated) => {
+      qc.setQueryData(['delivery-tasks-today'], (prev = []) =>
+        prev.map(tk => tk.id === updated.id ? updated : tk),
+      );
+      qc.invalidateQueries({ queryKey: ['delivery-stats'] });
+    },
+    onError: () => {
+      qc.invalidateQueries({ queryKey: ['delivery-tasks-today'] });
+    },
+    onSettled: () => setBusyId(null),
+  });
 
   const handleAction = (task, tr) => {
     if (tr.confirm) { setFailedReason(''); setFailedDialog({ taskId: task.id }); }
-    else updateStatus(task.id, tr.next);
+    else statusMutation.mutate({ taskId: task.id, status: tr.next });
   };
 
   const handleFailConfirm = () => {
     const { taskId } = failedDialog;
     setFailedDialog(null);
-    updateStatus(taskId, 'FAILED', failedReason);
+    statusMutation.mutate({ taskId, status: 'FAILED', reason: failedReason });
     setFailedReason('');
   };
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
-  if (error)   return <Alert severity="error">{error}</Alert>;
-
-  const todayTasks     = tasks.filter(tk => tk.scheduledDate === todayStr);
-  const yesterdayTasks = tasks.filter(tk => tk.scheduledDate === yesterdayStr);
-
-  const todayActive = todayTasks.filter(tk => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(tk.status)).length;
-  const todayDone   = todayTasks.length - todayActive;
+  if (error)   return <Alert severity="error">{t('dashboard.loadError')}</Alert>;
 
   return (
     <Box>

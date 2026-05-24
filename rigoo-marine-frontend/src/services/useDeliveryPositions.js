@@ -1,41 +1,69 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { deliveryApi } from './api';
+
+const MAX_BACKOFF = 8;
 
 /**
  * Fast-polling hook for driver positions.
- * Uses 5s interval by default — positions are lightweight Redis reads.
- * Returns positions[], lastUpdated epoch ms, and error flag.
+ * - Pauses when the browser tab is hidden (Page Visibility API).
+ * - Uses setTimeout scheduling so each poll starts after the previous one
+ *   completes — avoids concurrent requests on slow networks.
+ * - Exponential backoff on errors (base → base×2 → … → base×8), resets on success.
  */
 export function useDeliveryPositions({ enabled = true, intervalMs = 5_000 } = {}) {
   const [positions, setPositions]     = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError]             = useState(false);
-  const cancelRef                     = useRef(false);
+
+  const timerRef   = useRef(null);
+  const backoffRef = useRef(1);
+  const activeRef  = useRef(false);
+
+  const schedule = useCallback((delayMs) => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      if (!activeRef.current || document.hidden) {
+        schedule(intervalMs);
+        return;
+      }
+      try {
+        const data = await deliveryApi.adminListPositions();
+        if (!activeRef.current) return;
+        setPositions(data);
+        setLastUpdated(Date.now());
+        setError(false);
+        backoffRef.current = 1;
+        schedule(intervalMs);
+      } catch {
+        if (!activeRef.current) return;
+        setError(true);
+        const next = Math.min(backoffRef.current * 2, MAX_BACKOFF);
+        backoffRef.current = next;
+        schedule(intervalMs * next);
+      }
+    }, delayMs);
+  }, [intervalMs]);
 
   useEffect(() => {
     if (!enabled) return;
-    cancelRef.current = false;
+    activeRef.current  = true;
+    backoffRef.current = 1;
+    schedule(0);
 
-    const poll = async () => {
-      try {
-        const data = await deliveryApi.adminListPositions();
-        if (!cancelRef.current) {
-          setPositions(data);
-          setLastUpdated(Date.now());
-          setError(false);
-        }
-      } catch {
-        if (!cancelRef.current) setError(true);
+    const onVisible = () => {
+      if (!document.hidden && activeRef.current) {
+        backoffRef.current = 1;
+        schedule(0);
       }
     };
+    document.addEventListener('visibilitychange', onVisible);
 
-    poll();
-    const id = setInterval(poll, intervalMs);
     return () => {
-      cancelRef.current = true;
-      clearInterval(id);
+      activeRef.current = false;
+      clearTimeout(timerRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [enabled, intervalMs]);
+  }, [enabled, schedule]);
 
   return { positions, lastUpdated, error };
 }

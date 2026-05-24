@@ -35,11 +35,13 @@ public class DeliveryTaskService {
     private final DeliverySettingsRepository settingsRepo;
     private final DeliveryEventPublisher eventPublisher;
 
+    @Transactional(readOnly = true)
     public List<DeliveryTaskDTO> getTodayTasksForTech(Long techId, LocalDate date) {
         return repo.findByAssignedToAndScheduledDateOrderByStopOrderAscIdAsc(techId, date)
                 .stream().map(DeliveryTaskDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public DeliveryTaskDTO getTaskById(Long id, Long techId) {
         DeliveryTask task = repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
@@ -93,16 +95,19 @@ public class DeliveryTaskService {
         return new DeliveryTaskDTO(repo.save(task));
     }
 
+    @Transactional(readOnly = true)
     public List<DeliveryTaskDTO> getTasksForTechInRange(Long techId, LocalDate from, LocalDate to) {
         return repo.findByAssignedToAndScheduledDateBetweenOrderByScheduledDateDescStopOrderAscIdAsc(techId, from, to)
                 .stream().map(DeliveryTaskDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<DeliveryTaskDTO> getAllDriverHistoryInRange(LocalDate from, LocalDate to) {
         return repo.findByAssignedToNotNullAndScheduledDateBetweenOrderByAssignedToAscScheduledDateDescIdAsc(from, to)
                 .stream().map(DeliveryTaskDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public DeliveryStatsDTO getStatsForTech(Long techId) {
         List<Object[]> rows = repo.countByStatusGroupedForTech(techId);
         long delivered = 0, failed = 0, inTransit = 0, pending = 0, cancelled = 0;
@@ -117,10 +122,12 @@ public class DeliveryTaskService {
                 case CANCELLED  -> cancelled  = count;
             }
         }
-        long total = repo.countByAssignedTo(techId);
+        // total derived from the same GROUP BY result — no second round-trip
+        long total = delivered + failed + inTransit + pending + cancelled;
         return new DeliveryStatsDTO(total, delivered, failed, inTransit, pending, cancelled);
     }
 
+    @Transactional(readOnly = true)
     public DeliverySettings getSettings() {
         return settingsRepo.findById(1L).orElseGet(() -> {
             DeliverySettings s = new DeliverySettings();
@@ -137,6 +144,7 @@ public class DeliveryTaskService {
 
     // --- Admin / Team Lead ---
 
+    @Transactional(readOnly = true)
     public Page<DeliveryTaskDTO> adminSearch(LocalDate date, Long assignedTo, DeliveryTaskStatus status, Pageable pageable) {
         if (date != null && assignedTo != null && status != null) {
             return repo.findByScheduledDateAndAssignedToAndStatus(date, assignedTo, status, pageable).map(DeliveryTaskDTO::new);
@@ -188,6 +196,7 @@ public class DeliveryTaskService {
         return new DeliveryTaskDTO(repo.save(task));
     }
 
+    @Transactional(readOnly = true)
     public DeliveryTaskDTO adminGetById(Long id) {
         return repo.findById(id)
                 .map(DeliveryTaskDTO::new)

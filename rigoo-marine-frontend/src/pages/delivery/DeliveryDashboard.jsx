@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Grid, Card, CardContent, Chip,
   List, ListItem, ListItemText, ListItemSecondaryAction,
-  Divider, CircularProgress, Alert, Stack, Button,
+  Divider, CircularProgress, Alert, Stack, Button, Skeleton,
 } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckCircleIcon   from '@mui/icons-material/CheckCircle';
@@ -23,7 +24,9 @@ const STATUS_COLORS = {
   CANCELLED:  'default',
 };
 
-function StatCard({ label, value, color, icon, onClick }) {
+const DONE_SET = new Set(['DELIVERED', 'FAILED', 'CANCELLED']);
+
+function StatCard({ label, value, color, icon, onClick, loading }) {
   return (
     <Card
       variant="outlined"
@@ -37,7 +40,10 @@ function StatCard({ label, value, color, icon, onClick }) {
       <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ color: `${color}.main`, fontSize: 36, display: 'flex' }}>{icon}</Box>
         <Box>
-          <Typography variant="h4" fontWeight={700} color={`${color}.main`}>{value}</Typography>
+          {loading
+            ? <Skeleton width={40} height={40} />
+            : <Typography variant="h4" fontWeight={700} color={`${color}.main`}>{value}</Typography>
+          }
           <Typography variant="body2" color="text.secondary">{label}</Typography>
         </Box>
       </CardContent>
@@ -48,22 +54,31 @@ function StatCard({ label, value, color, icon, onClick }) {
 export default function DeliveryDashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation('delivery');
-  const [stats,      setStats]      = useState(null);
-  const [todayTasks, setTodayTasks] = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
 
-  useEffect(() => {
-    Promise.all([deliveryApi.getTaskStats(), deliveryApi.getTodayTasks()])
-      .then(([s, tasks]) => { setStats(s); setTodayTasks(tasks); })
-      .catch(() => setError(t('dashboard.loadError')))
-      .finally(() => setLoading(false));
-  }, [t]);
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useQuery({
+    queryKey: ['delivery-stats'],
+    queryFn: deliveryApi.getTaskStats,
+    staleTime: 5 * 60_000,
+    refetchInterval: 2 * 60_000,
+  });
+
+  const { data: todayTasks = [], isLoading: todayLoading, isError: todayError } = useQuery({
+    queryKey: ['delivery-tasks-today'],
+    queryFn: deliveryApi.getTodayTasks,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const loading = statsLoading || todayLoading;
+  const error   = statsError || todayError;
+
+  const active = useMemo(
+    () => todayTasks.filter(tk => !DONE_SET.has(tk.status)),
+    [todayTasks],
+  );
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
-  if (error)   return <Alert severity="error">{error}</Alert>;
-
-  const active = todayTasks.filter(tk => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(tk.status));
+  if (error)   return <Alert severity="error">{t('dashboard.loadError')}</Alert>;
 
   return (
     <Box>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -44,7 +44,7 @@ const PRESETS = [
   { label: '90 days', days: 90 },
 ];
 
-function TaskRow({ task }) {
+const TaskRow = memo(function TaskRow({ task }) {
   return (
     <Stack direction="row" alignItems="center" gap={1.5} sx={{ py: 0.75, px: 1 }}>
       <Box sx={{
@@ -67,16 +67,18 @@ function TaskRow({ task }) {
       <Chip label={task.status} color={STATUS_COLOR[task.status] || 'default'} size="small" sx={{ fontSize: 10 }} />
     </Stack>
   );
-}
+});
 
-function DriverGroup({ driverId, driverName, tasks, backRoute }) {
+const DriverGroup = memo(function DriverGroup({ driverId, driverName, tasks, backRoute }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const delivered = tasks.filter(t => t.status === 'DELIVERED').length;
-  const failed    = tasks.filter(t => t.status === 'FAILED').length;
-  const total     = tasks.length;
-  const pct       = total > 0 ? Math.round((delivered / total) * 100) : 0;
+  const { delivered, failed, total, pct } = useMemo(() => {
+    const delivered = tasks.filter(t => t.status === 'DELIVERED').length;
+    const failed    = tasks.filter(t => t.status === 'FAILED').length;
+    const total     = tasks.length;
+    return { delivered, failed, total, pct: total > 0 ? Math.round((delivered / total) * 100) : 0 };
+  }, [tasks]);
 
   return (
     <Card variant="outlined" sx={{ mb: 1.5 }}>
@@ -125,7 +127,7 @@ function DriverGroup({ driverId, driverName, tasks, backRoute }) {
       </Collapse>
     </Card>
   );
-}
+});
 
 /**
  * Props:
@@ -155,22 +157,26 @@ export default function AdminDeliveryHistory({ backPath, homePath, title = 'Driv
     queryFn: driverApi.getAll,
   });
 
-  const driverById = Object.fromEntries(drivers.map(d => [d.id, d]));
+  const driverById = useMemo(
+    () => Object.fromEntries(drivers.map(d => [d.id, d])),
+    [drivers],
+  );
 
-  // group tasks by assignedTo
-  const grouped = {};
-  tasks.forEach(t => {
-    const key = t.assignedTo;
-    if (key == null) return;
-    (grouped[key] ??= []).push(t);
-  });
-
-  const driverIds = Object.keys(grouped).map(Number)
-    .sort((a, b) => (driverById[a]?.name ?? '').localeCompare(driverById[b]?.name ?? ''));
-
-  const totalTasks     = tasks.length;
-  const totalDelivered = tasks.filter(t => t.status === 'DELIVERED').length;
-  const totalFailed    = tasks.filter(t => t.status === 'FAILED').length;
+  const { grouped, driverIds, totalTasks, totalDelivered, totalFailed } = useMemo(() => {
+    const grouped = {};
+    for (const t of tasks) {
+      if (t.assignedTo == null) continue;
+      (grouped[t.assignedTo] ??= []).push(t);
+    }
+    const driverIds = Object.keys(grouped).map(Number)
+      .sort((a, b) => (driverById[a]?.name ?? '').localeCompare(driverById[b]?.name ?? ''));
+    let totalDelivered = 0, totalFailed = 0;
+    for (const t of tasks) {
+      if (t.status === 'DELIVERED') totalDelivered++;
+      else if (t.status === 'FAILED') totalFailed++;
+    }
+    return { grouped, driverIds, totalTasks: tasks.length, totalDelivered, totalFailed };
+  }, [tasks, driverById]);
 
   return (
     <Box>
