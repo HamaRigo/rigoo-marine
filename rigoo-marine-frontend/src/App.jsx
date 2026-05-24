@@ -276,7 +276,8 @@ function App() {
                 <Route path="history"         element={<TeamLeadHistory />} />
                 <Route path="technicians"     element={<TeamLeadTechnicians />} />
                 <Route path="inspections"     element={<TeamLeadInspections />} />
-                <Route path="delivery"        element={<TeamLeadDelivery />} />
+                <Route path="delivery"          element={<TeamLeadDelivery />} />
+                <Route path="delivery/:techId" element={<TeamLeadDelivery />} />
               </Route>
 
               {/* Delivery Routes (DELIVERY role) */}
