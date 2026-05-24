@@ -92,6 +92,7 @@ import DeliveryDashboard from './pages/delivery/DeliveryDashboard';
 import DeliveryTasks from './pages/delivery/DeliveryTasks';
 import DeliveryTaskDetail from './pages/delivery/DeliveryTaskDetail';
 import DeliveryRouteMap from './pages/delivery/DeliveryRoute';
+import DeliveryHistory from './pages/delivery/DeliveryHistory';
 
 // Admin Delivery Tracking
 const DeliveryTracking = lazy(() => import('./pages/admin/DeliveryTracking'));
@@ -293,7 +294,7 @@ function App() {
                 <Route path="tasks"        element={<DeliveryTasks />} />
                 <Route path="tasks/:id"    element={<DeliveryTaskDetail />} />
                 <Route path="route"        element={<DeliveryRouteMap />} />
-                <Route path="history"      element={<DeliveryTasks />} />
+                <Route path="history"      element={<DeliveryHistory />} />
               </Route>
 
               {/* 404 - Catch all */}

@@ -6,9 +6,9 @@ import {
   Divider, CircularProgress, Alert, Stack, Button,
 } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import PendingIcon from '@mui/icons-material/Pending';
+import CheckCircleIcon   from '@mui/icons-material/CheckCircle';
+import ErrorIcon         from '@mui/icons-material/Error';
+import HistoryIcon       from '@mui/icons-material/History';
 import { useTranslation } from 'react-i18next';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { deliveryApi } from '../../services/api';
@@ -20,6 +20,7 @@ const STATUS_COLORS = {
   IN_TRANSIT: 'primary',
   DELIVERED:  'success',
   FAILED:     'error',
+  CANCELLED:  'default',
 };
 
 function StatCard({ label, value, color, icon, onClick }) {
@@ -47,13 +48,14 @@ function StatCard({ label, value, color, icon, onClick }) {
 export default function DeliveryDashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation('delivery');
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [stats,      setStats]      = useState(null);
+  const [todayTasks, setTodayTasks] = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
 
   useEffect(() => {
-    deliveryApi.getTodayTasks()
-      .then(setTasks)
+    Promise.all([deliveryApi.getTaskStats(), deliveryApi.getTodayTasks()])
+      .then(([s, tasks]) => { setStats(s); setTodayTasks(tasks); })
       .catch(() => setError(t('dashboard.loadError')))
       .finally(() => setLoading(false));
   }, [t]);
@@ -61,54 +63,53 @@ export default function DeliveryDashboard() {
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
   if (error)   return <Alert severity="error">{error}</Alert>;
 
-  const pending   = tasks.filter(t => ['PENDING', 'ASSIGNED'].includes(t.status));
-  const inTransit = tasks.filter(t => ['PICKED_UP', 'IN_TRANSIT'].includes(t.status));
-  const completed = tasks.filter(t => t.status === 'DELIVERED');
-  const failed    = tasks.filter(t => t.status === 'FAILED');
-  const active    = tasks.filter(t => !['DELIVERED', 'FAILED'].includes(t.status));
+  const active = todayTasks.filter(tk => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(tk.status));
 
   return (
     <Box>
       <Reveal variant="fade">
-        <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+        <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
           {t('dashboard.title')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          {t('dashboard.allTimeStats')}
         </Typography>
       </Reveal>
 
       <Stagger>
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
-              label={t('dashboard.todayStops')}
-              value={tasks.length}
+              label={t('dashboard.totalDeliveries')}
+              value={stats?.total ?? 0}
               color="primary"
               icon={<LocalShippingIcon fontSize="inherit" />}
               onClick={() => navigate('/delivery/tasks')}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
-            <StatCard
-              label={t('dashboard.inTransit')}
-              value={inTransit.length}
-              color="info"
-              icon={<LocalShippingIcon fontSize="inherit" />}
-              onClick={() => navigate('/delivery/tasks')}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               label={t('dashboard.completed')}
-              value={completed.length}
+              value={stats?.delivered ?? 0}
               color="success"
               icon={<CheckCircleIcon fontSize="inherit" />}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               label={t('dashboard.failed')}
-              value={failed.length}
+              value={stats?.failed ?? 0}
               color="error"
               icon={<ErrorIcon fontSize="inherit" />}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              label={t('dashboard.inTransit')}
+              value={stats?.inTransit ?? 0}
+              color="info"
+              icon={<LocalShippingIcon fontSize="inherit" />}
+              onClick={() => navigate('/delivery/tasks')}
             />
           </Grid>
         </Grid>
@@ -118,14 +119,14 @@ export default function DeliveryDashboard() {
         <Card variant="outlined">
           <CardContent>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-              <Typography variant="h6" fontWeight={600}>Active Stops</Typography>
-              <Button size="small" onClick={() => navigate('/delivery/tasks')}>View all</Button>
+              <Typography variant="h6" fontWeight={600}>{t('dashboard.todayActive')}</Typography>
+              <Button size="small" onClick={() => navigate('/delivery/tasks')}>{t('dashboard.viewAll')}</Button>
             </Stack>
             {active.length === 0 && (
-              <Typography color="text.disabled" variant="body2">{t('dashboard.noTasks')}</Typography>
+              <Typography color="text.disabled" variant="body2">{t('dashboard.noActiveTasks')}</Typography>
             )}
             <List dense disablePadding>
-              {active.slice(0, 10).map((task, i) => (
+              {active.slice(0, 8).map((task, i) => (
                 <Box key={task.id}>
                   {i > 0 && <Divider />}
                   <ListItem
@@ -150,6 +151,17 @@ export default function DeliveryDashboard() {
                 </Box>
               ))}
             </List>
+            {active.length === 0 && (stats?.pending ?? 0) === 0 && (
+              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
+                <Button
+                  size="small"
+                  startIcon={<HistoryIcon />}
+                  onClick={() => navigate('/delivery/history')}
+                >
+                  {t('dashboard.viewHistory')}
+                </Button>
+              </Stack>
+            )}
           </CardContent>
         </Card>
       </Reveal>

@@ -7,29 +7,50 @@
   },
   "dashboard": {
     "title": "Delivery Dashboard",
+    "allTimeStats": "All-time delivery summary",
     "todayStops": "Today's Stops",
+    "totalDeliveries": "Total Deliveries",
+    "todayActive": "Active Today",
     "pending": "Pending",
     "inTransit": "In Transit",
     "completed": "Completed",
     "failed": "Failed",
+    "noActiveTasks": "No active deliveries today.",
     "noTasks": "No deliveries scheduled for today.",
-    "loadError": "Failed to load delivery data."
+    "loadError": "Failed to load delivery data.",
+    "viewAll": "View all",
+    "viewHistory": "View history"
   },
   "tasks": {
     "title": "My Deliveries",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "active": "active",
+    "done": "done",
     "stop": "Stop",
     "pickup": "Pickup",
     "dropoff": "Drop-off",
     "clientPhone": "Client Phone",
     "invoiceAmount": "Invoice Amount",
     "notes": "Notes",
-    "noTasks": "No deliveries assigned.",
+    "noTasks": "No deliveries assigned for today.",
     "openMaps": "Google Maps",
     "openWaze": "Waze",
     "navigate": "Navigate",
     "changeApp": "Change app",
     "call": "Call Client",
     "viewDetails": "View Details"
+  },
+  "history": {
+    "title": "Delivery History",
+    "lastWeek": "Last 7 days",
+    "last": "Last",
+    "days": "days",
+    "noHistory": "No deliveries in this period.",
+    "loadArchive": "Load Archive",
+    "archive": "Archive",
+    "noArchive": "No archived deliveries.",
+    "hideArchive": "Hide archive"
   },
   "detail": {
     "title": "Delivery #{{id}}",
@@ -53,6 +74,7 @@
     "PICKED_UP": "Picked Up",
     "IN_TRANSIT": "In Transit",
     "DELIVERED": "Delivered",
-    "FAILED": "Failed"
+    "FAILED": "Failed",
+    "CANCELLED": "Cancelled"
   }
 }

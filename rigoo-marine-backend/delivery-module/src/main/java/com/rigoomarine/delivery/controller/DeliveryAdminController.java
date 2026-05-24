@@ -4,6 +4,7 @@ import com.rigoomarine.delivery.dto.AssignTaskRequest;
 import com.rigoomarine.delivery.dto.CreateDeliveryTaskRequest;
 import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
 import com.rigoomarine.delivery.dto.UpdateStatusRequest;
+import com.rigoomarine.delivery.entity.DeliverySettings;
 import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
 import com.rigoomarine.delivery.service.DeliveryTaskService;
 import jakarta.validation.Valid;
@@ -66,5 +67,11 @@ public class DeliveryAdminController {
     @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
     public DeliveryTaskDTO forceStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest req) {
         return taskService.adminForceStatus(id, req.getStatus());
+    }
+
+    @PutMapping("/settings")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public DeliverySettings updateSettings(@RequestParam int historyDays) {
+        return taskService.updateHistoryDays(historyDays);
     }
 }

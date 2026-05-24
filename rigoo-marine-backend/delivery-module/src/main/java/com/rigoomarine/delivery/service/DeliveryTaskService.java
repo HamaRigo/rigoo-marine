@@ -2,12 +2,15 @@ package com.rigoomarine.delivery.service;
 
 import com.rigoomarine.delivery.dto.AssignTaskRequest;
 import com.rigoomarine.delivery.dto.CreateDeliveryTaskRequest;
+import com.rigoomarine.delivery.dto.DeliveryStatsDTO;
 import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
 import com.rigoomarine.delivery.dto.UpdateStatusRequest;
+import com.rigoomarine.delivery.entity.DeliverySettings;
 import com.rigoomarine.delivery.entity.DeliveryTask;
 import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
 import com.rigoomarine.delivery.event.DeliveryEventPublisher;
 import com.rigoomarine.delivery.event.DeliveryStatusChangeEvent;
+import com.rigoomarine.delivery.repository.DeliverySettingsRepository;
 import com.rigoomarine.delivery.repository.DeliveryTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,7 @@ import java.util.UUID;
 public class DeliveryTaskService {
 
     private final DeliveryTaskRepository repo;
+    private final DeliverySettingsRepository settingsRepo;
     private final DeliveryEventPublisher eventPublisher;
 
     public List<DeliveryTaskDTO> getTodayTasksForTech(Long techId, LocalDate date) {
@@ -87,6 +91,43 @@ public class DeliveryTaskService {
         }
         task.setProofPhotoPath(filePath);
         return new DeliveryTaskDTO(repo.save(task));
+    }
+
+    public List<DeliveryTaskDTO> getTasksForTechInRange(Long techId, LocalDate from, LocalDate to) {
+        return repo.findByAssignedToAndScheduledDateBetweenOrderByScheduledDateDescStopOrderAscIdAsc(techId, from, to)
+                .stream().map(DeliveryTaskDTO::new).toList();
+    }
+
+    public DeliveryStatsDTO getStatsForTech(Long techId) {
+        List<Object[]> rows = repo.countByStatusGroupedForTech(techId);
+        long delivered = 0, failed = 0, inTransit = 0, pending = 0, cancelled = 0;
+        for (Object[] row : rows) {
+            DeliveryTaskStatus status = (DeliveryTaskStatus) row[0];
+            long count = (Long) row[1];
+            switch (status) {
+                case DELIVERED  -> delivered  = count;
+                case FAILED     -> failed     = count;
+                case IN_TRANSIT -> inTransit  = count;
+                case PENDING, ASSIGNED, PICKED_UP -> pending += count;
+                case CANCELLED  -> cancelled  = count;
+            }
+        }
+        long total = repo.countByAssignedTo(techId);
+        return new DeliveryStatsDTO(total, delivered, failed, inTransit, pending, cancelled);
+    }
+
+    public DeliverySettings getSettings() {
+        return settingsRepo.findById(1L).orElseGet(() -> {
+            DeliverySettings s = new DeliverySettings();
+            return settingsRepo.save(s);
+        });
+    }
+
+    @Transactional
+    public DeliverySettings updateHistoryDays(int days) {
+        DeliverySettings s = getSettings();
+        s.setHistoryDays(Math.max(1, Math.min(365, days)));
+        return settingsRepo.save(s);
     }
 
     // --- Admin / Team Lead ---

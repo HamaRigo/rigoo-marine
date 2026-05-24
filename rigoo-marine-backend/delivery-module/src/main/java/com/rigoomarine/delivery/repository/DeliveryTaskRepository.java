@@ -26,6 +26,14 @@ public interface DeliveryTaskRepository extends JpaRepository<DeliveryTask, Long
     Page<DeliveryTask> findByScheduledDateAndAssignedToAndStatus(
             LocalDate date, Long assignedTo, DeliveryTaskStatus status, Pageable pageable);
 
+    List<DeliveryTask> findByAssignedToAndScheduledDateBetweenOrderByScheduledDateDescStopOrderAscIdAsc(
+            Long assignedTo, LocalDate from, LocalDate to);
+
+    @Query("SELECT t.status, COUNT(t) FROM DeliveryTask t WHERE t.assignedTo = :techId GROUP BY t.status")
+    List<Object[]> countByStatusGroupedForTech(@Param("techId") Long techId);
+
+    long countByAssignedTo(Long assignedTo);
+
     @Query("SELECT DISTINCT t.assignedTo FROM DeliveryTask t " +
            "WHERE t.scheduledDate = :date AND t.assignedTo IS NOT NULL " +
            "AND t.status NOT IN :terminalStatuses")

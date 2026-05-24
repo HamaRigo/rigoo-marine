@@ -1290,6 +1290,26 @@ export const deliveryApi = {
     return res.data;
   },
 
+  getTasksInRange: async (from, to) => {
+    const res = await httpClient.get('/api/delivery/tasks/range', { params: { from, to } });
+    return res.data;
+  },
+
+  getTaskStats: async () => {
+    const res = await httpClient.get('/api/delivery/tasks/stats');
+    return res.data;
+  },
+
+  getDeliverySettings: async () => {
+    const res = await httpClient.get('/api/delivery/settings');
+    return res.data;
+  },
+
+  adminUpdateDeliverySettings: async (historyDays) => {
+    const res = await httpClient.put('/api/delivery/admin/settings', null, { params: { historyDays } });
+    return res.data;
+  },
+
   getTaskById: async (id) => {
     const res = await httpClient.get(`/api/delivery/tasks/${id}`);
     return res.data;

@@ -1,9 +1,11 @@
 package com.rigoomarine.delivery.controller;
 
 import com.rigoomarine.common.security.SecurityUtils;
+import com.rigoomarine.delivery.dto.DeliveryStatsDTO;
 import com.rigoomarine.delivery.dto.DeliveryTaskDTO;
 import com.rigoomarine.delivery.dto.PositionUpdateRequest;
 import com.rigoomarine.delivery.dto.UpdateStatusRequest;
+import com.rigoomarine.delivery.entity.DeliverySettings;
 import com.rigoomarine.delivery.entity.DeliveryTaskStatus;
 import com.rigoomarine.delivery.repository.DeliveryTaskRepository;
 import com.rigoomarine.delivery.service.DeliveryTaskService;
@@ -45,6 +47,28 @@ public class DeliveryTaskController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Long techId = SecurityUtils.currentClientIdOrThrow();
         return taskService.getTodayTasksForTech(techId, date != null ? date : LocalDate.now());
+    }
+
+    @GetMapping("/tasks/range")
+    @PreAuthorize("hasAnyRole('DELIVERY')")
+    public List<DeliveryTaskDTO> getTasksInRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        Long techId = SecurityUtils.currentClientIdOrThrow();
+        return taskService.getTasksForTechInRange(techId, from, to);
+    }
+
+    @GetMapping("/tasks/stats")
+    @PreAuthorize("hasAnyRole('DELIVERY')")
+    public DeliveryStatsDTO getStats() {
+        Long techId = SecurityUtils.currentClientIdOrThrow();
+        return taskService.getStatsForTech(techId);
+    }
+
+    @GetMapping("/settings")
+    @PreAuthorize("hasAnyRole('DELIVERY', 'TEAM_LEAD', 'ADMIN')")
+    public DeliverySettings getSettings() {
+        return taskService.getSettings();
     }
 
     @GetMapping("/tasks/{id}")
