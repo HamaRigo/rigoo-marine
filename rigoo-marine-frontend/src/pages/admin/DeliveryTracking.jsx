@@ -21,6 +21,7 @@ import FiberManualRecordIcon          from '@mui/icons-material/FiberManualRecor
 import FullscreenRoundedIcon          from '@mui/icons-material/FullscreenRounded';
 import CloseRoundedIcon               from '@mui/icons-material/CloseRounded';
 import SettingsRoundedIcon            from '@mui/icons-material/SettingsRounded';
+import HomeRoundedIcon                from '@mui/icons-material/HomeRounded';
 import toast from 'react-hot-toast';
 import { deliveryApi, driverApi } from '../../services/api';
 import { useDeliveryPositions, fetchPositionHistory } from '../../services/useDeliveryPositions';
@@ -175,6 +176,11 @@ export default function DeliveryTracking() {
       {/* Header */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" useFlexGap gap={1}>
         <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="Admin Home">
+            <IconButton onClick={() => navigate('/admin')} size="small">
+              <HomeRoundedIcon />
+            </IconButton>
+          </Tooltip>
           {techId && (
             <IconButton onClick={() => navigate('/admin/delivery')} size="small">
               <ArrowBackRoundedIcon />

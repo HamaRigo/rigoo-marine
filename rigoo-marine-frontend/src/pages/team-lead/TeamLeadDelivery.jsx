@@ -20,6 +20,8 @@ import AddRoundedIcon                 from '@mui/icons-material/AddRounded';
 import FiberManualRecordIcon          from '@mui/icons-material/FiberManualRecord';
 import FullscreenRoundedIcon          from '@mui/icons-material/FullscreenRounded';
 import CloseRoundedIcon               from '@mui/icons-material/CloseRounded';
+import HomeRoundedIcon                from '@mui/icons-material/HomeRounded';
+import SettingsRoundedIcon            from '@mui/icons-material/SettingsRounded';
 import toast from 'react-hot-toast';
 import { deliveryApi, driverApi } from '../../services/api';
 import { useDeliveryPositions, fetchPositionHistory } from '../../services/useDeliveryPositions';
@@ -77,6 +79,8 @@ export default function TeamLeadDelivery() {
   const [trail, setTrail]                   = useState([]);
   const [mapExpanded, setMapExpanded]       = useState(false);
   const [trackDate, setTrackDate]           = useState(localToday);
+  const [settingsOpen, setSettingsOpen]     = useState(false);
+  const [historyDaysInput, setHistoryDaysInput] = useState('7');
 
   const { positions: allPositions, lastUpdated } = useDeliveryPositions({ intervalMs: 5_000 });
   const filteredPositions = techId
@@ -130,6 +134,17 @@ export default function TeamLeadDelivery() {
     onError: () => toast.error('Failed to update status'),
   });
 
+  const { data: deliverySettings } = useQuery({
+    queryKey: ['delivery-settings'],
+    queryFn: deliveryApi.getDeliverySettings,
+  });
+
+  const settingsMutation = useMutation({
+    mutationFn: (days) => deliveryApi.adminUpdateDeliverySettings(days),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['delivery-settings'] }); setSettingsOpen(false); toast.success('Settings saved'); },
+    onError: () => toast.error('Failed to save settings'),
+  });
+
   const exceptions = tasks.filter(isException);
   const active     = tasks.filter(t => !DONE_STATUSES.includes(t.status)).length;
   const delivered  = tasks.filter(t => t.status === 'DELIVERED').length;
@@ -161,6 +176,11 @@ export default function TeamLeadDelivery() {
       {/* Header */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" useFlexGap gap={1}>
         <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="Team Lead Home">
+            <IconButton onClick={() => navigate('/team-lead')} size="small">
+              <HomeRoundedIcon />
+            </IconButton>
+          </Tooltip>
           {techId && (
             <IconButton onClick={() => navigate('/team-lead/delivery')} size="small">
               <ArrowBackRoundedIcon />
@@ -189,6 +209,11 @@ export default function TeamLeadDelivery() {
             New Task
           </Button>
           <Tooltip title="Refresh"><IconButton onClick={() => refetch()} disabled={isFetching} size="small"><RefreshRoundedIcon /></IconButton></Tooltip>
+          <Tooltip title="Delivery settings">
+            <IconButton size="small" onClick={() => { setHistoryDaysInput(String(deliverySettings?.historyDays ?? 7)); setSettingsOpen(true); }}>
+              <SettingsRoundedIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Stack>
 
@@ -366,6 +391,40 @@ export default function TeamLeadDelivery() {
       </Dialog>
 
       <CreateDeliveryTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} drivers={drivers} invalidateKeys={[queryKey[0]]} />
+
+      {/* Delivery Settings dialog */}
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delivery Settings</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Set how many days back drivers can see in their History tab.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>History Period</InputLabel>
+            <Select
+              value={historyDaysInput}
+              label="History Period"
+              onChange={e => setHistoryDaysInput(e.target.value)}
+            >
+              <MenuItem value="7">1 Week (7 days)</MenuItem>
+              <MenuItem value="14">2 Weeks (14 days)</MenuItem>
+              <MenuItem value="30">1 Month (30 days)</MenuItem>
+              <MenuItem value="60">2 Months (60 days)</MenuItem>
+              <MenuItem value="90">3 Months (90 days)</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={settingsMutation.isPending}
+            onClick={() => settingsMutation.mutate(Number(historyDaysInput))}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
