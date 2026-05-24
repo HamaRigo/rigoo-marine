@@ -9,6 +9,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 import UnverifiedEmailBanner from '../../components/common/UnverifiedEmailBanner';
 
 const drawerWidth = 240;
@@ -79,6 +80,12 @@ export default function TechnicianLayout() {
           );
         })}
         <ListItem disablePadding sx={{ mt: 1 }}>
+          <ListItemButton component={Link} to="/" onClick={() => setMobileOpen(false)}>
+            <ListItemIcon sx={{ minWidth: 36 }}><HomeIcon /></ListItemIcon>
+            <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
