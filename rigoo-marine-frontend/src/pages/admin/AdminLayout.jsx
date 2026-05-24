@@ -24,28 +24,21 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import CompareRoundedIcon from '@mui/icons-material/CompareRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 
 const drawerWidth = 240;
 const navItems = [
-  { name: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
-  { name: 'Work Orders', path: '/admin/orders', icon: <BuildIcon /> },
-  { name: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
-  { name: 'Invoices', path: '/admin/invoices', icon: <ReceiptIcon /> },
-  { name: 'Quotations', path: '/admin/quotations', icon: <RequestQuoteIcon /> },
-  { name: 'Services', path: '/admin/services', icon: <EngineeringIcon /> },
-  { name: 'Maintenance',  path: '/admin/maintenance',  icon: <HandymanRoundedIcon /> },
-  { name: 'Inspections', path: '/admin/inspections', icon: <VerifiedIcon /> },
-  { name: 'Boats', path: '/admin/boats', icon: <DirectionsBoatIcon /> },
-  { name: 'Inquiries', path: '/admin/inquiries', icon: <MarkChatUnreadIcon /> },
-  { name: 'Products', path: '/admin/products', icon: <StorefrontIcon /> },
-  { name: 'Shop orders', path: '/admin/shop-orders', icon: <ReceiptLongIcon /> },
-  { name: 'Shop inquiries', path: '/admin/shop-inquiries', icon: <ContactSupportIcon /> },
-  { name: 'Team Requests', path: '/admin/team-requests', icon: <GroupsIcon /> },
+  { name: 'Dashboard',    path: '/admin',                icon: <DashboardIcon /> },
+  { name: 'Operations',   path: '/admin/operations',     icon: <BuildIcon /> },
+  { name: 'Finance',      path: '/admin/finance',        icon: <ReceiptIcon /> },
+  { name: 'Fleet',        path: '/admin/fleet',          icon: <DirectionsBoatIcon /> },
+  { name: 'Marketplace',  path: '/admin/marketplace',    icon: <StorefrontIcon /> },
+  { name: 'People',       path: '/admin/people',         icon: <PeopleIcon /> },
   { name: 'Deliveries',   path: '/admin/delivery',       icon: <LocalShippingIcon /> },
-  { name: 'Analytics',   path: '/admin/analytics',      icon: <BarChartRoundedIcon /> },
-  { name: 'Inventory',   path: '/admin/inventory',      icon: <InventoryRoundedIcon /> },
-  { name: 'Audit log', path: '/admin/audit', icon: <HistoryIcon /> },
-  { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
+  { name: 'Content',      path: '/admin/content',        icon: <PeopleAltRoundedIcon /> },
+  { name: 'Analytics',    path: '/admin/analytics',      icon: <BarChartRoundedIcon /> },
+  { name: 'Settings',     path: '/admin/settings',       icon: <SettingsIcon /> },
 ];
 
 export default function AdminLayout() {
@@ -72,7 +65,9 @@ export default function AdminLayout() {
       </Toolbar>
       <List sx={{ px: 1, py: 1 }}>
         {navItems.map((item) => {
-          const selected = location.pathname === item.path;
+          const selected = location.pathname === item.path ||
+            (item.path !== '/admin' && location.pathname.startsWith(item.path + '/')) ||
+            (item.path !== '/admin' && location.pathname.startsWith(item.path));
           return (
             <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton

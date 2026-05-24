@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box, Container, Typography, Button, Card, CardContent,
   Chip, Dialog, DialogContent, IconButton, Zoom, Slide, Fade, Grid,
+  Avatar, Skeleton,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -67,20 +69,24 @@ const SERVICES = [
   { key: 'finishing',  Icon: StarIcon,           color: 'primary.light' },
 ];
 
-const GALLERY_ITEMS = [
-  { slug: 'engine-rebuild',      category: 'Mechanical' },
-  { slug: 'hull-restoration',    category: 'Structural' },
-  { slug: 'gel-coat-polish',     category: 'Finishing'  },
-  { slug: 'bottom-paint',        category: 'Finishing'  },
-  { slug: 'propeller-repair',    category: 'Mechanical' },
-  { slug: 'transom-replacement', category: 'Structural' },
-].map((item) => ({
-  ...item,
-  before: `/gallery/${item.slug}-before.jpg`,
-  after:  `/gallery/${item.slug}-after.jpg`,
-}));
-
-const GALLERY_CATEGORIES = ['All', 'Mechanical', 'Structural', 'Finishing'];
+const GALLERY_CATEGORY_LABELS = {
+  en: {
+    detailing:     'Boat Detailing',
+    hull_cleaning: 'Hull Cleaning',
+    engine_repair: 'Engine Repair',
+    painting:      'Painting',
+    restoration:   'Restoration',
+    other:         'Other',
+  },
+  ar: {
+    detailing:     'تنظيف وتلميع',
+    hull_cleaning: 'تنظيف الهيكل',
+    engine_repair: 'إصلاح المحرك',
+    painting:      'الطلاء',
+    restoration:   'ترميم',
+    other:         'أخرى',
+  },
+};
 
 const VALUE_ITEMS = [
   { key: 'quality',      Icon: WorkspacePremiumIcon, color: '#ff8f00' },
@@ -266,12 +272,37 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const { t, i18n } = useTranslation('home');
 
+  const { data: apiTeam = [] } = useQuery({
+    queryKey: ['public-team'],
+    queryFn: publicApi.getTeamMembers,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: rawGallery = [] } = useQuery({
+    queryKey: ['public-gallery'],
+    queryFn: publicApi.getGallery,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const apiGallery = rawGallery.map((g) => ({
+    ...g,
+    before: g.beforeUrl,
+    after:  g.afterUrl,
+  }));
+
+  const getCatLabel = (cat) => {
+    const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
+    return GALLERY_CATEGORY_LABELS[lang]?.[cat] ?? cat;
+  };
+
+  const galleryCategories = [...new Set(apiGallery.map((i) => i.category))];
+
   const [heroIn, setHeroIn]           = useState(false);
   const [slide, setSlide]             = useState(0);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [serviceIdx, setServiceIdx]   = useState(0);
   const [svcVisible, setSvcVisible]   = useState(true);
-  const [galleryCat, setGalleryCat]   = useState('All');
+  const [galleryCat, setGalleryCat]   = useState('all');
   const [selectedImage, setSelectedImage] = useState(null);
   const [contact, setContact]         = useState({ email: 'rigoomarine@gmail.com', phone: '+974 709 709 17' });
 
@@ -321,9 +352,9 @@ export default function Home() {
   const handlePrev = () => { setSlide((s) => (HERO_SLIDES.length + s - 1) % HERO_SLIDES.length); resetTimer(); };
   const handleNext = () => { setSlide((s) => (s + 1) % HERO_SLIDES.length); resetTimer(); };
 
-  const visibleGallery = galleryCat === 'All'
-    ? GALLERY_ITEMS
-    : GALLERY_ITEMS.filter((i) => i.category === galleryCat);
+  const visibleGallery = galleryCat === 'all'
+    ? apiGallery
+    : apiGallery.filter((i) => i.category === galleryCat);
 
   return (
     <Box>
@@ -583,27 +614,37 @@ export default function Home() {
             </Typography>
           </Reveal>
 
-          <Reveal variant="fade" delay={80}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {GALLERY_CATEGORIES.map((cat) => (
+          {galleryCategories.length > 0 && (
+            <Reveal variant="fade" delay={80}>
+              <Box sx={{ display: 'flex', gap: 1, mb: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <Chip
-                  key={cat}
-                  label={t(`gallery.categories.${cat === 'All' ? 'all' : cat}`)}
-                  onClick={() => setGalleryCat(cat)}
-                  color={galleryCat === cat ? 'primary' : 'default'}
-                  variant={galleryCat === cat ? 'filled' : 'outlined'}
+                  key="all"
+                  label={t('gallery.categories.all')}
+                  onClick={() => setGalleryCat('all')}
+                  color={galleryCat === 'all' ? 'primary' : 'default'}
+                  variant={galleryCat === 'all' ? 'filled' : 'outlined'}
                   sx={{ px: 2, fontWeight: 600 }}
                 />
-              ))}
-            </Box>
-          </Reveal>
+                {galleryCategories.map((cat) => (
+                  <Chip
+                    key={cat}
+                    label={getCatLabel(cat)}
+                    onClick={() => setGalleryCat(cat)}
+                    color={galleryCat === cat ? 'primary' : 'default'}
+                    variant={galleryCat === cat ? 'filled' : 'outlined'}
+                    sx={{ px: 2, fontWeight: 600 }}
+                  />
+                ))}
+              </Box>
+            </Reveal>
+          )}
 
           <Stagger key={galleryCat} variant="grow" step={80} timeout={520}
             sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}
           >
             {visibleGallery.map((item) => (
               <Card
-                key={item.slug}
+                key={item.id}
                 sx={{
                   overflow: 'hidden', cursor: 'pointer',
                   transition: 'box-shadow 280ms, transform 280ms',
@@ -617,8 +658,10 @@ export default function Home() {
                   height={230}
                 />
                 <Box sx={{ p: 2 }}>
-                  <Chip label={t(`gallery.categories.${item.category}`)} size="small" color="primary" variant="outlined" sx={{ mb: 1 }} />
-                  <Typography variant="body1" fontWeight="600" gutterBottom>{t(`gallery.items.${item.slug}`)}</Typography>
+                  <Chip label={getCatLabel(item.category)} size="small" color="primary" variant="outlined" sx={{ mb: 1 }} />
+                  <Typography variant="body1" fontWeight="600" gutterBottom>
+                    {i18n.language.startsWith('ar') && item.titleAr ? item.titleAr : item.title}
+                  </Typography>
                   <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <SwapHorizIcon sx={{ fontSize: 14 }} />
                     {t('gallery.dragHint')}
@@ -671,25 +714,53 @@ export default function Home() {
         <Stagger variant="grow" step={120} timeout={520}
           sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3, mt: 3 }}
         >
-          {TEAM_KEYS.map((key) => (
-            <Card key={key} sx={{ height: '100%' }}>
-              <CardContent>
-                <Box sx={{
-                  width: 52, height: 52, borderRadius: '50%', mb: 2,
-                  background: 'linear-gradient(135deg, #004263, #006994)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
-                  fontSize: '1.4rem', fontWeight: 700,
-                }}>
-                  {t(`team.members.${key}.name`).charAt(0)}
-                </Box>
-                <Typography variant="h6" gutterBottom>{t(`team.members.${key}.name`)}</Typography>
-                <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
-                  {t(`team.members.${key}.role`)}
-                </Typography>
-                <Typography color="text.secondary" variant="body2">{t(`team.members.${key}.bio`)}</Typography>
-              </CardContent>
-            </Card>
-          ))}
+          {apiTeam.length > 0
+            ? apiTeam.map((member) => (
+                <Card key={member.id} sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Avatar
+                      src={member.photoUrl || undefined}
+                      alt={member.name}
+                      sx={{
+                        width: 64, height: 64, mb: 2,
+                        background: 'linear-gradient(135deg, #004263, #006994)',
+                        fontSize: '1.4rem', fontWeight: 700,
+                      }}
+                    >
+                      {!member.photoUrl && member.name?.charAt(0)?.toUpperCase()}
+                    </Avatar>
+                    <Typography variant="h6" gutterBottom>
+                      {i18n.language === 'ar' && member.nameAr ? member.nameAr : member.name}
+                    </Typography>
+                    <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
+                      {i18n.language === 'ar' && member.roleAr ? member.roleAr : member.role}
+                    </Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      {i18n.language === 'ar' && member.bioAr ? member.bioAr : member.bio}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))
+            : TEAM_KEYS.map((key) => (
+                <Card key={key} sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Box sx={{
+                      width: 52, height: 52, borderRadius: '50%', mb: 2,
+                      background: 'linear-gradient(135deg, #004263, #006994)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                      fontSize: '1.4rem', fontWeight: 700,
+                    }}>
+                      {t(`team.members.${key}.name`).charAt(0)}
+                    </Box>
+                    <Typography variant="h6" gutterBottom>{t(`team.members.${key}.name`)}</Typography>
+                    <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
+                      {t(`team.members.${key}.role`)}
+                    </Typography>
+                    <Typography color="text.secondary" variant="body2">{t(`team.members.${key}.bio`)}</Typography>
+                  </CardContent>
+                </Card>
+              ))
+          }
         </Stagger>
       </Container>
 
@@ -756,8 +827,10 @@ export default function Home() {
               />
               <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                 <Box>
-                  <Typography variant="h6">{t(`gallery.items.${selectedImage.slug}`)}</Typography>
-                  <Typography color="text.secondary" variant="body2">{t(`gallery.categories.${selectedImage.category}`)}</Typography>
+                  <Typography variant="h6">
+                    {i18n.language.startsWith('ar') && selectedImage.titleAr ? selectedImage.titleAr : selectedImage.title}
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">{getCatLabel(selectedImage.category)}</Typography>
                 </Box>
                 <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <SwapHorizIcon sx={{ fontSize: 15 }} />

@@ -94,4 +94,13 @@ public class DeliveryTaskController {
                 List.of(DeliveryTaskStatus.DELIVERED, DeliveryTaskStatus.FAILED));
         return positionService.getAllPositions(activeTechIds);
     }
+
+    /** Breadcrumb trail: last N recorded positions for a driver (DB fallback). */
+    @GetMapping("/position/{techId}/history")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public List<Map<String, Object>> getPositionHistory(
+            @PathVariable Long techId,
+            @RequestParam(defaultValue = "40") int limit) {
+        return positionService.getHistory(techId, Math.min(limit, 100));
+    }
 }

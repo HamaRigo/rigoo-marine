@@ -30,53 +30,53 @@ import PendingApprovalsBanner from '../../components/admin/PendingApprovalsBanne
 
 const managementModules = [
   {
-    title: 'User Management',
-    path: '/admin/users',
+    title: 'People',
+    path: '/admin/people',
     icon: PeopleIcon,
     color: '#1976d2',
-    description: 'Manage users, roles, and permissions'
+    description: 'Users, team requests, and audit log'
   },
   {
-    title: 'Order Management',
-    path: '/admin/orders',
+    title: 'Operations',
+    path: '/admin/operations',
     icon: BuildIcon,
     color: '#ed6c02',
-    description: 'Track and manage work orders'
+    description: 'Work orders, services, and inventory'
   },
   {
-    title: 'Invoice Management',
-    path: '/admin/invoices',
+    title: 'Finance',
+    path: '/admin/finance',
     icon: ReceiptIcon,
     color: '#2e7d32',
-    description: 'Manage invoices and payments'
+    description: 'Invoices and quotations'
   },
   {
-    title: 'Quotation Management',
-    path: '/admin/quotations',
-    icon: QuoteIcon,
-    color: '#9c27b0',
-    description: 'Create and manage quotations'
-  },
-  {
-    title: 'Media Management',
-    path: '/admin/media',
-    icon: MediaIcon,
-    color: '#d32f2f',
-    description: 'Manage photos, videos, and media content'
-  },
-  {
-    title: 'Contact Info',
-    path: '/admin/contact-info',
-    icon: ContactInfoIcon,
-    color: '#009688',
-    description: 'Manage contact details for About page'
-  },
-  {
-    title: 'Service Management',
-    path: '/admin/services',
+    title: 'Fleet',
+    path: '/admin/fleet',
     icon: EngineeringIcon,
     color: '#0288d1',
-    description: 'Define services and pricing'
+    description: 'Maintenance and vessel inspections'
+  },
+  {
+    title: 'Marketplace',
+    path: '/admin/marketplace',
+    icon: MediaIcon,
+    color: '#d32f2f',
+    description: 'Boats, products, orders, and inquiries'
+  },
+  {
+    title: 'Content',
+    path: '/admin/content',
+    icon: ContactInfoIcon,
+    color: '#009688',
+    description: 'Team members, gallery, media, and contact info'
+  },
+  {
+    title: 'Analytics',
+    path: '/admin/analytics',
+    icon: QuoteIcon,
+    color: '#9c27b0',
+    description: 'Revenue, orders, and performance metrics'
   },
   {
     title: 'Settings',

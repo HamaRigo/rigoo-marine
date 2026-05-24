@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Grid, TextField, Button, Divider,
-  Switch, FormControlLabel, Alert, Tabs, Tab, IconButton, InputAdornment
+  Switch, FormControlLabel, Alert, Tabs, Tab, IconButton, InputAdornment,
+  Stack,
 } from '@mui/material';
 import { Save as SaveIcon, Email as EmailIcon, Business as BusinessIcon, Security as SecurityIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import CompareRoundedIcon   from '@mui/icons-material/CompareRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import toast from 'react-hot-toast';
 import { adminApi } from '../../services/api';
 
@@ -54,6 +59,7 @@ export function loadCompanySettings() {
 }
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(loadCompanySettings);
@@ -124,6 +130,7 @@ export default function Settings() {
     { label: 'Company', icon: <BusinessIcon /> },
     { label: 'Email', icon: <EmailIcon /> },
     { label: 'Documents', icon: <ReceiptIcon /> },
+    { label: 'Content', icon: <CompareRoundedIcon /> },
     { label: 'System', icon: <SecurityIcon /> },
   ];
 
@@ -298,8 +305,51 @@ export default function Settings() {
         </Card>
       )}
 
-      {/* System Settings */}
+      {/* Content Management */}
       {activeTab === 3 && (
+        <Grid container spacing={2}>
+          {[
+            {
+              icon: <PeopleAltRoundedIcon sx={{ fontSize: 36, color: 'primary.main' }} />,
+              title: 'Team Members',
+              desc: 'Add, edit and reorder the team members displayed on the website. Supports bilingual names and roles (EN / AR).',
+              path: '/admin/content',
+              btnLabel: 'Manage Team',
+            },
+            {
+              icon: <CompareRoundedIcon sx={{ fontSize: 36, color: 'secondary.main' }} />,
+              title: 'Before & After Gallery',
+              desc: 'Upload before/after image pairs to showcase work quality. Filter by category, toggle published status.',
+              path: '/admin/content?tab=1',
+              btnLabel: 'Manage Gallery',
+            },
+          ].map(item => (
+            <Grid key={item.title} size={{ xs: 12, sm: 6 }}>
+              <Card variant="outlined" sx={{ height: '100%', p: 1 }}>
+                <CardContent>
+                  <Stack direction="row" alignItems="center" gap={1.5} sx={{ mb: 1.5 }}>
+                    {item.icon}
+                    <Typography variant="h6" fontWeight={700}>{item.title}</Typography>
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {item.desc}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    endIcon={<ArrowForwardRoundedIcon />}
+                    onClick={() => navigate(item.path)}
+                  >
+                    {item.btnLabel}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* System Settings */}
+      {activeTab === 4 && (
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>System Configuration</Typography>

@@ -6,12 +6,12 @@ import {
   DialogContent, DialogActions, IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MapIcon from '@mui/icons-material/Map';
 import PhoneIcon from '@mui/icons-material/Phone';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { useTranslation } from 'react-i18next';
 import { Reveal } from '../../components/common/Motion';
 import { deliveryApi } from '../../services/api';
+import { NavigateButton } from '../../components/delivery/NavigateMenu';
 
 const STATUS_COLORS = {
   PENDING:    'default',
@@ -22,10 +22,6 @@ const STATUS_COLORS = {
   FAILED:     'error',
 };
 
-function mapsUrl(lat, lng, address) {
-  if (lat && lng) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-}
 
 export default function DeliveryTaskDetail() {
   const { id } = useParams();
@@ -116,16 +112,13 @@ export default function DeliveryTaskDetail() {
                 {task.pickupLabel && (
                   <Typography variant="body2" color="text.secondary">{task.pickupAddress}</Typography>
                 )}
-                <Button
-                  size="small"
-                  startIcon={<MapIcon />}
-                  href={mapsUrl(task.pickupLat, task.pickupLng, task.pickupAddress)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{ mt: 1 }}
-                >
-                  {t('tasks.openMaps')}
-                </Button>
+                <Box sx={{ mt: 1 }}>
+                  <NavigateButton
+                    lat={task.pickupLat}
+                    lng={task.pickupLng}
+                    address={task.pickupAddress}
+                  />
+                </Box>
               </CardContent>
             </Card>
           </Reveal>
@@ -139,19 +132,16 @@ export default function DeliveryTaskDetail() {
                 {t('detail.dropoffSection')}
               </Typography>
               <Typography variant="body1" fontWeight={500}>{task.deliveryAddress}</Typography>
-              <Stack direction="row" gap={1} sx={{ mt: 1 }} flexWrap="wrap">
-                <Button
-                  size="small"
-                  startIcon={<MapIcon />}
-                  href={mapsUrl(task.deliveryLat, task.deliveryLng, task.deliveryAddress)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('tasks.openMaps')}
-                </Button>
+              <Stack direction="row" gap={1} sx={{ mt: 1 }} flexWrap="wrap" alignItems="center">
+                <NavigateButton
+                  lat={task.deliveryLat}
+                  lng={task.deliveryLng}
+                  address={task.deliveryAddress}
+                />
                 {task.clientPhone && (
                   <Button
                     size="small"
+                    variant="outlined"
                     startIcon={<PhoneIcon />}
                     component="a"
                     href={`tel:${task.clientPhone}`}

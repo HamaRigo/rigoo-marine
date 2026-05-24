@@ -24,8 +24,10 @@
     "invoiceAmount": "مبلغ الفاتورة",
     "notes": "ملاحظات",
     "noTasks": "لا توجد توصيلات مسندة.",
-    "openMaps": "فتح في خرائط جوجل",
-    "openWaze": "فتح في ويز",
+    "openMaps": "خرائط جوجل",
+    "openWaze": "ويز",
+    "navigate": "تنقّل",
+    "changeApp": "تغيير التطبيق",
     "call": "اتصل بالعميل",
     "viewDetails": "عرض التفاصيل"
   },

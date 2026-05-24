@@ -183,6 +183,18 @@ export const publicApi = {
     const response = await httpClient.get('/api/public/contact-info');
     return response.data;
   },
+
+  /** Active team members ordered by displayOrder — used by the home page. */
+  getTeamMembers: async () => {
+    const response = await httpClient.get('/api/public/team');
+    return response.data;
+  },
+
+  /** Published before/after gallery items — used by the home page gallery section. */
+  getGallery: async () => {
+    const response = await httpClient.get('/api/public/gallery');
+    return response.data;
+  },
 };
 
 // ============== WORK ORDER APIs ==============
@@ -753,6 +765,54 @@ export const adminApi = {
     return response.data;
   },
 
+  // Before & After Gallery
+  getAllGallery: async () => {
+    const res = await httpClient.get('/admin/gallery');
+    return res.data;
+  },
+  getGalleryItem: async (id) => {
+    const res = await httpClient.get(`/admin/gallery/${id}`);
+    return res.data;
+  },
+  createGalleryItem: async (data) => {
+    const res = await httpClient.post('/admin/gallery', data);
+    return res.data;
+  },
+  updateGalleryItem: async (id, data) => {
+    const res = await httpClient.put(`/admin/gallery/${id}`, data);
+    return res.data;
+  },
+  toggleGalleryPublished: async (id) => {
+    await httpClient.patch(`/admin/gallery/${id}/toggle-published`);
+  },
+  deleteGalleryItem: async (id) => {
+    await httpClient.delete(`/admin/gallery/${id}`);
+  },
+
+  // Team Member Management
+  getAllTeamMembers: async () => {
+    const res = await httpClient.get('/admin/team');
+    return res.data;
+  },
+  getTeamMember: async (id) => {
+    const res = await httpClient.get(`/admin/team/${id}`);
+    return res.data;
+  },
+  createTeamMember: async (data) => {
+    const res = await httpClient.post('/admin/team', data);
+    return res.data;
+  },
+  updateTeamMember: async (id, data) => {
+    const res = await httpClient.put(`/admin/team/${id}`, data);
+    return res.data;
+  },
+  toggleTeamMemberActive: async (id) => {
+    await httpClient.patch(`/admin/team/${id}/toggle-active`);
+  },
+  deleteTeamMember: async (id) => {
+    await httpClient.delete(`/admin/team/${id}`);
+  },
+
   // Contact Info Management
   getAllContactInfo: async () => {
     const response = await httpClient.get('/admin/contact-info');
@@ -1272,6 +1332,11 @@ export const deliveryApi = {
 
   adminForceStatus: async (id, status) => {
     const res = await httpClient.patch(`/api/delivery/admin/tasks/${id}/status`, { status });
+    return res.data;
+  },
+
+  getPositionHistory: async (techId, limit = 40) => {
+    const res = await httpClient.get(`/api/delivery/position/${techId}/history`, { params: { limit } });
     return res.data;
   },
 };

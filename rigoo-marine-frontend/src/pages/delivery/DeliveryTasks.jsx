@@ -7,10 +7,10 @@ import {
   TextField, LinearProgress,
 } from '@mui/material';
 import PhoneIcon     from '@mui/icons-material/Phone';
-import MapIcon       from '@mui/icons-material/Map';
 import { useTranslation } from 'react-i18next';
 import { Stagger } from '../../components/common/Motion';
 import { deliveryApi } from '../../services/api';
+import { NavigateIconMenu } from '../../components/delivery/NavigateMenu';
 
 const STATUS_COLORS = {
   PENDING:    'default',
@@ -35,10 +35,6 @@ const TRANSITIONS = {
   ],
 };
 
-function mapsUrl(lat, lng, address) {
-  if (lat && lng) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address ?? '')}`;
-}
 
 export default function DeliveryTasks() {
   const navigate = useNavigate();
@@ -187,17 +183,11 @@ export default function DeliveryTasks() {
                           </IconButton>
                         </Tooltip>
                       )}
-                      <Tooltip title={t('tasks.openMaps')}>
-                        <IconButton
-                          size="small"
-                          component="a"
-                          href={mapsUrl(task.deliveryLat, task.deliveryLng, task.deliveryAddress)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <MapIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <NavigateIconMenu
+                        lat={task.deliveryLat}
+                        lng={task.deliveryLng}
+                        address={task.deliveryAddress}
+                      />
                     </Stack>
                   </Stack>
 

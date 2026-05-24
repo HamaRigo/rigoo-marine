@@ -50,7 +50,7 @@ export default function MediaManagement() {
   const createMutation = useMutation({
     mutationFn: adminApi.createMedia,
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-media']);
+      queryClient.invalidateQueries({ queryKey: ['admin-media'] });
       toast.success('Media created successfully');
       handleCloseDialog();
     },
@@ -62,7 +62,7 @@ export default function MediaManagement() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminApi.updateMedia(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-media']);
+      queryClient.invalidateQueries({ queryKey: ['admin-media'] });
       toast.success('Media updated successfully');
       handleCloseDialog();
     },
@@ -74,7 +74,7 @@ export default function MediaManagement() {
   const deleteMutation = useMutation({
     mutationFn: adminApi.deleteMedia,
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-media']);
+      queryClient.invalidateQueries({ queryKey: ['admin-media'] });
       toast.success('Media deleted successfully');
     },
     onError: (err) => {
@@ -317,7 +317,22 @@ export default function MediaManagement() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={12} >
+            {/* Image preview when editing an IMAGE type item */}
+            {formData.type === 'IMAGE' && formData.url && (
+              <Grid size={12}>
+                <Box
+                  component="img"
+                  src={formData.url}
+                  alt={formData.title}
+                  sx={{
+                    width: '100%', maxHeight: 200, objectFit: 'cover',
+                    borderRadius: 1, border: '1px solid', borderColor: 'divider',
+                  }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </Grid>
+            )}
+            <Grid size={12}>
               <TextField
                 label="Title"
                 fullWidth
@@ -326,7 +341,7 @@ export default function MediaManagement() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </Grid>
-            <Grid size={12} >
+            <Grid size={12}>
               <TextField
                 label="URL"
                 fullWidth
@@ -336,7 +351,7 @@ export default function MediaManagement() {
                 helperText="Direct URL to the media file"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }} >
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Type</InputLabel>
                 <Select
@@ -352,7 +367,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }} >
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -368,7 +383,7 @@ export default function MediaManagement() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={12} >
+            <Grid size={12}>
               <TextField
                 label="Description"
                 fullWidth

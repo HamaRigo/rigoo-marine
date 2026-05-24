@@ -1,7 +1,11 @@
 package com.rigoomarine.client.controller;
 
 import com.rigoomarine.client.dto.ContactInfoDTO;
+import com.rigoomarine.client.dto.GalleryItemDTO;
+import com.rigoomarine.client.dto.TeamMemberDTO;
 import com.rigoomarine.client.service.ContactInfoService;
+import com.rigoomarine.client.service.GalleryItemService;
+import com.rigoomarine.client.service.TeamMemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +24,24 @@ import java.util.List;
 public class PublicController {
 
     private final ContactInfoService contactInfoService;
+    private final GalleryItemService galleryItemService;
+    private final TeamMemberService teamMemberService;
 
     /** Returns active contact info entries — used by the footer on every page. */
     @GetMapping("/contact-info")
     public ResponseEntity<List<ContactInfoDTO>> getContactInfo() {
         return ResponseEntity.ok(contactInfoService.getActiveContactInfo());
+    }
+
+    /** Returns published gallery items ordered by displayOrder — used by the home page. */
+    @GetMapping("/gallery")
+    public ResponseEntity<List<GalleryItemDTO>> getGallery() {
+        return ResponseEntity.ok(galleryItemService.getPublished());
+    }
+
+    /** Returns active team members ordered by displayOrder — used by the home page. */
+    @GetMapping("/team")
+    public ResponseEntity<List<TeamMemberDTO>> getTeamMembers() {
+        return ResponseEntity.ok(teamMemberService.getActive());
     }
 }

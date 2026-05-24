@@ -47,33 +47,22 @@ import WorkOrderFlow from './pages/workorder/WorkOrderFlow';
 import ServiceRequest from './pages/workorder/ServiceRequest';
 
 // Admin Pages
-// AdminLayout stays eagerly imported — it owns the whole /admin route shell
-// and is the first chunk any admin loads. The leaf pages below are lazy-
-// loaded so a regular CLIENT user never pays their cost on initial dashboard
-// entry. Each React.lazy() call becomes its own chunk in the Vite output.
+// AdminLayout stays eagerly imported — it owns the whole /admin route shell.
+// Hub pages are lazy-loaded per navigation click; each hub's chunk bundles
+// all the sub-page components it hosts.
 import AdminLayout from './pages/admin/AdminLayout';
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const OrderManagement = lazy(() => import('./pages/admin/OrderManagement'));
-const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
-const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
-const ServiceManagement = lazy(() => import('./pages/admin/ServiceManagement'));
-const InvoiceManagement = lazy(() => import('./pages/admin/InvoiceManagement'));
-const QuotationManagement = lazy(() => import('./pages/admin/QuotationManagement'));
-const MediaManagement = lazy(() => import('./pages/admin/MediaManagement'));
-const ContactInfoManagement = lazy(() => import('./pages/admin/ContactInfoManagement'));
-const Settings = lazy(() => import('./pages/admin/Settings'));
-const BoatListingManagement = lazy(() => import('./pages/admin/BoatListingManagement'));
-const BoatListingForm = lazy(() => import('./pages/admin/BoatListingForm'));
-const BoatInquiryManagement = lazy(() => import('./pages/admin/BoatInquiryManagement'));
-const ProductManagement = lazy(() => import('./pages/admin/ProductManagement'));
-const ProductForm = lazy(() => import('./pages/admin/ProductForm'));
-const ProductInquiryManagement = lazy(() => import('./pages/admin/ProductInquiryManagement'));
-const ShopOrderManagement = lazy(() => import('./pages/admin/ShopOrderManagement'));
-const MaintenanceDashboard = lazy(() => import('./pages/admin/MaintenanceDashboard'));
-const VesselInspections    = lazy(() => import('./pages/admin/VesselInspections'));
-const TeamRequestManagement = lazy(() => import('./pages/admin/TeamRequestManagement'));
+const AdminDashboard  = lazy(() => import('./pages/admin/AdminDashboard'));
+const OperationsHub   = lazy(() => import('./pages/admin/OperationsHub'));
+const FinanceHub      = lazy(() => import('./pages/admin/FinanceHub'));
+const FleetHub        = lazy(() => import('./pages/admin/FleetHub'));
+const MarketplaceHub  = lazy(() => import('./pages/admin/MarketplaceHub'));
+const PeopleHub       = lazy(() => import('./pages/admin/PeopleHub'));
+const ContentHub      = lazy(() => import('./pages/admin/ContentHub'));
 const AnalyticsDashboard = lazy(() => import('./pages/admin/AnalyticsDashboard'));
-const InventoryManagement = lazy(() => import('./pages/admin/InventoryManagement'));
+const Settings        = lazy(() => import('./pages/admin/Settings'));
+// Form pages — navigated to from within hub tabs, redirect back to hub on save
+const BoatListingForm = lazy(() => import('./pages/admin/BoatListingForm'));
+const ProductForm     = lazy(() => import('./pages/admin/ProductForm'));
 
 /**
  * Lightweight spinner the Suspense fallback renders while a chunk loads.
@@ -205,33 +194,48 @@ function App() {
                   </AdminRoute>
                 }
               >
+                {/* Hub routes — each groups related pages under a tab bar */}
                 <Route index element={<AdminDashboard />} />
-                <Route path="orders" element={<OrderManagement />} />
-                <Route path="orders/:id" element={<TeamLeadOrderDetail />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="audit" element={<AuditLog />} />
-                <Route path="services" element={<ServiceManagement />} />
-                <Route path="maintenance"   element={<MaintenanceDashboard />} />
-                <Route path="inspections"  element={<VesselInspections />} />
-                <Route path="invoices" element={<InvoiceManagement />} />
-                <Route path="quotations" element={<QuotationManagement />} />
-                <Route path="media" element={<MediaManagement />} />
-                <Route path="contact-info" element={<ContactInfoManagement />} />
-                <Route path="boats" element={<BoatListingManagement />} />
-                <Route path="boats/new" element={<BoatListingForm />} />
-                <Route path="boats/:id/edit" element={<BoatListingForm />} />
-                <Route path="inquiries" element={<BoatInquiryManagement />} />
-                <Route path="products" element={<ProductManagement />} />
-                <Route path="products/new" element={<ProductForm />} />
-                <Route path="products/:id/edit" element={<ProductForm />} />
-                <Route path="shop-inquiries" element={<ProductInquiryManagement />} />
-                <Route path="shop-orders" element={<ShopOrderManagement />} />
-                <Route path="team-requests" element={<TeamRequestManagement />} />
-                <Route path="delivery" element={<DeliveryTracking />} />
+                <Route path="operations"  element={<OperationsHub />} />
+                <Route path="finance"     element={<FinanceHub />} />
+                <Route path="fleet"       element={<FleetHub />} />
+                <Route path="marketplace" element={<MarketplaceHub />} />
+                <Route path="people"      element={<PeopleHub />} />
+                <Route path="content"     element={<ContentHub />} />
+                <Route path="delivery"    element={<DeliveryTracking />} />
                 <Route path="delivery/:techId" element={<DeliveryTracking />} />
-                <Route path="analytics" element={<AnalyticsDashboard />} />
-                <Route path="inventory" element={<InventoryManagement />} />
-                <Route path="settings" element={<Settings />} />
+                <Route path="analytics"   element={<AnalyticsDashboard />} />
+                <Route path="settings"    element={<Settings />} />
+
+                {/* Standalone form pages — navigated to from hub tabs */}
+                <Route path="boats/new"       element={<BoatListingForm />} />
+                <Route path="boats/:id/edit"  element={<BoatListingForm />} />
+                <Route path="products/new"    element={<ProductForm />} />
+                <Route path="products/:id/edit" element={<ProductForm />} />
+
+                {/* Order detail — linked from within OperationsHub */}
+                <Route path="orders/:id" element={<TeamLeadOrderDetail />} />
+
+                {/* Legacy redirects — keep old URLs working (bookmarks, dashboard links) */}
+                <Route path="orders"        element={<Navigate to="/admin/operations" replace />} />
+                <Route path="services"      element={<Navigate to="/admin/operations?tab=1" replace />} />
+                <Route path="inventory"     element={<Navigate to="/admin/operations?tab=2" replace />} />
+                <Route path="invoices"      element={<Navigate to="/admin/finance" replace />} />
+                <Route path="quotations"    element={<Navigate to="/admin/finance?tab=1" replace />} />
+                <Route path="maintenance"   element={<Navigate to="/admin/fleet" replace />} />
+                <Route path="inspections"   element={<Navigate to="/admin/fleet?tab=1" replace />} />
+                <Route path="boats"         element={<Navigate to="/admin/marketplace" replace />} />
+                <Route path="inquiries"     element={<Navigate to="/admin/marketplace?tab=1" replace />} />
+                <Route path="products"      element={<Navigate to="/admin/marketplace?tab=2" replace />} />
+                <Route path="shop-orders"   element={<Navigate to="/admin/marketplace?tab=3" replace />} />
+                <Route path="shop-inquiries" element={<Navigate to="/admin/marketplace?tab=4" replace />} />
+                <Route path="users"         element={<Navigate to="/admin/people" replace />} />
+                <Route path="team-requests" element={<Navigate to="/admin/people?tab=1" replace />} />
+                <Route path="audit"         element={<Navigate to="/admin/people?tab=2" replace />} />
+                <Route path="team"          element={<Navigate to="/admin/content" replace />} />
+                <Route path="gallery"       element={<Navigate to="/admin/content?tab=1" replace />} />
+                <Route path="media"         element={<Navigate to="/admin/content?tab=2" replace />} />
+                <Route path="contact-info"  element={<Navigate to="/admin/content?tab=3" replace />} />
               </Route>
 
               {/* Technician Routes (TECHNICIAN role only) */}

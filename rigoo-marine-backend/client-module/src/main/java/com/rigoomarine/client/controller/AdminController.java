@@ -6,13 +6,19 @@ import com.rigoomarine.client.dto.AdminAuditDTO;
 import com.rigoomarine.client.dto.AdminPasswordResetRequest;
 import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
+import com.rigoomarine.client.dto.CreateGalleryItemRequest;
 import com.rigoomarine.client.dto.CreateMediaRequest;
 import com.rigoomarine.client.dto.CreateContactInfoRequest;
+import com.rigoomarine.client.dto.CreateTeamMemberRequest;
+import com.rigoomarine.client.dto.GalleryItemDTO;
 import com.rigoomarine.client.dto.MediaDTO;
 import com.rigoomarine.client.dto.ContactInfoDTO;
+import com.rigoomarine.client.dto.TeamMemberDTO;
 import com.rigoomarine.client.service.ClientService;
+import com.rigoomarine.client.service.GalleryItemService;
 import com.rigoomarine.client.service.MediaService;
 import com.rigoomarine.client.service.ContactInfoService;
+import com.rigoomarine.client.service.TeamMemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +47,8 @@ public class AdminController {
     private final MediaService mediaService;
     private final ContactInfoService contactInfoService;
     private final AdminAuditService adminAuditService;
+    private final GalleryItemService galleryItemService;
+    private final TeamMemberService teamMemberService;
 
     // ============== Dashboard Stats ==============
 
@@ -347,6 +355,45 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    // ============== Before & After Gallery ==============
+
+    @GetMapping("/gallery")
+    public ResponseEntity<List<GalleryItemDTO>> getAllGalleryItems() {
+        return ResponseEntity.ok(galleryItemService.getAll());
+    }
+
+    @GetMapping("/gallery/{id}")
+    public ResponseEntity<GalleryItemDTO> getGalleryItem(@PathVariable Long id) {
+        return ResponseEntity.ok(galleryItemService.getById(id));
+    }
+
+    @PostMapping("/gallery")
+    public ResponseEntity<GalleryItemDTO> createGalleryItem(@Valid @RequestBody CreateGalleryItemRequest req) {
+        log.info("Create gallery item: {}", req.getTitle());
+        return ResponseEntity.status(201).body(galleryItemService.create(req));
+    }
+
+    @PutMapping("/gallery/{id}")
+    public ResponseEntity<GalleryItemDTO> updateGalleryItem(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateGalleryItemRequest req) {
+        log.info("Update gallery item: {}", id);
+        return ResponseEntity.ok(galleryItemService.update(id, req));
+    }
+
+    @PatchMapping("/gallery/{id}/toggle-published")
+    public ResponseEntity<Void> toggleGalleryPublished(@PathVariable Long id) {
+        galleryItemService.togglePublished(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/gallery/{id}")
+    public ResponseEntity<Void> deleteGalleryItem(@PathVariable Long id) {
+        log.info("Delete gallery item: {}", id);
+        galleryItemService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     // ============== Contact Info Management ==============
 
     @GetMapping("/contact-info")
@@ -386,6 +433,45 @@ public class AdminController {
     public ResponseEntity<Void> deleteContactInfo(@PathVariable Long id) {
         log.info("Delete contact info {}", id);
         contactInfoService.deleteContactInfo(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============== Team Member Management ==============
+
+    @GetMapping("/team")
+    public ResponseEntity<List<TeamMemberDTO>> getAllTeamMembers() {
+        return ResponseEntity.ok(teamMemberService.getAll());
+    }
+
+    @GetMapping("/team/{id}")
+    public ResponseEntity<TeamMemberDTO> getTeamMember(@PathVariable Long id) {
+        return ResponseEntity.ok(teamMemberService.getById(id));
+    }
+
+    @PostMapping("/team")
+    public ResponseEntity<TeamMemberDTO> createTeamMember(@Valid @RequestBody CreateTeamMemberRequest req) {
+        log.info("Create team member: {}", req.getName());
+        return ResponseEntity.status(201).body(teamMemberService.create(req));
+    }
+
+    @PutMapping("/team/{id}")
+    public ResponseEntity<TeamMemberDTO> updateTeamMember(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateTeamMemberRequest req) {
+        log.info("Update team member: {}", id);
+        return ResponseEntity.ok(teamMemberService.update(id, req));
+    }
+
+    @PatchMapping("/team/{id}/toggle-active")
+    public ResponseEntity<Void> toggleTeamMemberActive(@PathVariable Long id) {
+        teamMemberService.toggleActive(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/team/{id}")
+    public ResponseEntity<Void> deleteTeamMember(@PathVariable Long id) {
+        log.info("Delete team member: {}", id);
+        teamMemberService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

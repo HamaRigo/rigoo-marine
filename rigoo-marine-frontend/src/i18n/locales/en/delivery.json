@@ -24,8 +24,10 @@
     "invoiceAmount": "Invoice Amount",
     "notes": "Notes",
     "noTasks": "No deliveries assigned.",
-    "openMaps": "Open in Google Maps",
-    "openWaze": "Open in Waze",
+    "openMaps": "Google Maps",
+    "openWaze": "Waze",
+    "navigate": "Navigate",
+    "changeApp": "Change app",
     "call": "Call Client",
     "viewDetails": "View Details"
   },
