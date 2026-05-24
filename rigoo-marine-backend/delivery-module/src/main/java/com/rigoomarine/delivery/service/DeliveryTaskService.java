@@ -98,6 +98,11 @@ public class DeliveryTaskService {
                 .stream().map(DeliveryTaskDTO::new).toList();
     }
 
+    public List<DeliveryTaskDTO> getAllDriverHistoryInRange(LocalDate from, LocalDate to) {
+        return repo.findByAssignedToNotNullAndScheduledDateBetweenOrderByAssignedToAscScheduledDateDescIdAsc(from, to)
+                .stream().map(DeliveryTaskDTO::new).toList();
+    }
+
     public DeliveryStatsDTO getStatsForTech(Long techId) {
         List<Object[]> rows = repo.countByStatusGroupedForTech(techId);
         long delivered = 0, failed = 0, inTransit = 0, pending = 0, cancelled = 0;

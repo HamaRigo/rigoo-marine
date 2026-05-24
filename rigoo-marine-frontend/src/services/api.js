@@ -1310,6 +1310,11 @@ export const deliveryApi = {
     return res.data;
   },
 
+  adminGetDriverHistory: async (from, to) => {
+    const res = await httpClient.get('/api/delivery/admin/history', { params: { from, to } });
+    return res.data;
+  },
+
   getTaskById: async (id) => {
     const res = await httpClient.get(`/api/delivery/tasks/${id}`);
     return res.data;

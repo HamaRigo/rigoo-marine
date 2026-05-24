@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/delivery/admin")
@@ -67,6 +68,14 @@ public class DeliveryAdminController {
     @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
     public DeliveryTaskDTO forceStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest req) {
         return taskService.adminForceStatus(id, req.getStatus());
+    }
+
+    @GetMapping("/history")
+    @PreAuthorize("hasAnyRole('TEAM_LEAD', 'ADMIN')")
+    public List<DeliveryTaskDTO> getDriverHistory(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return taskService.getAllDriverHistoryInRange(from, to);
     }
 
     @PutMapping("/settings")

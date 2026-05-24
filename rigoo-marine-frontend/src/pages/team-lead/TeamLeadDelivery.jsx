@@ -22,6 +22,7 @@ import FullscreenRoundedIcon          from '@mui/icons-material/FullscreenRounde
 import CloseRoundedIcon               from '@mui/icons-material/CloseRounded';
 import HomeRoundedIcon                from '@mui/icons-material/HomeRounded';
 import SettingsRoundedIcon            from '@mui/icons-material/SettingsRounded';
+import HistoryRoundedIcon             from '@mui/icons-material/HistoryRounded';
 import toast from 'react-hot-toast';
 import { deliveryApi, driverApi } from '../../services/api';
 import { useDeliveryPositions, fetchPositionHistory } from '../../services/useDeliveryPositions';
@@ -208,6 +209,11 @@ export default function TeamLeadDelivery() {
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} size="small">
             New Task
           </Button>
+          <Tooltip title="Driver history">
+            <IconButton size="small" onClick={() => navigate('/team-lead/delivery/history')}>
+              <HistoryRoundedIcon />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Refresh"><IconButton onClick={() => refetch()} disabled={isFetching} size="small"><RefreshRoundedIcon /></IconButton></Tooltip>
           <Tooltip title="Delivery settings">
             <IconButton size="small" onClick={() => { setHistoryDaysInput(String(deliverySettings?.historyDays ?? 7)); setSettingsOpen(true); }}>

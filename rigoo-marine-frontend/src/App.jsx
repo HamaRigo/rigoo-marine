@@ -95,7 +95,8 @@ import DeliveryRouteMap from './pages/delivery/DeliveryRoute';
 import DeliveryHistory from './pages/delivery/DeliveryHistory';
 
 // Admin Delivery Tracking
-const DeliveryTracking = lazy(() => import('./pages/admin/DeliveryTracking'));
+const DeliveryTracking      = lazy(() => import('./pages/admin/DeliveryTracking'));
+const AdminDeliveryHistory  = lazy(() => import('./pages/admin/AdminDeliveryHistory'));
 
 // Team Lead Delivery Tracking
 import TeamLeadDelivery from './pages/team-lead/TeamLeadDelivery';
@@ -205,7 +206,8 @@ function App() {
                 <Route path="marketplace" element={<MarketplaceHub />} />
                 <Route path="people"      element={<PeopleHub />} />
                 <Route path="content"     element={<ContentHub />} />
-                <Route path="delivery"    element={<DeliveryTracking />} />
+                <Route path="delivery"         element={<DeliveryTracking />} />
+                <Route path="delivery/history" element={<AdminDeliveryHistory backPath="/admin/delivery" homePath="/admin" title="Driver Delivery History" />} />
                 <Route path="delivery/:techId" element={<DeliveryTracking />} />
                 <Route path="analytics"   element={<AnalyticsDashboard />} />
                 <Route path="settings"    element={<Settings />} />
@@ -278,7 +280,8 @@ function App() {
                 <Route path="technicians"     element={<TeamLeadTechnicians />} />
                 <Route path="inspections"     element={<TeamLeadInspections />} />
                 <Route path="delivery"          element={<TeamLeadDelivery />} />
-                <Route path="delivery/:techId" element={<TeamLeadDelivery />} />
+                <Route path="delivery/history"  element={<AdminDeliveryHistory backPath="/team-lead/delivery" homePath="/team-lead" title="Driver Delivery History" />} />
+                <Route path="delivery/:techId"  element={<TeamLeadDelivery />} />
               </Route>
 
               {/* Delivery Routes (DELIVERY role) */}
