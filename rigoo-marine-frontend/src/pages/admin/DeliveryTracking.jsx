@@ -29,6 +29,11 @@ import CreateDeliveryTaskDialog from '../../components/delivery/CreateDeliveryTa
 const TASK_POLL_MS = 20_000;
 const PANEL_HEIGHT = 500;
 
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const STATUS_COLOR = {
   PENDING:    'default',
   ASSIGNED:   'info',
@@ -71,6 +76,7 @@ export default function DeliveryTracking() {
   const [selectedStopId, setSelectedStopId] = useState(null);
   const [trail, setTrail]                   = useState([]);
   const [mapExpanded, setMapExpanded]       = useState(false);
+  const [trackDate, setTrackDate]           = useState(localToday);
 
   const { positions: allPositions, lastUpdated } = useDeliveryPositions({ intervalMs: 5_000 });
   const filteredPositions = techId
@@ -84,12 +90,12 @@ export default function DeliveryTracking() {
     return () => clearInterval(id);
   }, [techId]);
 
-  const queryKey = techId ? ['admin-delivery-driver', techId] : ['admin-delivery-all'];
+  const queryKey = techId ? ['admin-delivery-driver', techId, trackDate] : ['admin-delivery-all', trackDate];
   const { data: tasksPage, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey,
     queryFn: () => techId
-      ? deliveryApi.adminListTasks({ assignedTo: Number(techId), size: 100 })
-      : deliveryApi.adminListTasks({ size: 200 }),
+      ? deliveryApi.adminListTasks({ assignedTo: Number(techId), date: trackDate, size: 100 })
+      : deliveryApi.adminListTasks({ date: trackDate, size: 200 }),
     refetchInterval: TASK_POLL_MS,
   });
   const tasks = tasksPage?.content ?? [];
@@ -165,6 +171,14 @@ export default function DeliveryTracking() {
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1} alignItems="center">
+          <TextField
+            type="date"
+            size="small"
+            value={trackDate}
+            onChange={e => setTrackDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ width: 150 }}
+          />
           <Chip
             icon={<FiberManualRecordIcon sx={{ fontSize: '10px !important', color: '#43a047 !important' }} />}
             label={liveAgoSec != null ? `Live · ${liveAgoSec}s ago` : 'Live'}

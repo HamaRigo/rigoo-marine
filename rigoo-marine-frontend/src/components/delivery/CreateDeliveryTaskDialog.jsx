@@ -15,12 +15,17 @@ const TYPES = [
   { value: 'WORK_ORDER_PARTS', label: 'Work Order Parts' },
 ];
 
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const empty = {
   type: 'MANUAL',
   deliveryAddress: '',
   deliveryLat: null,
   deliveryLng: null,
-  scheduledDate: new Date().toISOString().slice(0, 10),
+  scheduledDate: localToday(),
   pickupAddress: '',
   pickupLat: null,
   pickupLng: null,
@@ -121,7 +126,7 @@ export default function CreateDeliveryTaskDialog({ open, onClose, drivers = [], 
           />
 
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Scheduled Date *"
                 type="date"
@@ -131,7 +136,7 @@ export default function CreateDeliveryTaskDialog({ open, onClose, drivers = [], 
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Client Phone"
                 value={form.clientPhone}
