@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -44,6 +45,24 @@ public class RecipientLookup {
         } catch (Exception ex) {
             log.warn("RecipientLookup failed for clientId={}: {}", clientId, ex.getMessage());
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Returns all active staff of the given role (e.g. "ADMIN", "TEAM_LEAD")
+     * for peer-notification flows (e.g. admin approves → notify all team leads).
+     */
+    public List<Recipient> findAllByRole(String role) {
+        if (role == null || role.isBlank()) return List.of();
+        try {
+            return jdbc.query(
+                "SELECT " + COLUMNS + " FROM clients WHERE UPPER(role) = UPPER(?)",
+                (rs, rowNum) -> mapRow(rs),
+                role
+            );
+        } catch (Exception ex) {
+            log.warn("RecipientLookup byRole failed for role={}: {}", role, ex.getMessage());
+            return List.of();
         }
     }
 

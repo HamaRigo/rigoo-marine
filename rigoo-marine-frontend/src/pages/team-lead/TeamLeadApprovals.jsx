@@ -10,6 +10,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import { useAuth } from '../../context/AuthContext';
 import { workOrderApi, adminApi, marketplaceApi } from '../../services/api';
 import { formatPrice } from '../../utils/format';
@@ -173,7 +175,16 @@ function BoatListingApprovals() {
     onError: () => toast.error('Failed to reject listing'),
   });
 
+  const { data: recentData } = useQuery({
+    queryKey: ['tl-recent-listings'],
+    queryFn: () => marketplaceApi.searchListings({ adminStatus: 'ALL', size: 10, sort: 'updatedAt,desc' }),
+    refetchInterval: 60_000,
+  });
+
   const listings = data?.content ?? [];
+  const recentReviewed = (recentData?.content ?? []).filter(
+    l => (l.status === 'AVAILABLE' || l.status === 'REJECTED') && l.reviewedByEmail
+  ).slice(0, 6);
 
   if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>;
   if (isError) return <Alert severity="error">Failed to load pending listings.</Alert>;
@@ -250,6 +261,44 @@ function BoatListingApprovals() {
             ))}
           </Grid>
         </Stagger>
+      )}
+
+      {/* ── Recent decisions audit trail ─────────────────────────── */}
+      {recentReviewed.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1.5 }}>
+            Recent Decisions
+          </Typography>
+          <Stack spacing={1}>
+            {recentReviewed.map(l => (
+              <Card key={l.id} variant="outlined" sx={{ borderRadius: 2 }}>
+                <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                    {l.status === 'AVAILABLE'
+                      ? <VerifiedUserOutlinedIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                      : <BlockOutlinedIcon sx={{ color: 'error.main', fontSize: 20 }} />}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={600} noWrap>
+                        {l.titleEn || `Listing #${l.id}`}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {l.status === 'AVAILABLE' ? 'Approved' : 'Rejected'} by{' '}
+                        <strong>{l.reviewedByEmail}</strong> ({l.reviewedByRole}) ·{' '}
+                        {l.reviewedAt ? new Date(l.reviewedAt).toLocaleString() : '—'}
+                        {l.rejectionReason && ` — "${l.rejectionReason}"`}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      size="small"
+                      label={l.status}
+                      color={l.status === 'AVAILABLE' ? 'success' : 'error'}
+                    />
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </Box>
       )}
 
       {/* Approve dialog */}

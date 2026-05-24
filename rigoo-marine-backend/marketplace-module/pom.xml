@@ -74,6 +74,11 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <!-- JWT (per-service auth) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

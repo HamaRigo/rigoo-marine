@@ -85,19 +85,23 @@ public class BoatListingController {
     @PutMapping("/{id}/approve")
     public ResponseEntity<BoatListingDTO> approve(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
         BigDecimal pct = body.get("companyGainPct") == null ? null
                 : new BigDecimal(body.get("companyGainPct").toString());
-        return ResponseEntity.ok(service.approve(id, pct));
+        String role = principal.hasRole("ADMIN") ? "ADMIN" : "TEAM_LEAD";
+        return ResponseEntity.ok(service.approve(id, pct, principal.getEmail(), role));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD')")
     @PutMapping("/{id}/reject")
     public ResponseEntity<BoatListingDTO> reject(
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, Object> body) {
+            @RequestBody(required = false) Map<String, Object> body,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
         String reason = body != null && body.get("reason") != null ? body.get("reason").toString() : null;
-        return ResponseEntity.ok(service.reject(id, reason));
+        String role = principal.hasRole("ADMIN") ? "ADMIN" : "TEAM_LEAD";
+        return ResponseEntity.ok(service.reject(id, reason, principal.getEmail(), role));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -2,6 +2,7 @@ package com.rigoomarine.marketplace.service;
 
 import com.rigoomarine.marketplace.dto.BoatListingDTO;
 import com.rigoomarine.marketplace.entity.BoatListing;
+import com.rigoomarine.marketplace.kafka.ListingEventPublisher;
 import com.rigoomarine.marketplace.repository.BoatListingRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class BoatListingService {
 
     private final BoatListingRepository repository;
+    private final ListingEventPublisher eventPublisher;
 
     private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
 
@@ -71,21 +74,35 @@ public class BoatListingService {
                 .stream().map(this::toDTO).toList();
     }
 
-    public BoatListingDTO approve(Long id, java.math.BigDecimal companyGainPct) {
+    public BoatListingDTO approve(Long id, java.math.BigDecimal companyGainPct,
+                                   String reviewerEmail, String reviewerRole) {
         BoatListing entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found"));
         entity.setStatus(BoatListing.ListingStatus.AVAILABLE);
         entity.setCompanyGainPct(companyGainPct);
         entity.setRejectionReason(null);
-        return toDTO(repository.save(entity));
+        entity.setReviewedByEmail(reviewerEmail);
+        entity.setReviewedByRole(reviewerRole);
+        entity.setReviewedAt(LocalDateTime.now());
+        BoatListingDTO result = toDTO(repository.save(entity));
+        eventPublisher.publishApproved(entity.getId(), entity.getTitleEn(),
+                entity.getCreatedBy(), reviewerEmail, reviewerRole, companyGainPct);
+        return result;
     }
 
-    public BoatListingDTO reject(Long id, String reason) {
+    public BoatListingDTO reject(Long id, String reason,
+                                  String reviewerEmail, String reviewerRole) {
         BoatListing entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found"));
         entity.setStatus(BoatListing.ListingStatus.REJECTED);
         entity.setRejectionReason(reason);
-        return toDTO(repository.save(entity));
+        entity.setReviewedByEmail(reviewerEmail);
+        entity.setReviewedByRole(reviewerRole);
+        entity.setReviewedAt(LocalDateTime.now());
+        BoatListingDTO result = toDTO(repository.save(entity));
+        eventPublisher.publishRejected(entity.getId(), entity.getTitleEn(),
+                entity.getCreatedBy(), reviewerEmail, reviewerRole, reason);
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -351,6 +368,9 @@ public class BoatListingService {
                 .viewCount(e.getViewCount())
                 .companyGainPct(e.getCompanyGainPct())
                 .rejectionReason(e.getRejectionReason())
+                .reviewedByEmail(e.getReviewedByEmail())
+                .reviewedByRole(e.getReviewedByRole())
+                .reviewedAt(e.getReviewedAt())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();

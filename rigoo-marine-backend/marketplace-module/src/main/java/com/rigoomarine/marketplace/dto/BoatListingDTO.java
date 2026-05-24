@@ -95,6 +95,10 @@ public class BoatListingDTO {
     private BigDecimal companyGainPct;
     private String rejectionReason;
 
+    private String reviewedByEmail;
+    private String reviewedByRole;
+    private LocalDateTime reviewedAt;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -2,8 +2,9 @@ import { useState } from 'react';
 import {
   Box, Button, Chip, Stack, Typography, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  InputAdornment, Alert, CircularProgress,
+  InputAdornment, Alert, CircularProgress, Divider,
 } from '@mui/material';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -208,6 +209,21 @@ export default function BoatListingManagement() {
       render: (r) => (
         <Chip size="small" label={t(`status.${r.status}`, r.status)} color={STATUS_COLORS[r.status] || 'default'} />
       ),
+    },
+    {
+      id: 'reviewedBy',
+      label: t('admin.listingColumns.reviewedBy', 'Reviewed By'),
+      render: (r) => r.reviewedByEmail ? (
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <VerifiedUserOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+          <Stack>
+            <Typography variant="caption" noWrap sx={{ maxWidth: 140 }}>{r.reviewedByEmail}</Typography>
+            <Typography variant="caption" color="text.disabled">
+              {r.reviewedByRole} · {new Date(r.reviewedAt).toLocaleDateString()}
+            </Typography>
+          </Stack>
+        </Stack>
+      ) : '—',
     },
   ];
 

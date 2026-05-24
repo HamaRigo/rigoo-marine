@@ -243,6 +243,15 @@ public class BoatListing {
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
 
+    @Column(name = "reviewed_by_email")
+    private String reviewedByEmail;
+
+    @Column(name = "reviewed_by_role", length = 50)
+    private String reviewedByRole;
+
+    @Column(name = "reviewed_at")
+    private java.time.LocalDateTime reviewedAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
