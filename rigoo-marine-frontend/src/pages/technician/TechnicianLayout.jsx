@@ -80,12 +80,6 @@ export default function TechnicianLayout() {
           );
         })}
         <ListItem disablePadding sx={{ mt: 1 }}>
-          <ListItemButton component={Link} to="/" onClick={() => setMobileOpen(false)}>
-            <ListItemIcon sx={{ minWidth: 36 }}><HomeIcon /></ListItemIcon>
-            <ListItemText primary="Home" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
@@ -119,6 +113,9 @@ export default function TechnicianLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Technician'}
           </Typography>
+          <IconButton color="inherit" component={Link} to="/">
+            <HomeIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
 

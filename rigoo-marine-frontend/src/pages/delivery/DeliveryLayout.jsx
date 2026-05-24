@@ -72,12 +72,6 @@ export default function DeliveryLayout() {
           );
         })}
         <ListItem disablePadding sx={{ mt: 1 }}>
-          <ListItemButton component={Link} to="/" onClick={() => setMobileOpen(false)}>
-            <ListItemIcon sx={{ minWidth: 36 }}><HomeIcon /></ListItemIcon>
-            <ListItemText primary="Home" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
@@ -111,6 +105,9 @@ export default function DeliveryLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Delivery'}
           </Typography>
+          <IconButton color="inherit" component={Link} to="/">
+            <HomeIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
