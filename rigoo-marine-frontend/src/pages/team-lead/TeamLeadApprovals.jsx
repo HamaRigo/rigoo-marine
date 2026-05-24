@@ -147,7 +147,7 @@ function BoatListingApprovals() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tl-pending-listings'],
-    queryFn: () => marketplaceApi.searchListings({ status: 'PENDING_REVIEW', size: 50, sort: 'createdAt,asc' }),
+    queryFn: () => marketplaceApi.searchListings({ adminStatus: 'PENDING_REVIEW', size: 50, sort: 'createdAt,asc' }),
     refetchInterval: 60_000,
   });
 
@@ -372,7 +372,7 @@ export default function TeamLeadApprovals() {
 
   const { data: listingsData } = useQuery({
     queryKey: ['tl-pending-listings'],
-    queryFn: () => marketplaceApi.searchListings({ status: 'PENDING_REVIEW', size: 50, sort: 'createdAt,asc' }),
+    queryFn: () => marketplaceApi.searchListings({ adminStatus: 'PENDING_REVIEW', size: 50, sort: 'createdAt,asc' }),
     refetchInterval: 60_000,
   });
 
