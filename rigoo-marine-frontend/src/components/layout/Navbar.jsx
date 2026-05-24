@@ -96,7 +96,7 @@ function NavLinkButton({ to, label, active }) {
 
 // ── User avatar dropdown (desktop) ────────────────────────────────────────
 
-function UserMenu({ user, isAdmin, isTeamLead, isDelivery }) {
+function UserMenu({ user, isAdmin, isTeamLead, isDelivery, isTechnician }) {
   const navigate = useNavigate();
 
   const initials = (user?.name || 'U')
@@ -109,6 +109,7 @@ function UserMenu({ user, isAdmin, isTeamLead, isDelivery }) {
   const dest = isAdmin ? '/admin'
     : isTeamLead ? '/team-lead'
     : isDelivery ? '/delivery'
+    : isTechnician ? '/technician'
     : '/dashboard/vessels';
 
   return (
@@ -137,9 +138,10 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation(['navbar', 'common']);
-  const isAdmin    = user?.role === 'ADMIN';
-  const isTeamLead = user?.role === 'TEAM_LEAD';
-  const isDelivery = user?.role === 'DELIVERY';
+  const isAdmin       = user?.role === 'ADMIN';
+  const isTeamLead    = user?.role === 'TEAM_LEAD';
+  const isDelivery    = user?.role === 'DELIVERY';
+  const isTechnician  = user?.role === 'TECHNICIAN';
   const { itemCount } = useCart();
   const elevated = useScrollTrigger({ disableHysteresis: true, threshold: 12 });
   const [mounted, setMounted] = useState(false);
@@ -224,7 +226,31 @@ export default function Navbar() {
               <ListItem disablePadding>
                 <ListItemButton component={Link} to="/admin" onClick={() => setMobileOpen(false)}>
                   <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
-                  <ListItemText primary={t('navbar:auth.dashboard')} />
+                  <ListItemText primary="Admin Panel" />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {isTeamLead && (
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/team-lead" onClick={() => setMobileOpen(false)}>
+                  <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Team Lead Portal" />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {isTechnician && (
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/technician" onClick={() => setMobileOpen(false)}>
+                  <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Technician Portal" />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {isDelivery && (
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/delivery" onClick={() => setMobileOpen(false)}>
+                  <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Delivery Portal" />
                 </ListItemButton>
               </ListItem>
             )}
@@ -336,7 +362,7 @@ export default function Navbar() {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', ml: 'auto' }}>
               <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1.5, alignItems: 'center' }}>
                 {isAuthenticated ? (
-                  <UserMenu user={user} isAdmin={isAdmin} isTeamLead={isTeamLead} isDelivery={isDelivery} />
+                  <UserMenu user={user} isAdmin={isAdmin} isTeamLead={isTeamLead} isDelivery={isDelivery} isTechnician={isTechnician} />
                 ) : (
                   <>
                     <Button
