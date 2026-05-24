@@ -31,8 +31,8 @@ public class DeliveryTaskService {
     private final DeliveryTaskRepository repo;
     private final DeliveryEventPublisher eventPublisher;
 
-    public List<DeliveryTaskDTO> getTodayTasksForTech(Long techId) {
-        return repo.findByAssignedToAndScheduledDateOrderByStopOrderAscIdAsc(techId, LocalDate.now())
+    public List<DeliveryTaskDTO> getTodayTasksForTech(Long techId, LocalDate date) {
+        return repo.findByAssignedToAndScheduledDateOrderByStopOrderAscIdAsc(techId, date)
                 .stream().map(DeliveryTaskDTO::new).toList();
     }
 

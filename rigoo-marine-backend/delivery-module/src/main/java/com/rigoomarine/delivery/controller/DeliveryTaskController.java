@@ -16,6 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,9 +41,10 @@ public class DeliveryTaskController {
 
     @GetMapping("/tasks/today")
     @PreAuthorize("hasAnyRole('DELIVERY')")
-    public List<DeliveryTaskDTO> getTodayTasks() {
+    public List<DeliveryTaskDTO> getTodayTasks(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Long techId = SecurityUtils.currentClientIdOrThrow();
-        return taskService.getTodayTasksForTech(techId);
+        return taskService.getTodayTasksForTech(techId, date != null ? date : LocalDate.now());
     }
 
     @GetMapping("/tasks/{id}")

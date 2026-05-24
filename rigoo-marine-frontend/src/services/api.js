@@ -1284,7 +1284,9 @@ export const driverApi = {
 // ============== DELIVERY APIs ==============
 export const deliveryApi = {
   getTodayTasks: async () => {
-    const res = await httpClient.get('/api/delivery/tasks/today');
+    const d = new Date();
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const res = await httpClient.get('/api/delivery/tasks/today', { params: { date } });
     return res.data;
   },
 
