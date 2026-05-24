@@ -71,12 +71,6 @@ export default function DeliveryLayout() {
             </ListItem>
           );
         })}
-        <ListItem disablePadding sx={{ mt: 1 }}>
-          <ListItemButton onClick={logout}>
-            <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItemButton>
-        </ListItem>
       </List>
     </Box>
   );
