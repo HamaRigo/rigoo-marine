@@ -105,8 +105,11 @@ export default function DeliveryLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Delivery'}
           </Typography>
-          <IconButton color="inherit" component={Link} to="/">
+          <IconButton color="inherit" component={Link} to="/" title="Go to Home">
             <HomeIcon />
+          </IconButton>
+          <IconButton color="inherit" title="Logout" onClick={() => logout()}>
+            <LogoutIcon />
           </IconButton>
         </Toolbar>
       </AppBar>

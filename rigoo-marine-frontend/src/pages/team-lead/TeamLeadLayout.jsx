@@ -136,8 +136,11 @@ export default function TeamLeadLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1, ml: 2 }}>
             {user?.name || 'Team Lead'}
           </Typography>
-          <IconButton component={Link} to="/" color="inherit">
+          <IconButton component={Link} to="/" color="inherit" title="Go to Home">
             <HomeIcon />
+          </IconButton>
+          <IconButton color="inherit" title="Logout" onClick={logout}>
+            <LogoutIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
