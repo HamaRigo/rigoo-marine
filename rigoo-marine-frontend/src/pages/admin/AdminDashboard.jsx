@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, CardActionArea, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup,
-  ToggleButton, Avatar, IconButton, Tooltip,
+  ToggleButton, Avatar, IconButton, Tooltip, Stack,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 import PendingApprovalsBanner from '../../components/admin/PendingApprovalsBanner';
+import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
 
 const managementModules = [
   {
@@ -106,6 +107,10 @@ export default function AdminDashboard() {
   const [createDocumentOpen, setCreateDocumentOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
+  const [quickDocOpen, setQuickDocOpen]     = useState(false);
+  const [quickDocType, setQuickDocType]     = useState('invoice');
+  const [quickDocPrefill, setQuickDocPrefill] = useState(null);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -160,6 +165,18 @@ export default function AdminDashboard() {
   };
 
   const handleOpenCreateDocument = () => setCreateDocumentOpen(true);
+
+  const handleQuickDocument = (type, order) => {
+    setQuickDocType(type);
+    setQuickDocPrefill({
+      notes: `Order #${order.id} — ${order.service || ''}`,
+      billToMode: order.clientId ? 'registered' : 'manual',
+      clientId: order.clientId || '',
+      billToName: order.customer || '',
+      items: order.service ? [{ description: order.service, quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setQuickDocOpen(true);
+  };
 
   const handleDocumentTypeChange = (event, newType) => {
     if (newType) setDocumentType(newType);
@@ -384,6 +401,7 @@ export default function AdminDashboard() {
                       <TableCell>Order #</TableCell>
                       <TableCell>Customer</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell padding="checkbox" />
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -396,6 +414,13 @@ export default function AdminDashboard() {
                             label={order.status.replace('_', ' ')}
                             color={getStatusColor(order.status)}
                             size="small"
+                          />
+                        </TableCell>
+                        <TableCell padding="checkbox">
+                          <QuickDocumentMenu
+                            label={`Order #${order.id}`}
+                            onCreateInvoice={() => handleQuickDocument('invoice', order)}
+                            onCreateQuotation={() => handleQuickDocument('quotation', order)}
                           />
                         </TableCell>
                       </TableRow>
@@ -489,6 +514,15 @@ export default function AdminDashboard() {
         initialData={editTarget}
         editId={editTarget?.id}
         onCreated={fetchDashboardData}
+      />
+
+      <CreateInvoiceDialog
+        open={quickDocOpen}
+        onClose={() => setQuickDocOpen(false)}
+        clients={clients}
+        type={quickDocType}
+        prefill={quickDocPrefill}
+        onCreated={() => { setQuickDocOpen(false); fetchDashboardData(); }}
       />
     </Box>
   );

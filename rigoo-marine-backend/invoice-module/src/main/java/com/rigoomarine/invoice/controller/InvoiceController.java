@@ -98,6 +98,24 @@ public class InvoiceController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Find invoice for a shop order, or create a PAID one on-demand.
+     * Accessible to any authenticated user (client downloads their own receipt).
+     */
+    @GetMapping("/by-shop-order/{shopOrderId}")
+    public ResponseEntity<InvoiceDTO> getOrCreateForShopOrder(
+            @PathVariable Long shopOrderId,
+            @RequestBody(required = false) CreateInvoiceRequest createRequest) {
+        return invoiceService.findByShopOrderId(shopOrderId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    if (createRequest == null) return ResponseEntity.notFound().build();
+                    createRequest.setShopOrderId(shopOrderId);
+                    if (createRequest.getStatus() == null) createRequest.setStatus("PAID");
+                    return ResponseEntity.ok(invoiceService.createInvoice(createRequest));
+                });
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> getInvoicePdf(
             @PathVariable Long id,

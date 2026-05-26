@@ -14,8 +14,10 @@ import InfoOutlinedIcon        from '@mui/icons-material/InfoOutlined';
 import WhatsAppIcon            from '@mui/icons-material/WhatsApp';
 import AttachFileIcon          from '@mui/icons-material/AttachFile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { teamRequestApi, technicianApi } from '../../services/api';
+import { teamRequestApi, technicianApi, adminApi } from '../../services/api';
 import { Reveal } from '../../components/common/Motion';
+import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
+import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
 const COLS = [
   { status: 'PENDING',    label: 'Pending',    color: '#E65100', bg: '#FFF3E0' },
@@ -30,7 +32,7 @@ const CATEGORY_EMOJIS = {
   cosmetic: '✨', renovation: '🔄', emergency: '🆘',
 };
 
-function RequestCard({ req, techById, onAction, onView }) {
+function RequestCard({ req, techById, onAction, onView, onDocument }) {
   const techName = req.assignedTo
     ? (techById[String(req.assignedTo)]?.name ?? `Tech #${req.assignedTo}`)
     : null;
@@ -50,6 +52,13 @@ function RequestCard({ req, techById, onAction, onView }) {
           </Stack>
           <Stack direction="row" spacing={0.5} alignItems="center">
             {req.whatsappOptIn && <WhatsAppIcon sx={{ color: '#25D366', fontSize: 14 }} />}
+            {onDocument && (
+              <QuickDocumentMenu
+                label={`TR #${req.id}`}
+                onCreateInvoice={() => onDocument('invoice', req)}
+                onCreateQuotation={() => onDocument('quotation', req)}
+              />
+            )}
             <Tooltip title="View details">
               <IconButton size="small" onClick={() => onView(req)}>
                 <InfoOutlinedIcon sx={{ fontSize: 14 }} />
@@ -126,7 +135,7 @@ function RequestCard({ req, techById, onAction, onView }) {
   );
 }
 
-function KanbanCol({ col, cards, techById, onAction, onView }) {
+function KanbanCol({ col, cards, techById, onAction, onView, onDocument }) {
   return (
     <Box sx={{ minWidth: 268, flex: '0 0 268px' }}>
       <Box sx={{
@@ -155,7 +164,7 @@ function KanbanCol({ col, cards, techById, onAction, onView }) {
             Empty
           </Typography>
         ) : cards.map(r => (
-          <RequestCard key={r.id} req={r} techById={techById} onAction={onAction} onView={onView} />
+          <RequestCard key={r.id} req={r} techById={techById} onAction={onAction} onView={onView} onDocument={onDocument} />
         ))}
       </Box>
     </Box>
@@ -171,6 +180,15 @@ export default function TeamLeadTeamRequests() {
   const [assignTarget, setAssignTarget] = useState(null);
   const [techId, setTechId]             = useState('');
   const [techs, setTechs]               = useState([]);
+
+  const [docOpen, setDocOpen]       = useState(false);
+  const [docType, setDocType]       = useState('invoice');
+  const [docPrefill, setDocPrefill] = useState(null);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['admin-clients'],
+    queryFn: adminApi.getAll,
+  });
 
   useEffect(() => {
     technicianApi.getAll().then(list => setTechs(list || [])).catch(() => {});
@@ -206,6 +224,17 @@ export default function TeamLeadTeamRequests() {
     }
   };
 
+  const handleDocument = (type, req) => {
+    setDocType(type);
+    setDocPrefill({
+      notes: `Team Request #${req.id}${req.category ? ` — ${req.category}` : ''}`,
+      billToPhone: req.contactPhone || '',
+      billToMode: 'manual',
+      items: req.category ? [{ description: req.category.charAt(0).toUpperCase() + req.category.slice(1) + ' service', quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setDocOpen(true);
+  };
+
   if (isLoading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}><CircularProgress /></Box>;
   }
@@ -235,9 +264,19 @@ export default function TeamLeadTeamRequests() {
             techById={techById}
             onAction={handleAction}
             onView={setDetailReq}
+            onDocument={handleDocument}
           />
         ))}
       </Box>
+
+      <CreateInvoiceDialog
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        type={docType}
+        clients={clients}
+        prefill={docPrefill}
+        onCreated={() => setDocOpen(false)}
+      />
 
       {/* Detail dialog */}
       <Dialog open={!!detailReq} onClose={() => setDetailReq(null)} maxWidth="sm" fullWidth>

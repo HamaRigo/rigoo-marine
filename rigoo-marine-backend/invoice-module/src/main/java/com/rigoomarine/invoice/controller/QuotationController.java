@@ -31,6 +31,17 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.createQuotation(request));
     }
 
+    /**
+     * Client-facing: request a quotation from cart items.
+     * Creates a DRAFT quotation visible to Admin/Team Lead for review.
+     * No role restriction — any authenticated user may call this.
+     */
+    @PostMapping("/cart-request")
+    public ResponseEntity<QuotationDTO> requestCartQuotation(@Valid @RequestBody CreateQuotationRequest request) {
+        if (request.getStatus() == null) request.setStatus("DRAFT");
+        return ResponseEntity.ok(quotationService.createQuotation(request));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<List<QuotationDTO>> getMyQuotations(@RequestParam Long clientId) {
         return ResponseEntity.ok(quotationService.getQuotationsByClientId(clientId));

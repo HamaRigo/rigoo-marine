@@ -37,7 +37,7 @@ const fmt = (n) =>
 
 const toDateStr = (val) => (val ? val.toString().split('T')[0] : '');
 
-export default function CreateInvoiceDialog({ open, onClose, clients = [], type = 'invoice', onCreated, initialData = null, editId = null }) {
+export default function CreateInvoiceDialog({ open, onClose, clients = [], type = 'invoice', onCreated, initialData = null, editId = null, prefill = null }) {
   const isInvoice = type === 'invoice';
   const isEdit = !!editId;
   const queryClient = useQueryClient();
@@ -90,14 +90,40 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
   const [loading, setLoading] = useState(false);
 
   // When the dialog opens, fetch full data (includes items) if editing,
-  // or reset to a blank form if creating.
+  // populate from prefill when quick-creating from a card, or reset to blank.
   useEffect(() => {
     if (!open) return;
     if (!editId) {
-      setForm(defaultForm());
-      setItems(defaultItems());
-      setBillToMode('registered');
-      setManualBillTo({ name: '', email: '', phone: '', address: '', company: '' });
+      if (prefill) {
+        setForm({
+          workOrderId: prefill.workOrderId || '',
+          clientId: prefill.clientId || '',
+          status: isInvoice ? 'PENDING' : 'DRAFT',
+          issueDate: today,
+          dueDate: isInvoice ? due30 : due14,
+          notes: prefill.notes || '',
+          terms: '',
+          termsArabic: '',
+          logoUrl: loadCompanySettings().companyLogo || '/brand/logo.PNG',
+        });
+        setItems(prefill.items?.length
+          ? prefill.items.map((it) => ({ description: it.description || '', quantity: it.quantity ?? 1, unitPrice: it.unitPrice ?? '', taxRate: it.taxRate ?? 5 }))
+          : [emptyItem()]);
+        const mode = prefill.billToMode || (prefill.clientId ? 'registered' : 'manual');
+        setBillToMode(mode);
+        setManualBillTo({
+          name: prefill.billToName || '',
+          email: prefill.billToEmail || '',
+          phone: prefill.billToPhone || '',
+          address: prefill.billToAddress || '',
+          company: prefill.billToCompany || '',
+        });
+      } else {
+        setForm(defaultForm());
+        setItems(defaultItems());
+        setBillToMode('registered');
+        setManualBillTo({ name: '', email: '', phone: '', address: '', company: '' });
+      }
       return;
     }
     setLoading(true);
@@ -134,7 +160,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
       .catch(() => toast.error('Failed to load data for editing'))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editId]);
+  }, [open, editId, prefill]);
 
   const selectedClient = useMemo(
     () => clients.find((c) => String(c.id) === String(form.clientId)) || null,

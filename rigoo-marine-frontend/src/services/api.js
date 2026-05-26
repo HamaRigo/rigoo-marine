@@ -533,6 +533,12 @@ export const invoiceApi = {
   deleteInvoice: async (id) => {
     await httpClient.delete(`/api/invoices/${id}`);
   },
+
+  getByShopOrderId: async (shopOrderId, createData = null) => {
+    const config = createData ? { data: createData } : {};
+    const response = await httpClient.get(`/api/invoices/by-shop-order/${shopOrderId}`, config);
+    return response.data;
+  },
 };
 
 // ============== DASHBOARD APIs ==============
@@ -734,6 +740,11 @@ export const adminApi = {
 
   deleteQuotation: async (id) => {
     await httpClient.delete(`/api/quotations/${id}`);
+  },
+
+  requestCartQuotation: async (payload) => {
+    const response = await httpClient.post('/api/quotations/cart-request', payload);
+    return response.data;
   },
 
   // Media Management

@@ -10,6 +10,7 @@ import { adminApi, workOrderApi, technicianApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Reveal } from '../../components/common/Motion';
 import WorkOrderKanban from '../../components/common/WorkOrderKanban';
+import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
 export default function TeamLeadOrders() {
   const qc        = useQueryClient();
@@ -19,6 +20,10 @@ export default function TeamLeadOrders() {
   const [rejectReason, setRejectReason] = useState('');
   const [assignTarget, setAssignTarget] = useState(null);
   const [assignTechId, setAssignTechId] = useState('');
+
+  const [docOpen, setDocOpen]     = useState(false);
+  const [docType, setDocType]     = useState('invoice');
+  const [docPrefill, setDocPrefill] = useState(null);
 
   /* ── Data ── */
   const { data: pageData, isLoading, isError } = useQuery({
@@ -30,6 +35,11 @@ export default function TeamLeadOrders() {
   const { data: technicians = [] } = useQuery({
     queryKey: ['staff-technicians'],
     queryFn: technicianApi.getAll,
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['admin-clients'],
+    queryFn: adminApi.getAll,
   });
 
   /* ── Optimistic cache patch ── */
@@ -84,6 +94,17 @@ export default function TeamLeadOrders() {
     if (action === 'assign')  { setAssignTechId(order.assignedTechnicianId?.toString() || ''); setAssignTarget(order); }
   };
 
+  const handleDocument = (type, order) => {
+    setDocType(type);
+    setDocPrefill({
+      workOrderId: order.id,
+      clientId: order.clientId || '',
+      notes: `Work Order #${order.id}${order.serviceType ? ` — ${order.serviceType.replace(/_/g, ' ')}` : ''}`,
+      items: order.serviceType ? [{ description: order.serviceType.replace(/_/g, ' '), quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setDocOpen(true);
+  };
+
   /* ── Render ── */
   if (isLoading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}><CircularProgress /></Box>;
@@ -102,7 +123,17 @@ export default function TeamLeadOrders() {
         technicians={technicians}
         onStatusChange={handleStatusChange}
         onAction={handleAction}
+        onDocument={handleDocument}
         detailBasePath="/team-lead/orders"
+      />
+
+      <CreateInvoiceDialog
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        type={docType}
+        clients={clients}
+        prefill={docPrefill}
+        onCreated={() => setDocOpen(false)}
       />
 
       {/* Reject dialog */}

@@ -14,8 +14,11 @@ import {
   Divider,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { shopApi } from '../../../services/api';
+import DownloadIcon from '@mui/icons-material/Download';
+import { shopApi, invoiceApi } from '../../../services/api';
 import { formatPrice } from '../../../utils/format';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 
 export default function CheckoutSuccess() {
@@ -38,11 +41,49 @@ export default function CheckoutSuccess() {
   });
 
   const isPaid = order?.status === 'PAID';
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   // When the order flips to PAID, refresh the cart (server has cleared it).
   if (isPaid) {
     queryClient.invalidateQueries({ queryKey: ['shop', 'cart'] });
   }
+
+  // Auto-fetch/create invoice once order is confirmed PAID.
+  const { data: invoice } = useQuery({
+    queryKey: ['shop', 'invoice', orderId],
+    queryFn: () => invoiceApi.getByShopOrderId(orderId, {
+      status: 'PAID',
+      billToName: order?.buyerName || '',
+      billToEmail: order?.buyerEmail || '',
+      notes: `Shop order ${order?.orderNumber}`,
+      items: (order?.items || []).map((it) => ({
+        description: (it.nameEn || it.sku || 'Product') + (it.sku ? ` (${it.sku})` : ''),
+        quantity: it.quantity,
+        unitPrice: Number(it.priceQar) || 0,
+        taxRate: 5,
+      })),
+    }),
+    enabled: isPaid && !!orderId,
+    retry: false,
+  });
+
+  const handleDownloadInvoice = async () => {
+    if (!invoice) return;
+    setDownloadingInvoice(true);
+    try {
+      const blob = await invoiceApi.downloadPdf(invoice.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice.invoiceNumber || invoice.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
@@ -83,10 +124,20 @@ export default function CheckoutSuccess() {
                     </>
                   )}
                 </Box>
-                <Stack direction="row" spacing={2} justifyContent="center">
+                <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
                   <Button variant="contained" onClick={() => navigate('/dashboard/orders')}>
                     {t('checkout.viewOrder')}
                   </Button>
+                  {invoice && (
+                    <Button
+                      variant="outlined"
+                      startIcon={downloadingInvoice ? <CircularProgress size={16} /> : <DownloadIcon />}
+                      disabled={downloadingInvoice}
+                      onClick={handleDownloadInvoice}
+                    >
+                      Download Invoice
+                    </Button>
+                  )}
                   <Button onClick={() => navigate('/shop')}>
                     {t('checkout.backToShop')}
                   </Button>

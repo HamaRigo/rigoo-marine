@@ -34,6 +34,7 @@ import PlayArrowRoundedIcon      from '@mui/icons-material/PlayArrowRounded';
 import PersonAddRoundedIcon      from '@mui/icons-material/PersonAddRounded';
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
 import ReplayRoundedIcon         from '@mui/icons-material/ReplayRounded';
+import QuickDocumentMenu         from '../admin/QuickDocumentMenu';
 
 export const KANBAN_COLS = [
   { status: 'PENDING_APPROVAL', label: 'Awaiting Approval', color: '#757575', hex: '#757575' },
@@ -82,7 +83,7 @@ function FloatingCard({ order }) {
 
 // ─── Single draggable card ────────────────────────────────────────────────────
 
-function DraggableCard({ order, techName, onStatusChange, onAction, detailBasePath }) {
+function DraggableCard({ order, techName, onStatusChange, onAction, onDocument, detailBasePath }) {
   const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: String(order.id),
@@ -117,6 +118,13 @@ function DraggableCard({ order, techName, onStatusChange, onAction, detailBasePa
             {order.priority === 'HIGH' && (
               <Chip label="HIGH" size="small" color="error"
                 sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
+            )}
+            {onDocument && (
+              <QuickDocumentMenu
+                label={`WO #${order.id}`}
+                onCreateInvoice={() => onDocument('invoice', order)}
+                onCreateQuotation={() => onDocument('quotation', order)}
+              />
             )}
             <Tooltip title="Open detail">
               <IconButton size="small"
@@ -213,7 +221,7 @@ function DraggableCard({ order, techName, onStatusChange, onAction, detailBasePa
 
 // ─── Droppable column ─────────────────────────────────────────────────────────
 
-function DroppableCol({ col, cards, techById, onStatusChange, onAction, detailBasePath }) {
+function DroppableCol({ col, cards, techById, onStatusChange, onAction, onDocument, detailBasePath }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.status });
 
   const bg = isOver ? alpha(col.color, 0.14) : COL_BG[col.status] ?? '#FAFAFA';
@@ -271,6 +279,7 @@ function DroppableCol({ col, cards, techById, onStatusChange, onAction, detailBa
               techName={techById[String(o.assignedTechnicianId)]?.name}
               onStatusChange={onStatusChange}
               onAction={onAction}
+              onDocument={onDocument}
               detailBasePath={detailBasePath}
             />
           ))
@@ -299,6 +308,7 @@ export default function WorkOrderKanban({
   technicians = [],
   onStatusChange,
   onAction,
+  onDocument,
   detailBasePath = '/team-lead/orders',
 }) {
   const [activeOrder, setActiveOrder]   = useState(null);
@@ -370,6 +380,7 @@ export default function WorkOrderKanban({
               techById={techById}
               onStatusChange={onStatusChange}
               onAction={onAction}
+              onDocument={onDocument}
               detailBasePath={detailBasePath}
             />
           ))}

@@ -57,6 +57,7 @@ public class InvoiceService {
         Invoice invoice = Invoice.builder()
             .invoiceNumber(generateInvoiceNumber())
             .workOrderId(request.getWorkOrderId())
+            .shopOrderId(request.getShopOrderId())
             .clientId(request.getClientId())
             .billToName(request.getBillToName())
             .billToEmail(request.getBillToEmail())
@@ -176,6 +177,11 @@ public class InvoiceService {
             .orElseThrow(() -> new RuntimeException("Invoice not found"));
     }
 
+    @Transactional(readOnly = true)
+    public java.util.Optional<InvoiceDTO> findByShopOrderId(Long shopOrderId) {
+        return invoiceRepository.findByShopOrderId(shopOrderId).map(this::toDTO);
+    }
+
     public InvoiceDTO updateInvoice(Long id, CreateInvoiceRequest request) {
         Invoice invoice = invoiceRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Invoice not found"));
@@ -281,6 +287,7 @@ public class InvoiceService {
             .id(invoice.getId())
             .invoiceNumber(invoice.getInvoiceNumber())
             .workOrderId(invoice.getWorkOrderId())
+            .shopOrderId(invoice.getShopOrderId())
             .clientId(invoice.getClientId())
             .billToName(invoice.getBillToName())
             .billToEmail(invoice.getBillToEmail())

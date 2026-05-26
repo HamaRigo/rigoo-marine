@@ -19,17 +19,21 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../../hooks/useCart';
-import { shopApi } from '../../services/api';
+import { shopApi, adminApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { formatPrice } from '../../utils/format';
+import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function CartDrawer({ open, onClose }) {
   const { t, i18n } = useTranslation('shop');
   const navigate = useNavigate();
   const { error: toastError } = useToast();
+  const { user } = useAuth();
   const isAr = i18n.language === 'ar';
   const { cart, isLoading, updateItem, removeItem } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
+  const [requestingQuote, setRequestingQuote] = useState(false);
   const [conflicts, setConflicts] = useState(null);
 
   const items = cart?.items ?? [];
@@ -54,6 +58,31 @@ export default function CartDrawer({ open, onClose }) {
       }
     } finally {
       setCheckingOut(false);
+    }
+  };
+
+  const handleRequestQuote = async () => {
+    setRequestingQuote(true);
+    try {
+      const payload = {
+        status: 'DRAFT',
+        billToEmail: user?.email || '',
+        billToName: user?.name || '',
+        notes: 'Quotation requested from cart',
+        items: items.map((item) => ({
+          description: (item.nameEn || item.sku || 'Product') + (item.sku ? ` (${item.sku})` : ''),
+          quantity: item.quantity,
+          unitPrice: Number(item.priceQar) || 0,
+          taxRate: 5,
+        })),
+      };
+      const result = await adminApi.requestCartQuotation(payload);
+      toast.success(`Quotation ${result.quotationNumber} submitted — our team will review it shortly.`);
+      onClose();
+    } catch {
+      toast.error('Failed to submit quotation request. Please try again.');
+    } finally {
+      setRequestingQuote(false);
     }
   };
 
@@ -190,6 +219,17 @@ export default function CartDrawer({ open, onClose }) {
               startIcon={checkingOut && <CircularProgress size={16} color="inherit" />}
             >
               {t('cta.checkout')}
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              disabled={requestingQuote}
+              onClick={handleRequestQuote}
+              startIcon={requestingQuote && <CircularProgress size={16} color="inherit" />}
+              sx={{ mt: 1 }}
+            >
+              Request a Quote
             </Button>
           </Box>
         )}

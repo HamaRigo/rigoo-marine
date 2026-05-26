@@ -13,6 +13,7 @@ public class InvoiceDTO {
     private Long id;
     private String invoiceNumber;
     private Long workOrderId;
+    private Long shopOrderId;
     private Long clientId;
     private String billToName;
     private String billToEmail;

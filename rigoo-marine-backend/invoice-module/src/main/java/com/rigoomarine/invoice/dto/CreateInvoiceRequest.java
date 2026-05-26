@@ -13,6 +13,8 @@ public class CreateInvoiceRequest {
 
     private Long workOrderId;
 
+    private Long shopOrderId;
+
     private Long clientId;
 
     // Free-text bill-to for unregistered clients. At least one of clientId or

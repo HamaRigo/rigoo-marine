@@ -16,6 +16,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
     List<Invoice> findByClientId(Long clientId);
     List<Invoice> findByWorkOrderId(Long workOrderId);
+    Optional<Invoice> findByShopOrderId(Long shopOrderId);
     List<Invoice> findByStatus(InvoiceStatus status);
 
     // Invoices that are still PENDING but past their due date

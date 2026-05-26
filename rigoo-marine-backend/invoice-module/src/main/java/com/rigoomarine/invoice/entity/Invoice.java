@@ -24,6 +24,9 @@ public class Invoice {
 
     private Long workOrderId;
 
+    @Column(name = "shop_order_id")
+    private Long shopOrderId;
+
     private Long clientId;
 
     @Column(name = "bill_to_name")

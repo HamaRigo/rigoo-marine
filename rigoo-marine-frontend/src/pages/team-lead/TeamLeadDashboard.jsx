@@ -11,6 +11,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { adminApi, teamRequestApi } from '../../services/api';
+import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
+import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
 const STATUS_COLORS = {
   PENDING_APPROVAL: 'default',
@@ -47,8 +49,13 @@ export default function TeamLeadDashboard() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [teamReqs, setTeamReqs] = useState([]);
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [docOpen, setDocOpen]       = useState(false);
+  const [docType, setDocType]       = useState('invoice');
+  const [docPrefill, setDocPrefill] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -67,10 +74,33 @@ export default function TeamLeadDashboard() {
         setTeamReqs(reqsResult.value?.content || []);
       }
 
+      adminApi.getAll().then(list => setClients(list || [])).catch(() => {});
       setLoading(false);
     };
     load();
   }, []);
+
+  const handleDocumentOrder = (type, order) => {
+    setDocType(type);
+    setDocPrefill({
+      workOrderId: order.id,
+      clientId: order.clientId || '',
+      notes: `Work Order #${order.id}${order.serviceType ? ` — ${order.serviceType.replace(/_/g, ' ')}` : ''}`,
+      items: order.serviceType ? [{ description: order.serviceType.replace(/_/g, ' '), quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setDocOpen(true);
+  };
+
+  const handleDocumentRequest = (type, req) => {
+    setDocType(type);
+    setDocPrefill({
+      notes: `Team Request #${req.id}${req.category ? ` — ${req.category}` : ''}`,
+      billToPhone: req.contactPhone || '',
+      billToMode: 'manual',
+      items: req.category ? [{ description: req.category.charAt(0).toUpperCase() + req.category.slice(1) + ' service', quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setDocOpen(true);
+  };
 
   const today = new Date().toDateString();
   const active    = orders.filter(o => ['PENDING', 'IN_PROGRESS', 'WAITING_PARTS'].includes(o.status));
@@ -132,7 +162,14 @@ export default function TeamLeadDashboard() {
                           secondaryTypographyProps={{ variant: 'caption' }}
                         />
                         <ListItemSecondaryAction>
-                          <Chip label={o.status} color={STATUS_COLORS[o.status] || 'default'} size="small" />
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <QuickDocumentMenu
+                              label={`WO #${o.id}`}
+                              onCreateInvoice={(e) => { handleDocumentOrder('invoice', o); }}
+                              onCreateQuotation={() => handleDocumentOrder('quotation', o)}
+                            />
+                            <Chip label={o.status} color={STATUS_COLORS[o.status] || 'default'} size="small" />
+                          </Stack>
                         </ListItemSecondaryAction>
                       </ListItem>
                     </Box>
@@ -170,9 +207,16 @@ export default function TeamLeadDashboard() {
                           secondaryTypographyProps={{ variant: 'caption' }}
                         />
                         <ListItemSecondaryAction>
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(r.createdAt).toLocaleDateString()}
-                          </Typography>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <QuickDocumentMenu
+                              label={`TR #${r.id}`}
+                              onCreateInvoice={() => handleDocumentRequest('invoice', r)}
+                              onCreateQuotation={() => handleDocumentRequest('quotation', r)}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(r.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </Stack>
                         </ListItemSecondaryAction>
                       </ListItem>
                     </Box>
@@ -183,6 +227,15 @@ export default function TeamLeadDashboard() {
           </Reveal>
         </Grid>
       </Grid>
+
+      <CreateInvoiceDialog
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        type={docType}
+        clients={clients}
+        prefill={docPrefill}
+        onCreated={() => setDocOpen(false)}
+      />
     </Box>
   );
 }

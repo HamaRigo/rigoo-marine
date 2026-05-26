@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { adminApi, workOrderApi, technicianApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import WorkOrderKanban from '../../components/common/WorkOrderKanban';
+import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
 export default function OrderManagement() {
   const { t }     = useTranslation('admin');
@@ -21,6 +22,10 @@ export default function OrderManagement() {
   const [assignTarget, setAssignTarget] = useState(null);
   const [assignTechId, setAssignTechId] = useState('');
 
+  const [docOpen, setDocOpen]       = useState(false);
+  const [docType, setDocType]       = useState('invoice');
+  const [docPrefill, setDocPrefill] = useState(null);
+
   /* ── Data ── */
   const { data: pageData, isLoading, isError } = useQuery({
     queryKey: ['admin-orders'],
@@ -31,6 +36,11 @@ export default function OrderManagement() {
   const { data: technicians = [] } = useQuery({
     queryKey: ['staff-technicians'],
     queryFn: technicianApi.getAll,
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['admin-clients'],
+    queryFn: adminApi.getAll,
   });
 
   /* ── Optimistic cache patch ── */
@@ -85,6 +95,17 @@ export default function OrderManagement() {
     if (action === 'assign')  { setAssignTechId(order.assignedTechnicianId?.toString() || ''); setAssignTarget(order); }
   };
 
+  const handleDocument = (type, order) => {
+    setDocType(type);
+    setDocPrefill({
+      workOrderId: order.id,
+      clientId: order.clientId || '',
+      notes: `Work Order #${order.id}${order.serviceType ? ` — ${order.serviceType.replace(/_/g, ' ')}` : ''}`,
+      items: order.serviceType ? [{ description: order.serviceType.replace(/_/g, ' '), quantity: 1, unitPrice: '', taxRate: 5 }] : [],
+    });
+    setDocOpen(true);
+  };
+
   /* ── Render ── */
   if (isLoading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}><CircularProgress /></Box>;
@@ -103,7 +124,17 @@ export default function OrderManagement() {
         technicians={technicians}
         onStatusChange={handleStatusChange}
         onAction={handleAction}
+        onDocument={handleDocument}
         detailBasePath="/team-lead/orders"
+      />
+
+      <CreateInvoiceDialog
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        type={docType}
+        clients={clients}
+        prefill={docPrefill}
+        onCreated={() => setDocOpen(false)}
       />
 
       {/* Reject dialog */}
