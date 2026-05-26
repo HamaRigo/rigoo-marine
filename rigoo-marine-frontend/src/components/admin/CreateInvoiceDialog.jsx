@@ -403,26 +403,6 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
             </Box>
           </Box>
 
-          <Divider sx={{ my: 2 }} />
-
-          {/* ── Notes & Terms ── */}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }} >
-              <TextField label="Notes" fullWidth multiline rows={3}
-                value={form.notes} onChange={set('notes')}
-                placeholder="Payment instructions, references…" size="small" />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }} >
-              <TextField label="Terms & Conditions (English)" fullWidth multiline rows={3}
-                value={form.terms} onChange={set('terms')}
-                placeholder="Standard Qatari terms…" size="small" />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }} >
-              <TextField label="الشروط والأحكام" fullWidth multiline rows={3}
-                value={form.termsArabic} onChange={set('termsArabic')}
-                dir="rtl" size="small" />
-            </Grid>
-          </Grid>
         </Paper>
       </DialogContent>
 

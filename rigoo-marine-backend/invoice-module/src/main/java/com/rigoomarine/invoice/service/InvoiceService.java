@@ -288,13 +288,26 @@ public class InvoiceService {
             .orElseThrow(() -> new RuntimeException("Invoice not found"));
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 40, 40, 40, 40);
+            Document document = new Document(PageSize.A4, 40, 40, 40, 82);
             PdfWriter pdfWriter = PdfWriter.getInstance(document, byteArrayOutputStream);
-            // Watermark image + page numbers applied to every page before first content
+
+            // Pre-load Arabic font so the page-event footer can render it on every page
+            BaseFont arabicBf = null;
+            try {
+                java.io.InputStream afs = BrandingAssetLoader.class.getClassLoader()
+                        .getResourceAsStream("branding/ArialUnicode.ttf");
+                if (afs != null) {
+                    byte[] afb = afs.readAllBytes();
+                    arabicBf = BaseFont.createFont("ArialUnicode.ttf",
+                            BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, afb, null);
+                }
+            } catch (Exception ignored) {}
+
+            // Watermark + fixed bilingual footer on every page
             try {
                 BaseFont wmarkBf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
                 Image wmarkImg = BrandingAssetLoader.loadWatermark();
-                pdfWriter.setPageEvent(new InvoicePageEvent(wmarkImg, wmarkBf));
+                pdfWriter.setPageEvent(new InvoicePageEvent(wmarkImg, wmarkBf, arabicBf, invoice.getNotes()));
             } catch (Exception ignored) {}
             document.open();
 
@@ -315,20 +328,9 @@ public class InvoiceService {
             Font totalBoldFont    = new Font(Font.HELVETICA, 10, Font.BOLD, primaryBlue);
             Font footerFont       = new Font(Font.HELVETICA,  7, Font.NORMAL);
 
-            // ── Arabic font (Arial Unicode, bundled in branding/) ────────────────
-            Font arabicFont = smallFont; // fallback
-            Font arabicBoldFont = boldFont;
-            try {
-                java.io.InputStream fontStream = BrandingAssetLoader.class.getClassLoader()
-                        .getResourceAsStream("branding/ArialUnicode.ttf");
-                if (fontStream != null) {
-                    byte[] fontBytes = fontStream.readAllBytes();
-                    BaseFont bf = BaseFont.createFont("ArialUnicode.ttf",
-                            BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, fontBytes, null);
-                    arabicFont     = new Font(bf, 8, Font.NORMAL);
-                    arabicBoldFont = new Font(bf, 8, Font.BOLD);
-                }
-            } catch (Exception ignored) {}
+            // ── Arabic font (reuse the BaseFont pre-loaded for the page event) ────
+            Font arabicFont     = arabicBf != null ? new Font(arabicBf, 8, Font.NORMAL) : smallFont;
+            Font arabicBoldFont = arabicBf != null ? new Font(arabicBf, 8, Font.BOLD)   : boldFont;
 
             DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance();
@@ -581,45 +583,6 @@ public class InvoiceService {
             sigTable.addCell(sc);
             document.add(sigTable);
 
-            // ── 7. BILINGUAL FOOTER (compliance note always shown + optional user notes) ──
-            Font noteFont   = new Font(Font.HELVETICA, 7, Font.ITALIC, new Color(120, 100, 40));
-            Font noteArabic = new Font(arabicFont.getBaseFont(), 7, Font.NORMAL, new Color(120, 100, 40));
-
-            PdfPTable footerTable = new PdfPTable(2);
-            footerTable.setWidthPercentage(100);
-            footerTable.setWidths(new float[]{50, 50});
-            footerTable.setSpacingBefore(4);
-
-            PdfPCell engCell = new PdfPCell();
-            engCell.setBorder(Rectangle.TOP);
-            engCell.setBorderWidthTop(0.5f);
-            engCell.setBorderColorTop(new Color(180, 148, 75));
-            engCell.setPadding(5);
-            engCell.setPaddingLeft(4);
-            engCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            Paragraph engPara = new Paragraph(
-                "This invoice is issued in two languages (Arabic & English) per Qatari customs and commercial requirements.",
-                noteFont);
-            engPara.setAlignment(Element.ALIGN_LEFT);
-            engCell.addElement(engPara);
-            footerTable.addCell(engCell);
-
-            PdfPCell arCell = new PdfPCell();
-            arCell.setBorder(Rectangle.TOP);
-            arCell.setBorderWidthTop(0.5f);
-            arCell.setBorderColorTop(new Color(180, 148, 75));
-            arCell.setPadding(5);
-            arCell.setPaddingRight(4);
-            arCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-            arCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            Paragraph arPara = new Paragraph(
-                "يُصدر هذه الفاتورة باللغتين العربية والإنجليزية وفقاً للأعراف والمتطلبات التجارية القطرية.",
-                noteArabic);
-            arPara.setAlignment(Element.ALIGN_RIGHT);
-            arCell.addElement(arPara);
-            footerTable.addCell(arCell);
-            document.add(footerTable);
-
             document.close();
             return byteArrayOutputStream.toByteArray();
         } catch (Exception e) {
@@ -672,11 +635,24 @@ public class InvoiceService {
     private static class InvoicePageEvent extends PdfPageEventHelper {
         private final Image watermarkImage;
         private final BaseFont bf;
+        private final BaseFont arabicBf;
+        private final String notes;
+        private final float wmarkOrigW;
+        private final float wmarkOrigH;
         private PdfTemplate pageCountTemplate;
 
-        InvoicePageEvent(Image watermarkImage, BaseFont bf) {
+        private static final String COMPLIANCE_EN =
+            "This invoice is issued in two languages (Arabic & English) per Qatari customs and commercial requirements.";
+        private static final String COMPLIANCE_AR =
+            "يُصدر هذه الفاتورة باللغتين العربية والإنجليزية وفقاً للأعراف والمتطلبات التجارية القطرية.";
+
+        InvoicePageEvent(Image watermarkImage, BaseFont bf, BaseFont arabicBf, String notes) {
             this.watermarkImage = watermarkImage;
             this.bf = bf;
+            this.arabicBf = arabicBf;
+            this.notes = notes;
+            this.wmarkOrigW = watermarkImage != null ? watermarkImage.getWidth()  : 0f;
+            this.wmarkOrigH = watermarkImage != null ? watermarkImage.getHeight() : 0f;
         }
 
         @Override
@@ -687,47 +663,103 @@ public class InvoiceService {
         @Override
         public void onEndPage(PdfWriter writer, Document doc) {
             Rectangle ps = doc.getPageSize();
+            PdfContentByte cb = writer.getDirectContent();
+            float leftX  = ps.getLeft()  + 40f;
+            float rightX = ps.getRight() - 40f;
+            float midX   = (leftX + rightX) / 2f;
+            Color gold      = new Color(180, 148, 75);
+            Color textColor = new Color(120, 100, 40);
+            boolean hasNotes = notes != null && !notes.isBlank();
 
-            // Logo image watermark centred behind content
-            if (watermarkImage != null) {
+            // ── Watermark over content ────────────────────────────────────────────
+            if (watermarkImage != null && wmarkOrigW > 0 && wmarkOrigH > 0) {
                 try {
-                    PdfContentByte cbUnder = writer.getDirectContentUnder();
-                    cbUnder.saveState();
+                    cb.saveState();
                     PdfGState gs = new PdfGState();
-                    gs.setFillOpacity(0.09f);
+                    gs.setFillOpacity(0.10f);
+                    gs.setStrokeOpacity(0.10f);
                     gs.setBlendMode(PdfGState.BM_NORMAL);
-                    cbUnder.setGState(gs);
-                    // Scale image to fit ~60% of page width while keeping aspect ratio
+                    cb.setGState(gs);
                     float maxW = ps.getWidth()  * 0.60f;
                     float maxH = ps.getHeight() * 0.60f;
-                    float scale = Math.min(maxW / watermarkImage.getWidth(),
-                                           maxH / watermarkImage.getHeight());
-                    float w = watermarkImage.getWidth()  * scale;
-                    float h = watermarkImage.getHeight() * scale;
-                    float x = (ps.getWidth()  - w) / 2f;
-                    float y = (ps.getHeight() - h) / 2f;
-                    watermarkImage.setAbsolutePosition(x, y);
+                    float scale = Math.min(maxW / wmarkOrigW, maxH / wmarkOrigH);
+                    float w = wmarkOrigW * scale;
+                    float h = wmarkOrigH * scale;
+                    watermarkImage.setAbsolutePosition((ps.getWidth() - w) / 2f, (ps.getHeight() - h) / 2f);
                     watermarkImage.scaleAbsolute(w, h);
-                    cbUnder.addImage(watermarkImage);
-                    cbUnder.restoreState();
+                    cb.addImage(watermarkImage);
+                    cb.restoreState();
                 } catch (Exception ignored) {}
             }
 
-            // "Page X / Y" at bottom-right
-            PdfContentByte cbOver = writer.getDirectContent();
+            // ── Fixed footer ──────────────────────────────────────────────────────
+            // Gold top border
+            cb.saveState();
+            cb.setColorStroke(gold);
+            cb.setLineWidth(0.5f);
+            cb.moveTo(leftX,  ps.getBottom() + 74f);
+            cb.lineTo(rightX, ps.getBottom() + 74f);
+            cb.stroke();
+            cb.restoreState();
+
+            float complianceTop;
+            float complianceBottom = ps.getBottom() + 24f;
+
+            if (hasNotes) {
+                String notesLine = notes.length() > 130 ? notes.substring(0, 127) + "..." : notes;
+                cb.saveState();
+                cb.setColorFill(textColor);
+                cb.beginText();
+                cb.setFontAndSize(bf, 7);
+                cb.setTextMatrix(leftX, ps.getBottom() + 62f);
+                cb.showText("Notes:  " + notesLine);
+                cb.endText();
+                cb.restoreState();
+
+                cb.saveState();
+                cb.setColorStroke(gold);
+                cb.setLineWidth(0.3f);
+                cb.moveTo(leftX,  ps.getBottom() + 58f);
+                cb.lineTo(rightX, ps.getBottom() + 58f);
+                cb.stroke();
+                cb.restoreState();
+
+                complianceTop = ps.getBottom() + 56f;
+            } else {
+                complianceTop = ps.getBottom() + 72f;
+            }
+
+            // Bilingual compliance text — EN left, AR right
+            try {
+                ColumnText ctEn = new ColumnText(cb);
+                ctEn.setSimpleColumn(leftX, complianceBottom, midX - 4f, complianceTop);
+                ctEn.addText(new Phrase(COMPLIANCE_EN, new Font(bf, 7, Font.ITALIC, textColor)));
+                ctEn.go();
+            } catch (Exception ignored) {}
+
+            try {
+                BaseFont arBf = arabicBf != null ? arabicBf : bf;
+                ColumnText ctAr = new ColumnText(cb);
+                ctAr.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+                ctAr.setSimpleColumn(midX + 4f, complianceBottom, rightX, complianceTop);
+                ctAr.addText(new Phrase(COMPLIANCE_AR, new Font(arBf, 7, Font.NORMAL, textColor)));
+                ctAr.go();
+            } catch (Exception ignored) {}
+
+            // ── Page number ───────────────────────────────────────────────────────
             String pageLabel = "Page " + writer.getPageNumber() + " / ";
             float labelWidth = bf.getWidthPoint(pageLabel, 7f);
-            float numX = ps.getRight() - 40f;
-            float numY = ps.getBottom() + 18f;
-            cbOver.saveState();
-            cbOver.beginText();
-            cbOver.setFontAndSize(bf, 7);
-            cbOver.setColorFill(new Color(120, 120, 120));
-            cbOver.setTextMatrix(numX - labelWidth, numY);
-            cbOver.showText(pageLabel);
-            cbOver.endText();
-            cbOver.addTemplate(pageCountTemplate, numX, numY);
-            cbOver.restoreState();
+            float numX = rightX;
+            float numY = ps.getBottom() + 10f;
+            cb.saveState();
+            cb.beginText();
+            cb.setFontAndSize(bf, 7);
+            cb.setColorFill(new Color(120, 120, 120));
+            cb.setTextMatrix(numX - labelWidth, numY);
+            cb.showText(pageLabel);
+            cb.endText();
+            cb.addTemplate(pageCountTemplate, numX, numY);
+            cb.restoreState();
         }
 
         @Override

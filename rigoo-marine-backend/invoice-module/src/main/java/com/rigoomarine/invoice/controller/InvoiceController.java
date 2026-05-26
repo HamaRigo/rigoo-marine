@@ -42,7 +42,7 @@ public class InvoiceController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "issueDate,desc") String sort
+            @RequestParam(defaultValue = "createdAt,desc") String sort
     ) {
         int safeSize = Math.min(Math.max(size, 1), 100);
         String[] parts = sort.split(",", 2);

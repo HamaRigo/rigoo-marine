@@ -108,7 +108,7 @@ export default function QuotationManagement() {
         fetchPage={adminApi.searchQuotations}
         columns={columns}
         rowKey={(r) => r.id}
-        defaultSort="issueDate,desc"
+        defaultSort="createdAt,desc"
         filters={[
           { id: 'status', label: t('filters.status'),
             options: STATUSES.map((s) => ({ value: s, label: s })) },
