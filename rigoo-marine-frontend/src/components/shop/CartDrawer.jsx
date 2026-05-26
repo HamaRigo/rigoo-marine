@@ -16,7 +16,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import Tooltip from '@mui/material/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../../hooks/useCart';
-import { shopApi, adminApi } from '../../services/api';
+import { shopApi, adminApi, authApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../context/AuthContext';
@@ -328,7 +328,12 @@ export default function CartDrawer({ open, onClose }) {
   const handleRequestQuote = async () => {
     setRequestingQuote(true);
     try {
-      // Detect items where requested qty exceeds available stock
+      // Fetch full profile to get phone, address, company — fields not always in JWT
+      // /auth/profile returns { user: ClientDTO }
+      const profileResp = await authApi.getProfile().catch(() => null);
+      const fullUser = profileResp?.user ?? profileResp ?? user ?? {};
+
+      // Stock conflicts: items where requested qty > available stock
       const stockConflicts = items
         .filter((item) => item.stockQty != null && item.quantity > item.stockQty)
         .map((item) => ({
@@ -337,20 +342,44 @@ export default function CartDrawer({ open, onClose }) {
           available: item.stockQty,
         }));
 
-      const payload = {
-        status: 'DRAFT',
-        billToEmail: user?.email || '',
-        billToName: user?.name || '',
-        notes: stockConflicts.length > 0
-          ? `Quotation requested from cart.\nNote: ${stockConflicts.map(c => `${c.description} — requested ${c.requested}, available ${c.available}`).join('; ')}`
-          : 'Quotation requested from cart',
-        items: items.map((item) => ({
-          description: (isAr ? item.nameAr : item.nameEn) || item.nameEn || item.sku || 'Product',
+      // Build rich item descriptions: name + SKU + availability note if needed
+      const quotationItems = items.map((item) => {
+        const name = (isAr ? item.nameAr : item.nameEn) || item.nameEn || 'Product';
+        const sku = item.sku ? ` [${item.sku}]` : '';
+        const hasConflict = item.stockQty != null && item.quantity > item.stockQty;
+        const stockNote = hasConflict
+          ? ` — in stock: ${item.stockQty}, requested: ${item.quantity}`
+          : item.stockQty != null ? ` — in stock: ${item.stockQty}` : '';
+        return {
+          description: `${name}${sku}${stockNote}`,
           quantity: item.quantity,
           unitPrice: Number(item.priceQar) || 0,
           taxRate: 5,
-        })),
+        };
+      });
+
+      const noteLines = ['Quotation requested from cart.'];
+      if (stockConflicts.length > 0) {
+        noteLines.push('');
+        noteLines.push('⚠ Limited stock items:');
+        stockConflicts.forEach((c) =>
+          noteLines.push(`  • ${c.description}: requested ${c.requested}, available ${c.available}`)
+        );
+      }
+
+      const payload = {
+        status: 'DRAFT',
+        // Link to registered client so admin can look them up
+        clientId: fullUser.id || user?.id || null,
+        billToName:    fullUser.name    || user?.name    || '',
+        billToEmail:   fullUser.email   || user?.email   || '',
+        billToPhone:   fullUser.phone   || user?.phone   || '',
+        billToAddress: fullUser.address || user?.address || '',
+        billToCompany: fullUser.company || user?.company || '',
+        notes: noteLines.join('\n'),
+        items: quotationItems,
       };
+
       const result = await adminApi.requestCartQuotation(payload);
       setQuotationPreview({ quotation: result, stockConflicts });
     } catch {
