@@ -12,6 +12,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
 import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import Tooltip from '@mui/material/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../../hooks/useCart';
 import { shopApi, adminApi } from '../../services/api';
@@ -25,11 +27,17 @@ const fmt = (n) =>
 
 // ─── Quotation preview dialog ──────────────────────────────────────────────────
 
-function QuotationPreviewDialog({ quotation, open, onClose }) {
+// stockConflicts: [{ description, requested, available }]
+function QuotationPreviewDialog({ quotation, open, onClose, stockConflicts = [] }) {
   const [downloading, setDownloading] = useState(false);
   const [downloadingAr, setDownloadingAr] = useState(false);
 
   if (!quotation) return null;
+
+  // Build a lookup so we can flag individual rows
+  const conflictMap = Object.fromEntries(
+    stockConflicts.map((c) => [c.description, c])
+  );
 
   const handleDownload = async (lang = 'en') => {
     const setLoading = lang === 'ar' ? setDownloadingAr : setDownloading;
@@ -75,6 +83,21 @@ function QuotationPreviewDialog({ quotation, open, onClose }) {
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
+        {stockConflicts.length > 0 && (
+          <Alert severity="warning" icon={<WarningAmberRoundedIcon />} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Some items have insufficient stock
+            </Typography>
+            {stockConflicts.map((c) => (
+              <Typography key={c.description} variant="caption" display="block">
+                <strong>{c.description}</strong>: requested {c.requested}, only {c.available} in stock
+              </Typography>
+            ))}
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              The quotation has been created. Our team will contact you to confirm final quantities.
+            </Typography>
+          </Alert>
+        )}
         <Paper elevation={3} sx={{ p: 4, bgcolor: 'white', borderRadius: 2 }}>
 
           {/* Header: logo + title */}
@@ -152,27 +175,47 @@ function QuotationPreviewDialog({ quotation, open, onClose }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map((item, i) => (
-                <TableRow key={item.id ?? i} sx={{ '&:nth-of-type(even)': { bgcolor: 'grey.50' } }}>
-                  <TableCell>
-                    <Typography variant="body2">{item.description}</Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="body2">{item.quantity}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">QAR {fmt(item.unitPrice)}</Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="body2">{fmt(item.taxRate)}%</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={600}>
-                      QAR {fmt(item.amount ?? (Number(item.unitPrice) * item.quantity))}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((item, i) => {
+                const conflict = conflictMap[item.description];
+                return (
+                  <TableRow key={item.id ?? i} sx={{
+                    bgcolor: conflict ? 'warning.50' : undefined,
+                    '&:nth-of-type(even)': { bgcolor: conflict ? 'warning.50' : 'grey.50' },
+                  }}>
+                    <TableCell>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        {conflict && (
+                          <Tooltip title={`Only ${conflict.available} in stock`}>
+                            <WarningAmberRoundedIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                          </Tooltip>
+                        )}
+                        <Typography variant="body2">{item.description}</Typography>
+                      </Stack>
+                      {conflict && (
+                        <Typography variant="caption" color="warning.dark">
+                          Available: {conflict.available} — requested: {conflict.requested}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" color={conflict ? 'warning.dark' : 'inherit'} fontWeight={conflict ? 700 : 400}>
+                        {item.quantity}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2">QAR {fmt(item.unitPrice)}</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">{fmt(item.taxRate)}%</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight={600}>
+                        QAR {fmt(item.amount ?? (Number(item.unitPrice) * item.quantity))}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 
@@ -255,7 +298,7 @@ export default function CartDrawer({ open, onClose }) {
   const { cart, isLoading, updateItem, removeItem } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
   const [requestingQuote, setRequestingQuote] = useState(false);
-  const [quotationPreview, setQuotationPreview] = useState(null);
+  const [quotationPreview, setQuotationPreview] = useState(null);   // { quotation, stockConflicts }
   const [conflicts, setConflicts] = useState(null);
 
   const items = cart?.items ?? [];
@@ -285,11 +328,22 @@ export default function CartDrawer({ open, onClose }) {
   const handleRequestQuote = async () => {
     setRequestingQuote(true);
     try {
+      // Detect items where requested qty exceeds available stock
+      const stockConflicts = items
+        .filter((item) => item.stockQty != null && item.quantity > item.stockQty)
+        .map((item) => ({
+          description: (isAr ? item.nameAr : item.nameEn) || item.nameEn || item.sku || 'Product',
+          requested: item.quantity,
+          available: item.stockQty,
+        }));
+
       const payload = {
         status: 'DRAFT',
         billToEmail: user?.email || '',
         billToName: user?.name || '',
-        notes: 'Quotation requested from cart',
+        notes: stockConflicts.length > 0
+          ? `Quotation requested from cart.\nNote: ${stockConflicts.map(c => `${c.description} — requested ${c.requested}, available ${c.available}`).join('; ')}`
+          : 'Quotation requested from cart',
         items: items.map((item) => ({
           description: (isAr ? item.nameAr : item.nameEn) || item.nameEn || item.sku || 'Product',
           quantity: item.quantity,
@@ -298,7 +352,7 @@ export default function CartDrawer({ open, onClose }) {
         })),
       };
       const result = await adminApi.requestCartQuotation(payload);
-      setQuotationPreview(result);
+      setQuotationPreview({ quotation: result, stockConflicts });
     } catch {
       toast.error('Failed to generate quotation. Please try again.');
     } finally {
@@ -461,7 +515,8 @@ export default function CartDrawer({ open, onClose }) {
 
       <QuotationPreviewDialog
         open={!!quotationPreview}
-        quotation={quotationPreview}
+        quotation={quotationPreview?.quotation ?? null}
+        stockConflicts={quotationPreview?.stockConflicts ?? []}
         onClose={() => setQuotationPreview(null)}
       />
     </>
