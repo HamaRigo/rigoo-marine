@@ -538,28 +538,29 @@ public class QuotationService {
             tlValue.setPadding(5); tlValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
             totalsInner.addCell(tlValue);
             totalsOuterCell.addElement(totalsInner);
-            bottomTable.addCell(totalsOuterCell);
-            document.add(bottomTable);
 
-            // ── 6. AUTHORIZED SIGNATURE ───────────────────────────────────────
-            PdfPTable sigTable = new PdfPTable(1);
-            sigTable.setWidthPercentage(35);
-            sigTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            sigTable.setSpacingBefore(16);
-            sigTable.setSpacingAfter(14);
+            // ── Authorized Signature — sits directly below the totals ────────
+            PdfPTable sigInner = new PdfPTable(1);
+            sigInner.setWidthPercentage(100);
+            sigInner.setSpacingBefore(10);
             PdfPCell sc = new PdfPCell();
-            sc.setBorder(Rectangle.NO_BORDER);
+            sc.setBorder(Rectangle.TOP);
+            sc.setBorderWidthTop(0.5f);
+            sc.setBorderColor(accentGold);
             sc.setPadding(6);
-            sc.setPaddingTop(20);
+            sc.setPaddingTop(16);
             sc.setHorizontalAlignment(Element.ALIGN_CENTER);
             Image sigStamp = BrandingAssetLoader.loadStamp();
             if (sigStamp != null) {
-                sigStamp.scaleToFit(75, 75);
+                sigStamp.scaleToFit(70, 70);
                 sc.setCellEvent(new StampBackground(sigStamp));
             }
             sc.addElement(new Paragraph("Authorized Signature", smallFont));
-            sigTable.addCell(sc);
-            document.add(sigTable);
+            sigInner.addCell(sc);
+            totalsOuterCell.addElement(sigInner);
+
+            bottomTable.addCell(totalsOuterCell);
+            document.add(bottomTable);
 
             document.close();
             return out.toByteArray();
