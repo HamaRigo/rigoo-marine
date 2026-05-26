@@ -332,7 +332,8 @@ public class InvoiceService {
             try {
                 BaseFont wmarkBf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
                 Image wmarkImg = BrandingAssetLoader.loadWatermark();
-                pdfWriter.setPageEvent(new InvoicePageEvent(wmarkImg, wmarkBf, arabicBf, invoice.getNotes()));
+                pdfWriter.setPageEvent(new InvoicePageEvent(wmarkImg, wmarkBf, arabicBf, invoice.getNotes(),
+                        invoice.getStatus() == Invoice.InvoiceStatus.PAID));
             } catch (Exception ignored) {}
             document.open();
 
@@ -662,6 +663,7 @@ public class InvoiceService {
         private final BaseFont bf;
         private final BaseFont arabicBf;
         private final String notes;
+        private final boolean isPaid;
         private final float wmarkOrigW;
         private final float wmarkOrigH;
         private PdfTemplate pageCountTemplate;
@@ -671,11 +673,12 @@ public class InvoiceService {
         private static final String COMPLIANCE_AR =
             "يُصدر هذه الفاتورة باللغتين العربية والإنجليزية وفقاً للأعراف والمتطلبات التجارية القطرية.";
 
-        InvoicePageEvent(Image watermarkImage, BaseFont bf, BaseFont arabicBf, String notes) {
+        InvoicePageEvent(Image watermarkImage, BaseFont bf, BaseFont arabicBf, String notes, boolean isPaid) {
             this.watermarkImage = watermarkImage;
             this.bf = bf;
             this.arabicBf = arabicBf;
             this.notes = notes;
+            this.isPaid = isPaid;
             this.wmarkOrigW = watermarkImage != null ? watermarkImage.getWidth()  : 0f;
             this.wmarkOrigH = watermarkImage != null ? watermarkImage.getHeight() : 0f;
         }
@@ -713,6 +716,42 @@ public class InvoiceService {
                     watermarkImage.setAbsolutePosition((ps.getWidth() - w) / 2f, (ps.getHeight() - h) / 2f);
                     watermarkImage.scaleAbsolute(w, h);
                     cb.addImage(watermarkImage);
+                    cb.restoreState();
+                } catch (Exception ignored) {}
+            }
+
+            // ── PAID stamp ────────────────────────────────────────────────────────
+            if (isPaid) {
+                try {
+                    cb.saveState();
+                    PdfGState gsStamp = new PdfGState();
+                    gsStamp.setFillOpacity(0.38f);
+                    gsStamp.setStrokeOpacity(0.38f);
+                    cb.setGState(gsStamp);
+                    Color stampRed = new Color(200, 0, 0);
+                    float angle = 28f * (float)(Math.PI / 180f);
+                    float cx = ps.getWidth() * 0.63f;
+                    float cy = ps.getHeight() * 0.44f;
+                    cb.concatCTM(
+                        (float)Math.cos(angle), (float)Math.sin(angle),
+                        -(float)Math.sin(angle), (float)Math.cos(angle),
+                        cx, cy);
+                    float sw = 182f, sh = 72f, arc = 8f;
+                    cb.setColorStroke(stampRed);
+                    cb.setLineWidth(3.5f);
+                    cb.roundRectangle(-sw / 2f, -sh / 2f, sw, sh, arc);
+                    cb.stroke();
+                    cb.setLineWidth(1.5f);
+                    cb.roundRectangle(-sw / 2f + 5f, -sh / 2f + 5f, sw - 10f, sh - 10f, arc - 2f);
+                    cb.stroke();
+                    cb.setColorFill(stampRed);
+                    BaseFont stampFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                    cb.beginText();
+                    cb.setFontAndSize(stampFont, 50);
+                    float tw = stampFont.getWidthPoint("PAID", 50);
+                    cb.setTextMatrix(-tw / 2f, -17f);
+                    cb.showText("PAID");
+                    cb.endText();
                     cb.restoreState();
                 } catch (Exception ignored) {}
             }
