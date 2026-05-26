@@ -12,7 +12,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { adminApi, invoiceApi } from '../../services/api';
+import { adminApi, invoiceApi, clientApi } from '../../services/api';
 import FilterableTable from '../../components/admin/FilterableTable';
 import { formatPrice, formatDate } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
@@ -38,7 +38,7 @@ export default function TeamLeadInvoices() {
   const [rowStatusChanging, setRowStatusChanging] = useState(new Set());
 
   useEffect(() => {
-    adminApi.getAllUsers().then(setClients).catch(() => {});
+    clientApi.getAll().then(setClients).catch(() => {});
   }, []);
 
   const openPreview = async (row) => {
