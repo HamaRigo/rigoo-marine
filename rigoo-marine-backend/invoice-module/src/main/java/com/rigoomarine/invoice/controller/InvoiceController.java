@@ -99,14 +99,18 @@ public class InvoiceController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
-        byte[] pdfContent = invoiceService.generateInvoicePdf(id);
+    public ResponseEntity<byte[]> getInvoicePdf(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "en") String lang) {
+        byte[] pdfContent = "ar".equalsIgnoreCase(lang)
+                ? invoiceService.generateInvoicePdfArabic(id)
+                : invoiceService.generateInvoicePdf(id);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData(
             "attachment",
-            "invoice-" + id + ".pdf"
+            "invoice-" + id + ("ar".equalsIgnoreCase(lang) ? "-ar" : "") + ".pdf"
         );
 
         return ResponseEntity.ok()

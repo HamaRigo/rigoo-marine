@@ -36,6 +36,7 @@ export default function TeamLeadQuotations() {
   const [clients, setClients]           = useState([]);
   const [changingStatus, setChangingStatus]       = useState(false);
   const [rowStatusChanging, setRowStatusChanging] = useState(new Set());
+  const [downloadingAr, setDownloadingAr]         = useState(false);
 
   useEffect(() => {
     clientApi.getAll().then(setClients).catch(() => {});
@@ -99,6 +100,24 @@ export default function TeamLeadQuotations() {
     a.href = previewUrl;
     a.download = `quotation-${previewRow.quotationNumber || previewRow.id}.pdf`;
     a.click();
+  };
+
+  const handleDownloadAr = async () => {
+    if (!previewRow || downloadingAr) return;
+    setDownloadingAr(true);
+    try {
+      const blob = await adminApi.downloadQuotationPdf(previewRow.id, 'ar');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quotation-${previewRow.quotationNumber || previewRow.id}-ar.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to generate Arabic PDF');
+    } finally {
+      setDownloadingAr(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -268,6 +287,11 @@ export default function TeamLeadQuotations() {
             <Button variant="contained" size="small" startIcon={<DownloadIcon />}
               onClick={handleDownload} disabled={!previewUrl}>
               Download PDF
+            </Button>
+            <Button variant="outlined" size="small"
+              startIcon={downloadingAr ? <CircularProgress size={14} /> : <DownloadIcon />}
+              onClick={handleDownloadAr} disabled={!previewRow || downloadingAr}>
+              AR PDF
             </Button>
             <IconButton onClick={closePreview} size="small"><CloseIcon /></IconButton>
           </Box>

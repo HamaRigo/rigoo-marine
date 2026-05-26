@@ -100,14 +100,18 @@ public class QuotationController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> getQuotationPdf(@PathVariable Long id) {
-        byte[] pdfContent = quotationService.generateQuotationPdf(id);
+    public ResponseEntity<byte[]> getQuotationPdf(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "en") String lang) {
+        byte[] pdfContent = "ar".equalsIgnoreCase(lang)
+                ? quotationService.generateQuotationPdfArabic(id)
+                : quotationService.generateQuotationPdf(id);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData(
             "attachment",
-            "quotation-" + id + ".pdf"
+            "quotation-" + id + ("ar".equalsIgnoreCase(lang) ? "-ar" : "") + ".pdf"
         );
 
         return ResponseEntity.ok()

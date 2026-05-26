@@ -296,6 +296,238 @@ public class QuotationService {
     // ─────────────────────────────────────────────────────────────────────────
     //  PDF — identical layout to InvoiceService, adapted for Quotation fields
     // ─────────────────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] generateQuotationPdfArabic(Long id) {
+        Quotation quotation = quotationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Quotation not found"));
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4, 40, 40, 40, 82);
+            PdfWriter pdfWriter = PdfWriter.getInstance(document, baos);
+
+            BaseFont arabicBf = null;
+            try {
+                java.io.InputStream afs = BrandingAssetLoader.class.getClassLoader()
+                        .getResourceAsStream("branding/ArialUnicode.ttf");
+                if (afs != null) {
+                    byte[] afb = afs.readAllBytes();
+                    arabicBf = BaseFont.createFont("ArialUnicode.ttf",
+                            BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, afb, null);
+                }
+            } catch (Exception ignored) {}
+            final BaseFont arBf = arabicBf != null ? arabicBf
+                    : BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+
+            try {
+                BaseFont wmarkBf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                Image wmarkImg = BrandingAssetLoader.loadWatermark();
+                pdfWriter.setPageEvent(new QuotationPageEvent(wmarkImg, wmarkBf, arabicBf, quotation.getNotes()));
+            } catch (Exception ignored) {}
+            document.open();
+
+            Color primaryBlue   = new Color(46, 91, 168);
+            Color deepBlue      = new Color(28, 57, 110);
+            Color accentGold    = new Color(180, 148, 75);
+            Color tableHeaderBg = new Color(70, 100, 150);
+            Color billToBg      = new Color(232, 232, 232);
+            Color altRowBg      = new Color(248, 248, 248);
+
+            Font arNormal    = new Font(arBf,  9, Font.NORMAL);
+            Font arBold      = new Font(arBf,  9, Font.BOLD);
+            Font arSmall     = new Font(arBf,  8, Font.NORMAL);
+            Font arTableHdr  = new Font(arBf,  9, Font.BOLD, Color.WHITE);
+            Font arTotalBold = new Font(arBf, 10, Font.BOLD, primaryBlue);
+            Font arTitle     = new Font(arBf, 34, Font.BOLD, deepBlue);
+            Font arLabelGray = new Font(arBf,  8, Font.BOLD, new Color(120, 120, 120));
+
+            DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance();
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+
+            // ── Header: [Title+Details (left) | Logo (right)] ───────────────
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[]{88, 12});
+            headerTable.setSpacingAfter(0);
+
+            PdfPCell leftCell = new PdfPCell();
+            leftCell.setBackgroundColor(Color.WHITE);
+            leftCell.setBorder(Rectangle.NO_BORDER);
+            leftCell.setPaddingTop(18); leftCell.setPaddingBottom(14);
+            leftCell.setPaddingLeft(16); leftCell.setPaddingRight(22);
+            leftCell.setVerticalAlignment(Element.ALIGN_TOP);
+            leftCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            Paragraph titlePara = new Paragraph("عرض سعر", arTitle);
+            titlePara.setAlignment(Element.ALIGN_RIGHT);
+            leftCell.addElement(titlePara);
+            PdfPTable accentBar = new PdfPTable(1);
+            accentBar.setWidthPercentage(100); accentBar.setSpacingBefore(4); accentBar.setSpacingAfter(8);
+            PdfPCell accentCell = new PdfPCell(new Phrase(" "));
+            accentCell.setBackgroundColor(accentGold); accentCell.setBorder(Rectangle.NO_BORDER); accentCell.setFixedHeight(2.5f);
+            accentBar.addCell(accentCell);
+            leftCell.addElement(accentBar);
+            String issueStr = quotation.getIssueDate()  != null ? quotation.getIssueDate().format(dateFmt)  : "-";
+            String expStr   = quotation.getExpiryDate() != null ? quotation.getExpiryDate().format(dateFmt) : "-";
+            PdfPTable detailsGrid = new PdfPTable(2);
+            detailsGrid.setWidthPercentage(100);
+            detailsGrid.setWidths(new float[]{60, 40});
+            for (String[] row : new String[][]{
+                    {quotation.getQuotationNumber(), "رقم العرض"},
+                    {issueStr, "التاريخ"},
+                    {expStr,   "صالح حتى"}}) {
+                PdfPCell vc = new PdfPCell(new Phrase(row[0], arNormal));
+                vc.setBorder(Rectangle.NO_BORDER); vc.setPaddingBottom(3);
+                detailsGrid.addCell(vc);
+                PdfPCell lc = new PdfPCell(new Phrase(row[1], arLabelGray));
+                lc.setBorder(Rectangle.NO_BORDER); lc.setPaddingBottom(3);
+                lc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+                lc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                detailsGrid.addCell(lc);
+            }
+            leftCell.addElement(detailsGrid);
+            headerTable.addCell(leftCell);
+
+            PdfPCell logoCell = new PdfPCell();
+            logoCell.setBackgroundColor(Color.WHITE); logoCell.setBorder(Rectangle.NO_BORDER);
+            logoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE); logoCell.setPadding(4);
+            Image logoImage = null;
+            if (quotation.getLogoUrl() != null && !quotation.getLogoUrl().isBlank()) {
+                try { logoImage = Image.getInstance(quotation.getLogoUrl()); } catch (Exception ignored) {}
+            }
+            if (logoImage == null) logoImage = BrandingAssetLoader.loadLogo();
+            if (logoImage != null) { logoImage.scaleToFit(62, 92); logoCell.addElement(logoImage); }
+            headerTable.addCell(logoCell);
+            document.add(headerTable);
+
+            // ── Contact strip ────────────────────────────────────────────────
+            PdfPTable contactStrip = new PdfPTable(3);
+            contactStrip.setWidthPercentage(100);
+            contactStrip.setWidths(new float[]{33, 33, 34});
+            contactStrip.setSpacingAfter(10);
+            Color stripBg = new Color(240, 244, 252);
+            for (String txt : new String[]{"rigoomarine@gmail.com", "+974 709 709 17", "الدوحة، قطر"}) {
+                PdfPCell cc = new PdfPCell(new Phrase(txt, arSmall));
+                cc.setBackgroundColor(stripBg); cc.setBorder(Rectangle.NO_BORDER);
+                cc.setPadding(5); cc.setPaddingRight(10);
+                cc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                cc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+                contactStrip.addCell(cc);
+            }
+            document.add(contactStrip);
+
+            // ── Bill To bar ──────────────────────────────────────────────────
+            String clientDisplay = quotation.getBillToName() != null ? quotation.getBillToName()
+                    : (quotation.getClientId() != null ? "Client #" + quotation.getClientId() : "");
+            PdfPTable billToTable = new PdfPTable(1);
+            billToTable.setWidthPercentage(100); billToTable.setSpacingAfter(10);
+            PdfPCell billToCell = new PdfPCell();
+            billToCell.setBackgroundColor(billToBg); billToCell.setBorder(Rectangle.NO_BORDER);
+            billToCell.setPadding(6); billToCell.setPaddingRight(8);
+            billToCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            Paragraph billToPara = new Paragraph();
+            billToPara.setAlignment(Element.ALIGN_RIGHT);
+            billToPara.add(new Chunk(clientDisplay + " : ", arBold));
+            billToPara.add(new Chunk("عرض سعر إلى", arBold));
+            billToCell.addElement(billToPara);
+            billToTable.addCell(billToCell);
+            document.add(billToTable);
+
+            // ── Items table (Arabic column order: Amount | Price | Qty | Desc) ──
+            PdfPTable itemsTable = new PdfPTable(4);
+            itemsTable.setWidthPercentage(100);
+            itemsTable.setWidths(new float[]{22, 22, 10, 46});
+            itemsTable.setSpacingAfter(14);
+            for (int i = 0; i < 4; i++) {
+                String[] hdrs = {"المبلغ", "سعر الوحدة", "الكمية", "الوصف"};
+                PdfPCell hc = new PdfPCell();
+                hc.setBackgroundColor(tableHeaderBg); hc.setBorder(Rectangle.NO_BORDER); hc.setPadding(6);
+                hc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+                hc.setHorizontalAlignment(i == 3 ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
+                hc.addElement(new Phrase(hdrs[i], arTableHdr));
+                itemsTable.addCell(hc);
+            }
+            boolean alt = false;
+            for (QuotationItem item : quotation.getItems()) {
+                Color rowBg = alt ? altRowBg : Color.WHITE;
+                pdfItemCell(itemsTable, "QAR " + nf.format(item.getAmount()),    arNormal, rowBg, Element.ALIGN_LEFT);
+                pdfItemCell(itemsTable, "QAR " + nf.format(item.getUnitPrice()), arNormal, rowBg, Element.ALIGN_LEFT);
+                pdfItemCell(itemsTable, String.valueOf(item.getQuantity()),        arNormal, rowBg, Element.ALIGN_CENTER);
+                PdfPCell dc = new PdfPCell(new Phrase(item.getDescription() != null ? item.getDescription() : "", arNormal));
+                dc.setBackgroundColor(rowBg); dc.setBorder(Rectangle.NO_BORDER); dc.setPadding(6);
+                dc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL); dc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                itemsTable.addCell(dc);
+                alt = !alt;
+            }
+            document.add(itemsTable);
+
+            // ── Bottom: [Totals+Sig (left) | Empty | Terms (right)] ──────────
+            PdfPTable bottomTable = new PdfPTable(3);
+            bottomTable.setWidthPercentage(100);
+            bottomTable.setWidths(new float[]{38, 24, 38});
+            bottomTable.setSpacingAfter(8);
+
+            PdfPCell totalsOuterCell = new PdfPCell();
+            totalsOuterCell.setBorder(Rectangle.NO_BORDER); totalsOuterCell.setPadding(2);
+            PdfPTable totalsInner = new PdfPTable(2);
+            totalsInner.setWidthPercentage(100);
+            addTotalsRowAr(totalsInner, "المجموع الفرعي",    "QAR " + nf.format(quotation.getSubtotal()),  arNormal, arNormal);
+            addTotalsRowAr(totalsInner, "المجموع بعد الخصم", "QAR " + nf.format(quotation.getSubtotal()),  arNormal, arNormal);
+            addTotalsRowAr(totalsInner, "نسبة الضريبة",       quotation.getTaxRate() + "%",                   arNormal, arNormal);
+            addTotalsRowAr(totalsInner, "إجمالي الضريبة",     "QAR " + nf.format(quotation.getTaxAmount()), arNormal, arNormal);
+            PdfPCell tlL = new PdfPCell(new Phrase("الإجمالي", arBold));
+            tlL.setBorder(Rectangle.TOP); tlL.setBorderWidthTop(1.5f); tlL.setPadding(5);
+            tlL.setHorizontalAlignment(Element.ALIGN_RIGHT); tlL.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            totalsInner.addCell(tlL);
+            PdfPCell tlV = new PdfPCell(new Phrase("QAR " + nf.format(quotation.getTotal()), arTotalBold));
+            tlV.setBorder(Rectangle.TOP); tlV.setBorderWidthTop(1.5f); tlV.setPadding(5);
+            tlV.setHorizontalAlignment(Element.ALIGN_LEFT);
+            totalsInner.addCell(tlV);
+            totalsOuterCell.addElement(totalsInner);
+            PdfPTable sigInner = new PdfPTable(1);
+            sigInner.setWidthPercentage(100); sigInner.setSpacingBefore(10);
+            PdfPCell sc = new PdfPCell();
+            sc.setBorder(Rectangle.TOP); sc.setBorderWidthTop(0.5f); sc.setBorderColor(accentGold);
+            sc.setPadding(6); sc.setPaddingTop(16);
+            sc.setHorizontalAlignment(Element.ALIGN_CENTER); sc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            Image sigStamp = BrandingAssetLoader.loadStamp();
+            if (sigStamp != null) { sigStamp.scaleToFit(70, 70); sc.setCellEvent(new StampBackground(sigStamp)); }
+            Paragraph sigPara = new Paragraph("توقيع مخوّل", arSmall);
+            sigPara.setAlignment(Element.ALIGN_CENTER);
+            sc.addElement(sigPara);
+            sigInner.addCell(sc);
+            totalsOuterCell.addElement(sigInner);
+            bottomTable.addCell(totalsOuterCell);
+
+            PdfPCell emptyCell = new PdfPCell();
+            emptyCell.setBorder(Rectangle.NO_BORDER);
+            bottomTable.addCell(emptyCell);
+
+            PdfPCell termsCell = new PdfPCell();
+            termsCell.setBorder(Rectangle.NO_BORDER); termsCell.setPadding(4);
+            termsCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            Paragraph termsPara = new Paragraph();
+            termsPara.setAlignment(Element.ALIGN_RIGHT);
+            termsPara.add(new Chunk("شروط الدفع\n", arBold));
+            if (quotation.getTermsArabic() != null && !quotation.getTermsArabic().isBlank()) {
+                termsPara.add(new Chunk("ملاحظات هامة\n", arBold));
+                for (String line : quotation.getTermsArabic().split("\n")) {
+                    if (!line.isBlank()) termsPara.add(new Chunk(line.trim() + "\n", arSmall));
+                }
+            }
+            termsCell.addElement(termsPara);
+            bottomTable.addCell(termsCell);
+            document.add(bottomTable);
+
+            document.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate Arabic PDF", e);
+        }
+    }
+
     @Transactional(readOnly = true)
     public byte[] generateQuotationPdf(Long id) {
         Quotation quotation = quotationRepository.findById(id)
@@ -584,6 +816,17 @@ public class QuotationService {
         table.addCell(lc);
         PdfPCell vc = new PdfPCell(new Phrase(value, vf));
         vc.setBorder(Rectangle.NO_BORDER); vc.setPadding(4); vc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(vc);
+    }
+
+    private static void addTotalsRowAr(PdfPTable table, String label, String value, Font lf, Font vf) {
+        PdfPCell lc = new PdfPCell(new Phrase(label, lf));
+        lc.setBorder(Rectangle.NO_BORDER); lc.setPadding(4);
+        lc.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        lc.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        table.addCell(lc);
+        PdfPCell vc = new PdfPCell(new Phrase(value, vf));
+        vc.setBorder(Rectangle.NO_BORDER); vc.setPadding(4); vc.setHorizontalAlignment(Element.ALIGN_LEFT);
         table.addCell(vc);
     }
 

@@ -38,6 +38,7 @@ export default function InvoiceManagement() {
   const [clients, setClients] = useState([]);
   const [changingStatus, setChangingStatus] = useState(false);
   const [rowStatusChanging, setRowStatusChanging] = useState(new Set());
+  const [downloadingAr, setDownloadingAr] = useState(false);
 
   useEffect(() => {
     adminApi.getAllUsers().then(setClients).catch(() => {});
@@ -118,6 +119,24 @@ export default function InvoiceManagement() {
     a.href = previewUrl;
     a.download = `invoice-${previewRow.invoiceNumber || previewRow.id}.pdf`;
     a.click();
+  };
+
+  const handleDownloadAr = async () => {
+    if (!previewRow || downloadingAr) return;
+    setDownloadingAr(true);
+    try {
+      const blob = await invoiceApi.downloadPdf(previewRow.id, 'ar');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${previewRow.invoiceNumber || previewRow.id}-ar.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to generate Arabic PDF');
+    } finally {
+      setDownloadingAr(false);
+    }
   };
 
   const columns = [
@@ -289,6 +308,15 @@ export default function InvoiceManagement() {
               disabled={!previewUrl}
             >
               Download PDF
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={downloadingAr ? <CircularProgress size={14} /> : <DownloadIcon />}
+              onClick={handleDownloadAr}
+              disabled={!previewRow || downloadingAr}
+            >
+              AR PDF
             </Button>
             <IconButton onClick={closePreview} size="small">
               <CloseIcon />

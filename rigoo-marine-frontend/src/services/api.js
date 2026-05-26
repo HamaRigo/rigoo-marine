@@ -511,9 +511,10 @@ export const invoiceApi = {
    * @param {string|number} id
    * @returns {Promise<Blob>}
    */
-  downloadPdf: async (id) => {
+  downloadPdf: async (id, lang = 'en') => {
     const response = await httpClient.get(`/api/invoices/${id}/pdf`, {
       responseType: 'blob',
+      params: lang !== 'en' ? { lang } : {},
     });
     return response.data;
   },
@@ -723,9 +724,10 @@ export const adminApi = {
     return response.data;
   },
 
-  downloadQuotationPdf: async (id) => {
+  downloadQuotationPdf: async (id, lang = 'en') => {
     const response = await httpClient.get(`/api/quotations/${id}/pdf`, {
       responseType: 'blob',
+      params: lang !== 'en' ? { lang } : {},
     });
     return response.data;
   },
