@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, Chip, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton, CircularProgress, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  CircularProgress, Tooltip, Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -17,9 +18,10 @@ import FilterableTable from '../../components/admin/FilterableTable';
 import { formatPrice, formatDate } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
-const STATUSES = ['PENDING', 'PAID', 'OVERDUE', 'CANCELLED'];
+const STATUSES = ['DRAFT', 'PENDING', 'PAID', 'OVERDUE', 'CANCELLED', 'ARCHIVED'];
 const STATUS_COLORS = {
-  PENDING: 'warning', PAID: 'success', OVERDUE: 'error', CANCELLED: 'default',
+  DRAFT: 'default', PENDING: 'warning', PAID: 'success',
+  OVERDUE: 'error', CANCELLED: 'secondary', ARCHIVED: 'info',
 };
 
 export default function InvoiceManagement() {
@@ -34,6 +36,8 @@ export default function InvoiceManagement() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [clients, setClients] = useState([]);
+  const [changingStatus, setChangingStatus] = useState(false);
+  const [rowStatusChanging, setRowStatusChanging] = useState(new Set());
 
   useEffect(() => {
     adminApi.getAllUsers().then(setClients).catch(() => {});
@@ -74,6 +78,40 @@ export default function InvoiceManagement() {
     }
   };
 
+  const handleRowStatusChange = async (row, newStatus) => {
+    if (rowStatusChanging.has(row.id)) return;
+    setRowStatusChanging((prev) => new Set([...prev, row.id]));
+    try {
+      await adminApi.updateInvoiceStatus(row.id, newStatus);
+      toast.success(`Status changed to ${newStatus}`);
+      queryClient.invalidateQueries(['admin', 'invoices']);
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setRowStatusChanging((prev) => { const s = new Set(prev); s.delete(row.id); return s; });
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    if (!previewRow || changingStatus) return;
+    setChangingStatus(true);
+    try {
+      await adminApi.updateInvoiceStatus(previewRow.id, newStatus);
+      toast.success(`Invoice status changed to ${newStatus}`);
+      setPreviewRow((prev) => ({ ...prev, status: newStatus }));
+      queryClient.invalidateQueries(['admin', 'invoices']);
+      // Reload PDF to reflect new stamp/watermark
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      const blob = await invoiceApi.downloadPdf(previewRow.id);
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setChangingStatus(false);
+    }
+  };
+
   const handleDownload = () => {
     if (!previewUrl || !previewRow) return;
     const a = document.createElement('a');
@@ -90,8 +128,28 @@ export default function InvoiceManagement() {
     { id: 'dueDate',      label: t('invoices.columns.dueDate'),   render: (r) => formatDate(r.dueDate) },
     { id: 'total',        label: t('invoices.columns.total'),
       render: (r) => formatPrice(r.total, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
-    { id: 'status',       label: t('invoices.columns.status'),
-      render: (r) => <Chip size="small" label={r.status} color={STATUS_COLORS[r.status] || 'default'} /> },
+    { id: 'status', label: t('invoices.columns.status'),
+      render: (r) => (
+        <Select
+          size="small"
+          value={r.status}
+          disabled={rowStatusChanging.has(r.id)}
+          onChange={(e) => { e.stopPropagation(); handleRowStatusChange(r, e.target.value); }}
+          renderValue={(val) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {rowStatusChanging.has(r.id) && <CircularProgress size={12} />}
+              <Chip size="small" label={val} color={STATUS_COLORS[val] || 'default'} sx={{ pointerEvents: 'none' }} />
+            </Box>
+          )}
+          sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, minWidth: 120 }}
+        >
+          {STATUSES.map((s) => (
+            <MenuItem key={s} value={s}>
+              <Chip size="small" label={s} color={STATUS_COLORS[s] || 'default'} sx={{ cursor: 'pointer' }} />
+            </MenuItem>
+          ))}
+        </Select>
+      ) },
   ];
 
   return (
@@ -207,6 +265,22 @@ export default function InvoiceManagement() {
             Invoice {previewRow?.invoiceNumber || `#${previewRow?.id}`}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                label="Status"
+                value={previewRow?.status || ''}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={changingStatus}
+                startAdornment={changingStatus ? <CircularProgress size={14} sx={{ mr: 1 }} /> : null}
+              >
+                {STATUSES.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    <Chip size="small" label={s} color={STATUS_COLORS[s] || 'default'} sx={{ cursor: 'pointer' }} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="contained"
               size="small"

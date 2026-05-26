@@ -701,6 +701,11 @@ export const adminApi = {
     return response.data; // Page<QuotationDTO>
   },
 
+  getQuotationById: async (id) => {
+    const response = await httpClient.get(`/api/quotations/${id}`);
+    return response.data;
+  },
+
   createQuotation: async (quotationData) => {
     const response = await httpClient.post('/api/quotations', quotationData);
     return response.data;

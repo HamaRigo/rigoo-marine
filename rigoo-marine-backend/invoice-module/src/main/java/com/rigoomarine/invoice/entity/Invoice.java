@@ -90,6 +90,9 @@ public class Invoice {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -130,6 +133,7 @@ public class Invoice {
         PENDING,
         PAID,
         OVERDUE,
-        CANCELLED
+        CANCELLED,
+        ARCHIVED
     }
 }

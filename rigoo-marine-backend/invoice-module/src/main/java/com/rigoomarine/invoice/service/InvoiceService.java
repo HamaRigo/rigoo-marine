@@ -48,6 +48,12 @@ public class InvoiceService {
                 .build())
             .collect(Collectors.toList());
 
+        // Force DRAFT if client info is incomplete
+        boolean hasClient = request.getClientId() != null ||
+                (request.getBillToName() != null && !request.getBillToName().isBlank());
+        Invoice.InvoiceStatus resolvedStatus = !hasClient ? Invoice.InvoiceStatus.DRAFT
+                : (request.getStatus() != null ? Invoice.InvoiceStatus.valueOf(request.getStatus()) : Invoice.InvoiceStatus.PENDING);
+
         Invoice invoice = Invoice.builder()
             .invoiceNumber(generateInvoiceNumber())
             .workOrderId(request.getWorkOrderId())
@@ -57,7 +63,7 @@ public class InvoiceService {
             .billToPhone(request.getBillToPhone())
             .billToAddress(request.getBillToAddress())
             .billToCompany(request.getBillToCompany())
-            .status(request.getStatus() != null ? Invoice.InvoiceStatus.valueOf(request.getStatus()) : Invoice.InvoiceStatus.PENDING)
+            .status(resolvedStatus)
             .issueDate(request.getIssueDate())
             .dueDate(request.getDueDate())
             .items(itemEntities)
@@ -92,14 +98,7 @@ public class InvoiceService {
         invoice.setTaxAmount(taxAmount);
         invoice.setTotal(total);
 
-        // Set watermark based on status
-        if (invoice.getStatus() == Invoice.InvoiceStatus.DRAFT) {
-            invoice.setWatermark("DRAFT");
-        } else if (invoice.getStatus() == Invoice.InvoiceStatus.CANCELLED) {
-            invoice.setWatermark("CANCELLED");
-        } else {
-            invoice.setWatermark("CONFIDENTIAL");
-        }
+        invoice.setWatermark(resolveWatermark(invoice.getStatus()));
 
         Invoice saved = invoiceRepository.save(invoice);
         return toDTO(saved);
@@ -221,10 +220,12 @@ public class InvoiceService {
         invoice.setTaxAmount(taxAmount);
         invoice.setTotal(subtotal.add(taxAmount));
 
-        Invoice.InvoiceStatus st = invoice.getStatus();
-        if (st == Invoice.InvoiceStatus.DRAFT)           invoice.setWatermark("DRAFT");
-        else if (st == Invoice.InvoiceStatus.CANCELLED)  invoice.setWatermark("CANCELLED");
-        else                                             invoice.setWatermark("CONFIDENTIAL");
+        // Auto-DRAFT if client info was cleared during edit
+        boolean hasClient = invoice.getClientId() != null ||
+                (invoice.getBillToName() != null && !invoice.getBillToName().isBlank());
+        if (!hasClient) invoice.setStatus(Invoice.InvoiceStatus.DRAFT);
+
+        invoice.setWatermark(resolveWatermark(invoice.getStatus()));
 
         return toDTO(invoiceRepository.save(invoice));
     }
@@ -236,18 +237,14 @@ public class InvoiceService {
         Invoice.InvoiceStatus newStatus = Invoice.InvoiceStatus.valueOf(status);
         invoice.setStatus(newStatus);
 
-        if (newStatus == Invoice.InvoiceStatus.PAID) {
+        if (newStatus == Invoice.InvoiceStatus.PAID && invoice.getPaidAt() == null) {
             invoice.setPaidAt(LocalDateTime.now());
         }
-
-        // Update watermark
-        if (newStatus == Invoice.InvoiceStatus.DRAFT) {
-            invoice.setWatermark("DRAFT");
-        } else if (newStatus == Invoice.InvoiceStatus.CANCELLED) {
-            invoice.setWatermark("CANCELLED");
-        } else {
-            invoice.setWatermark("CONFIDENTIAL");
+        if (newStatus == Invoice.InvoiceStatus.CANCELLED && invoice.getCancelledAt() == null) {
+            invoice.setCancelledAt(LocalDateTime.now());
         }
+
+        invoice.setWatermark(resolveWatermark(newStatus));
 
         Invoice updated = invoiceRepository.save(invoice);
         return toDTO(updated);
@@ -255,6 +252,16 @@ public class InvoiceService {
 
     public void deleteInvoice(Long id) {
         invoiceRepository.deleteById(id);
+    }
+
+    private static String resolveWatermark(Invoice.InvoiceStatus st) {
+        return switch (st) {
+            case DRAFT    -> "DRAFT";
+            case CANCELLED -> "CANCELLED";
+            case ARCHIVED  -> "ARCHIVED";
+            case OVERDUE   -> "OVERDUE";
+            default        -> "CONFIDENTIAL";
+        };
     }
 
     private String generateInvoiceNumber() {
@@ -303,6 +310,7 @@ public class InvoiceService {
             .watermark(invoice.getWatermark())
             .qrCode(invoice.getQrCode())
             .paidAt(invoice.getPaidAt())
+            .cancelledAt(invoice.getCancelledAt())
             .createdAt(invoice.getCreatedAt())
             .build();
     }

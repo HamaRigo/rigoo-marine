@@ -33,6 +33,7 @@ public class QuotationDTO {
     private List<String> insertedImages;
     private String watermark;
     private LocalDateTime acceptedAt;
+    private LocalDateTime cancelledAt;
     private LocalDateTime createdAt;
 
     // Customer info for display

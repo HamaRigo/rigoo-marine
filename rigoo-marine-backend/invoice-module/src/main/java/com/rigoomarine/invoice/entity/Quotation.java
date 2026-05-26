@@ -88,6 +88,9 @@ public class Quotation {
     @Column(name = "accepted_at")
     private LocalDateTime acceptedAt;
 
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -128,6 +131,8 @@ public class Quotation {
         PENDING,
         ACCEPTED,
         REJECTED,
-        EXPIRED
+        EXPIRED,
+        CANCELLED,
+        ARCHIVED
     }
 }

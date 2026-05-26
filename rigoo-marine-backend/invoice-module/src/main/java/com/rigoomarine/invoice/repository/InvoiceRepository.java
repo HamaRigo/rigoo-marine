@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     List<Invoice> findByClientId(Long clientId);
     List<Invoice> findByWorkOrderId(Long workOrderId);
     List<Invoice> findByStatus(InvoiceStatus status);
+
+    // Invoices that are still PENDING but past their due date
+    List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDateTime dueDate);
+
+    // CANCELLED invoices whose cancelledAt is older than the given threshold
+    List<Invoice> findByStatusAndCancelledAtBefore(InvoiceStatus status, LocalDateTime threshold);
 
     @Query("SELECT MAX(i.invoiceNumber) FROM Invoice i WHERE i.invoiceNumber LIKE :prefix%")
     Optional<String> findMaxInvoiceNumberWithPrefix(@Param("prefix") String prefix);

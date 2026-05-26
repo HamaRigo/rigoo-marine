@@ -49,6 +49,12 @@ public class QuotationService {
                 .build())
             .collect(Collectors.toList());
 
+        // Force DRAFT if client info is incomplete
+        boolean hasClient = request.getClientId() != null ||
+                (request.getBillToName() != null && !request.getBillToName().isBlank());
+        Quotation.QuotationStatus resolvedStatus = !hasClient ? Quotation.QuotationStatus.DRAFT
+                : (request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : Quotation.QuotationStatus.DRAFT);
+
         Quotation quotation = Quotation.builder()
             .quotationNumber(generateQuotationNumber())
             .clientId(request.getClientId())
@@ -57,7 +63,7 @@ public class QuotationService {
             .billToPhone(request.getBillToPhone())
             .billToAddress(request.getBillToAddress())
             .billToCompany(request.getBillToCompany())
-            .status(request.getStatus() != null ? Quotation.QuotationStatus.valueOf(request.getStatus()) : Quotation.QuotationStatus.DRAFT)
+            .status(resolvedStatus)
             .issueDate(request.getIssueDate())
             .expiryDate(request.getExpiryDate())
             .items(itemEntities)
@@ -88,11 +94,7 @@ public class QuotationService {
         quotation.setTaxAmount(taxAmount);
         quotation.setTotal(total);
 
-        Quotation.QuotationStatus st = quotation.getStatus();
-        if (st == Quotation.QuotationStatus.DRAFT)         quotation.setWatermark("DRAFT");
-        else if (st == Quotation.QuotationStatus.ACCEPTED) quotation.setWatermark("ACCEPTED");
-        else if (st == Quotation.QuotationStatus.REJECTED) quotation.setWatermark("REJECTED");
-        else                                               quotation.setWatermark("QUOTATION");
+        quotation.setWatermark(resolveWatermark(quotation.getStatus()));
 
         return toDTO(quotationRepository.save(quotation));
     }
@@ -202,12 +204,12 @@ public class QuotationService {
         quotation.setTaxAmount(taxAmount);
         quotation.setTotal(subtotal.add(taxAmount));
 
-        Quotation.QuotationStatus st = quotation.getStatus();
-        if (st == Quotation.QuotationStatus.DRAFT)         quotation.setWatermark("DRAFT");
-        else if (st == Quotation.QuotationStatus.ACCEPTED) quotation.setWatermark("ACCEPTED");
-        else if (st == Quotation.QuotationStatus.REJECTED) quotation.setWatermark("REJECTED");
-        else if (st == Quotation.QuotationStatus.EXPIRED)  quotation.setWatermark("EXPIRED");
-        else                                               quotation.setWatermark("QUOTATION");
+        // Auto-DRAFT if client info was cleared during edit
+        boolean hasClient = quotation.getClientId() != null ||
+                (quotation.getBillToName() != null && !quotation.getBillToName().isBlank());
+        if (!hasClient) quotation.setStatus(Quotation.QuotationStatus.DRAFT);
+
+        quotation.setWatermark(resolveWatermark(quotation.getStatus()));
 
         return toDTO(quotationRepository.save(quotation));
     }
@@ -216,16 +218,30 @@ public class QuotationService {
         Quotation q = quotationRepository.findById(id).orElseThrow(() -> new RuntimeException("Quotation not found"));
         Quotation.QuotationStatus newStatus = Quotation.QuotationStatus.valueOf(status);
         q.setStatus(newStatus);
-        if (newStatus == Quotation.QuotationStatus.ACCEPTED) { q.setAcceptedAt(LocalDateTime.now()); q.setWatermark("ACCEPTED"); }
-        else if (newStatus == Quotation.QuotationStatus.REJECTED) q.setWatermark("REJECTED");
-        else if (newStatus == Quotation.QuotationStatus.DRAFT)    q.setWatermark("DRAFT");
-        else if (newStatus == Quotation.QuotationStatus.EXPIRED)  q.setWatermark("EXPIRED");
-        else                                                      q.setWatermark("QUOTATION");
+        if (newStatus == Quotation.QuotationStatus.ACCEPTED && q.getAcceptedAt() == null) {
+            q.setAcceptedAt(LocalDateTime.now());
+        }
+        if (newStatus == Quotation.QuotationStatus.CANCELLED && q.getCancelledAt() == null) {
+            q.setCancelledAt(LocalDateTime.now());
+        }
+        q.setWatermark(resolveWatermark(newStatus));
         return toDTO(quotationRepository.save(q));
     }
 
     public void deleteQuotation(Long id) {
         quotationRepository.deleteById(id);
+    }
+
+    private static String resolveWatermark(Quotation.QuotationStatus st) {
+        return switch (st) {
+            case DRAFT     -> "DRAFT";
+            case ACCEPTED  -> "ACCEPTED";
+            case REJECTED  -> "REJECTED";
+            case EXPIRED   -> "EXPIRED";
+            case CANCELLED -> "CANCELLED";
+            case ARCHIVED  -> "ARCHIVED";
+            default        -> "QUOTATION";
+        };
     }
 
     private String generateQuotationNumber() {
@@ -272,6 +288,7 @@ public class QuotationService {
             .insertedImages(q.getInsertedImages())
             .watermark(q.getWatermark())
             .acceptedAt(q.getAcceptedAt())
+            .cancelledAt(q.getCancelledAt())
             .createdAt(q.getCreatedAt())
             .build();
     }

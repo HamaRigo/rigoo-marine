@@ -35,6 +35,7 @@ public class InvoiceDTO {
     private String watermark;
     private String qrCode;
     private LocalDateTime paidAt;
+    private LocalDateTime cancelledAt;
     private LocalDateTime createdAt;
 
     // Customer info for display

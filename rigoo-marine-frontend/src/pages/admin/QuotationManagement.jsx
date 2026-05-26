@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, Chip, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton, CircularProgress, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  CircularProgress, Tooltip, Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -17,10 +18,10 @@ import FilterableTable from '../../components/admin/FilterableTable';
 import { formatPrice, formatDate } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
-const STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED'];
+const STATUSES = ['DRAFT', 'PENDING', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'CANCELLED', 'ARCHIVED'];
 const STATUS_COLORS = {
-  DRAFT: 'default', SENT: 'info', ACCEPTED: 'success',
-  REJECTED: 'error', EXPIRED: 'warning',
+  DRAFT: 'default', PENDING: 'warning', SENT: 'info', ACCEPTED: 'success',
+  REJECTED: 'error', EXPIRED: 'warning', CANCELLED: 'secondary', ARCHIVED: 'info',
 };
 
 export default function QuotationManagement() {
@@ -35,6 +36,8 @@ export default function QuotationManagement() {
   const [createOpen, setCreateOpen]   = useState(false);
   const [editTarget, setEditTarget]   = useState(null);
   const [clients, setClients]         = useState([]);
+  const [changingStatus, setChangingStatus] = useState(false);
+  const [rowStatusChanging, setRowStatusChanging] = useState(new Set());
 
   useEffect(() => {
     adminApi.getAllUsers().then(setClients).catch(() => {});
@@ -75,6 +78,39 @@ export default function QuotationManagement() {
     }
   };
 
+  const handleRowStatusChange = async (row, newStatus) => {
+    if (rowStatusChanging.has(row.id)) return;
+    setRowStatusChanging((prev) => new Set([...prev, row.id]));
+    try {
+      await adminApi.updateQuotationStatus(row.id, newStatus);
+      toast.success(`Status changed to ${newStatus}`);
+      queryClient.invalidateQueries(['admin', 'quotations']);
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setRowStatusChanging((prev) => { const s = new Set(prev); s.delete(row.id); return s; });
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    if (!previewRow || changingStatus) return;
+    setChangingStatus(true);
+    try {
+      await adminApi.updateQuotationStatus(previewRow.id, newStatus);
+      toast.success(`Quotation status changed to ${newStatus}`);
+      setPreviewRow((prev) => ({ ...prev, status: newStatus }));
+      queryClient.invalidateQueries(['admin', 'quotations']);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      const blob = await adminApi.downloadQuotationPdf(previewRow.id);
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setChangingStatus(false);
+    }
+  };
+
   const handleDownload = () => {
     if (!previewUrl || !previewRow) return;
     const a = document.createElement('a');
@@ -91,8 +127,28 @@ export default function QuotationManagement() {
     { id: 'expiryDate',      label: t('quotations.columns.expiryDate'), render: (r) => formatDate(r.expiryDate) },
     { id: 'total',           label: t('quotations.columns.total'),
       render: (r) => formatPrice(r.total, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
-    { id: 'status',          label: t('quotations.columns.status'),
-      render: (r) => <Chip size="small" label={r.status} color={STATUS_COLORS[r.status] || 'default'} /> },
+    { id: 'status', label: t('quotations.columns.status'),
+      render: (r) => (
+        <Select
+          size="small"
+          value={r.status}
+          disabled={rowStatusChanging.has(r.id)}
+          onChange={(e) => { e.stopPropagation(); handleRowStatusChange(r, e.target.value); }}
+          renderValue={(val) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {rowStatusChanging.has(r.id) && <CircularProgress size={12} />}
+              <Chip size="small" label={val} color={STATUS_COLORS[val] || 'default'} sx={{ pointerEvents: 'none' }} />
+            </Box>
+          )}
+          sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, minWidth: 120 }}
+        >
+          {STATUSES.map((s) => (
+            <MenuItem key={s} value={s}>
+              <Chip size="small" label={s} color={STATUS_COLORS[s] || 'default'} sx={{ cursor: 'pointer' }} />
+            </MenuItem>
+          ))}
+        </Select>
+      ) },
   ];
 
   return (
@@ -207,6 +263,22 @@ export default function QuotationManagement() {
             Quotation {previewRow?.quotationNumber || `#${previewRow?.id}`}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                label="Status"
+                value={previewRow?.status || ''}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={changingStatus}
+                startAdornment={changingStatus ? <CircularProgress size={14} sx={{ mr: 1 }} /> : null}
+              >
+                {STATUSES.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    <Chip size="small" label={s} color={STATUS_COLORS[s] || 'default'} sx={{ cursor: 'pointer' }} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="contained"
               size="small"

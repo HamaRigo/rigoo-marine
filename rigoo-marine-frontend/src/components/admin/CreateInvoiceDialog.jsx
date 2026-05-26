@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Grid, TextField, MenuItem, Button,
   IconButton, Divider, Paper, Stack, InputAdornment, Chip,
-  ToggleButtonGroup, ToggleButton,
+  ToggleButtonGroup, ToggleButton, CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -13,7 +13,7 @@ import {
   PersonSearch as PersonSearchIcon,
   EditNote as EditNoteIcon,
 } from '@mui/icons-material';
-import { adminApi } from '../../services/api';
+import { adminApi, invoiceApi } from '../../services/api';
 import { loadCompanySettings } from '../../pages/admin/Settings';
 import toast from 'react-hot-toast';
 
@@ -87,6 +87,54 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
       : { name: '', email: '', phone: '', address: '', company: '' }
   );
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // When the dialog opens, fetch full data (includes items) if editing,
+  // or reset to a blank form if creating.
+  useEffect(() => {
+    if (!open) return;
+    if (!editId) {
+      setForm(defaultForm());
+      setItems(defaultItems());
+      setBillToMode('registered');
+      setManualBillTo({ name: '', email: '', phone: '', address: '', company: '' });
+      return;
+    }
+    setLoading(true);
+    const fetcher = isInvoice
+      ? () => invoiceApi.getInvoiceById(editId)
+      : () => adminApi.getQuotationById(editId);
+    fetcher()
+      .then((data) => {
+        setForm({
+          workOrderId: data.workOrderId || '',
+          clientId: data.clientId || '',
+          status: data.status || (isInvoice ? 'PENDING' : 'DRAFT'),
+          issueDate: toDateStr(data.issueDate) || today,
+          dueDate: toDateStr(data.dueDate || data.expiryDate) || (isInvoice ? due30 : due14),
+          notes: data.notes || '',
+          terms: data.terms || '',
+          termsArabic: data.termsArabic || '',
+          logoUrl: data.logoUrl || loadCompanySettings().companyLogo || '/brand/logo.PNG',
+        });
+        setItems(data.items?.length
+          ? data.items.map((it) => ({
+              description: it.description || '',
+              quantity: it.quantity ?? 1,
+              unitPrice: it.unitPrice ?? '',
+              taxRate: it.taxRate ?? 0,
+            }))
+          : [emptyItem()]);
+        const isManual = data.billToName && !data.clientId;
+        setBillToMode(isManual ? 'manual' : 'registered');
+        setManualBillTo(isManual
+          ? { name: data.billToName || '', email: data.billToEmail || '', phone: data.billToPhone || '', address: data.billToAddress || '', company: data.billToCompany || '' }
+          : { name: '', email: '', phone: '', address: '', company: '' });
+      })
+      .catch(() => toast.error('Failed to load data for editing'))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editId]);
 
   const selectedClient = useMemo(
     () => clients.find((c) => String(c.id) === String(form.clientId)) || null,
@@ -189,8 +237,13 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+            <CircularProgress />
+          </Box>
+        )}
         {/* Invoice Paper */}
-        <Paper elevation={3} sx={{ p: 4, bgcolor: 'white', borderRadius: 2 }}>
+        <Paper elevation={3} sx={{ p: 4, bgcolor: 'white', borderRadius: 2, display: loading ? 'none' : undefined }}>
 
           {/* ── Header ── */}
           <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
@@ -413,7 +466,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
           </Typography>
         </Box>
         <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={submitting || (billToMode === 'registered' && !form.clientId) || (billToMode === 'manual' && !manualBillTo.name.trim())}>
+        <Button variant="contained" onClick={handleSubmit} disabled={loading || submitting || (billToMode === 'registered' && !form.clientId) || (billToMode === 'manual' && !manualBillTo.name.trim())}>
           {submitting ? (isEdit ? 'Saving…' : 'Creating…') : (isEdit ? `Save ${isInvoice ? 'Invoice' : 'Quotation'}` : `Create ${isInvoice ? 'Invoice' : 'Quotation'}`)}
         </Button>
       </DialogActions>
