@@ -37,6 +37,7 @@ export default function FilterableTable({
   const [filterValues, setFilterValues] = useState(
     Object.fromEntries(filters.map((f) => [f.id, defaultFilters[f.id] ?? ''])),
   );
+  const [debouncedFilterValues, setDebouncedFilterValues] = useState(filterValues);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
 
@@ -45,17 +46,23 @@ export default function FilterableTable({
     return () => clearTimeout(handle);
   }, [q]);
 
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedFilterValues(filterValues), 300);
+    return () => clearTimeout(handle);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(filterValues)]);
+
   // Reset to first page when search/filter changes
-  useEffect(() => { setPage(0); }, [debouncedQ, JSON.stringify(filterValues)]);
+  useEffect(() => { setPage(0); }, [debouncedQ, JSON.stringify(debouncedFilterValues)]);
 
   const params = useMemo(() => {
     const p = { page, size, sort: defaultSort };
     if (debouncedQ) p.q = debouncedQ;
-    for (const [k, v] of Object.entries(filterValues)) {
+    for (const [k, v] of Object.entries(debouncedFilterValues)) {
       if (v !== '' && v !== 'ALL') p[k] = v;
     }
     return p;
-  }, [debouncedQ, filterValues, page, size, defaultSort]);
+  }, [debouncedQ, debouncedFilterValues, page, size, defaultSort]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [...queryKey, params],
@@ -89,24 +96,51 @@ export default function FilterableTable({
               ),
             }}
           />
-          {filters.map((f) => (
-            <TextField
-              key={f.id}
-              select
-              size="small"
-              label={f.label}
-              value={filterValues[f.id]}
-              onChange={(e) =>
-                setFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))
-              }
-              sx={{ minWidth: 160 }}
-            >
-              <MenuItem value="">{t('filters.all')}</MenuItem>
-              {f.options.map((o) => (
-                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-              ))}
-            </TextField>
-          ))}
+          {filters.map((f) => {
+            const onChange = (e) => setFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }));
+            if (f.type === 'date') {
+              return (
+                <TextField
+                  key={f.id}
+                  type="date"
+                  size="small"
+                  label={f.label}
+                  value={filterValues[f.id]}
+                  onChange={onChange}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 150 }}
+                />
+              );
+            }
+            if (f.type === 'text') {
+              return (
+                <TextField
+                  key={f.id}
+                  size="small"
+                  label={f.label}
+                  value={filterValues[f.id]}
+                  onChange={onChange}
+                  sx={{ minWidth: 160 }}
+                />
+              );
+            }
+            return (
+              <TextField
+                key={f.id}
+                select
+                size="small"
+                label={f.label}
+                value={filterValues[f.id]}
+                onChange={onChange}
+                sx={{ minWidth: 160 }}
+              >
+                <MenuItem value="">{t('filters.all')}</MenuItem>
+                {f.options.map((o) => (
+                  <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                ))}
+              </TextField>
+            );
+          })}
         </Stack>
 
         {isError ? (

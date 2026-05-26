@@ -13,7 +13,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,6 +42,10 @@ public class InvoiceController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) String clientName,
+            @RequestParam(required = false) String itemName,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort
@@ -49,7 +55,7 @@ public class InvoiceController {
         Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("asc")
                 ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(dir, parts[0]));
-        return ResponseEntity.ok(invoiceService.searchPaged(q, status, clientId, pageable));
+        return ResponseEntity.ok(invoiceService.searchPaged(q, status, clientId, clientName, itemName, dateFrom, dateTo, pageable));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM_LEAD')")

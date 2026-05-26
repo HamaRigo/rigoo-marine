@@ -84,7 +84,8 @@ export default function InvoiceManagement() {
 
   const columns = [
     { id: 'invoiceNumber', label: t('invoices.columns.number') },
-    { id: 'clientId',     label: t('invoices.columns.client') },
+    { id: 'billToName',    label: t('invoices.columns.client'),
+      render: (r) => r.billToName || (r.clientId ? `Client #${r.clientId}` : '—') },
     { id: 'issueDate',    label: t('invoices.columns.issueDate'), render: (r) => formatDate(r.issueDate) },
     { id: 'dueDate',      label: t('invoices.columns.dueDate'),   render: (r) => formatDate(r.dueDate) },
     { id: 'total',        label: t('invoices.columns.total'),
@@ -109,8 +110,12 @@ export default function InvoiceManagement() {
         rowKey={(r) => r.id}
         defaultSort="createdAt,desc"
         filters={[
-          { id: 'status', label: t('filters.status'),
+          { id: 'status',     label: t('filters.status'),
             options: STATUSES.map((s) => ({ value: s, label: s })) },
+          { id: 'clientName', label: 'Client Name', type: 'text' },
+          { id: 'itemName',   label: 'Item',        type: 'text' },
+          { id: 'dateFrom',   label: 'From',        type: 'date' },
+          { id: 'dateTo',     label: 'To',          type: 'date' },
         ]}
         renderActions={(row) => (
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>

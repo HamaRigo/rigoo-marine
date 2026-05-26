@@ -85,7 +85,8 @@ export default function QuotationManagement() {
 
   const columns = [
     { id: 'quotationNumber', label: t('quotations.columns.number') },
-    { id: 'clientId',        label: t('quotations.columns.client') },
+    { id: 'billToName',      label: t('quotations.columns.client'),
+      render: (r) => r.billToName || (r.clientId ? `Client #${r.clientId}` : '—') },
     { id: 'issueDate',       label: t('quotations.columns.issueDate'),  render: (r) => formatDate(r.issueDate) },
     { id: 'expiryDate',      label: t('quotations.columns.expiryDate'), render: (r) => formatDate(r.expiryDate) },
     { id: 'total',           label: t('quotations.columns.total'),
@@ -110,8 +111,12 @@ export default function QuotationManagement() {
         rowKey={(r) => r.id}
         defaultSort="createdAt,desc"
         filters={[
-          { id: 'status', label: t('filters.status'),
+          { id: 'status',     label: t('filters.status'),
             options: STATUSES.map((s) => ({ value: s, label: s })) },
+          { id: 'clientName', label: 'Client Name', type: 'text' },
+          { id: 'itemName',   label: 'Item',        type: 'text' },
+          { id: 'dateFrom',   label: 'From',        type: 'date' },
+          { id: 'dateTo',     label: 'To',          type: 'date' },
         ]}
         renderActions={(row) => (
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>

@@ -9,6 +9,8 @@ import com.rigoomarine.invoice.dto.QuotationDTO;
 import com.rigoomarine.invoice.dto.CreateQuotationRequest;
 import com.rigoomarine.invoice.dto.QuotationItemDTO;
 import com.rigoomarine.invoice.util.BrandingAssetLoader;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -105,19 +108,41 @@ public class QuotationService {
     }
 
     @Transactional(readOnly = true)
-    public Page<QuotationDTO> searchPaged(String q, String status, Long clientId, Pageable pageable) {
+    public Page<QuotationDTO> searchPaged(String q, String status, Long clientId,
+            String clientName, String itemName, LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
         Specification<Quotation> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (q != null && !q.isBlank()) {
                 String like = "%" + q.toLowerCase() + "%";
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("quotationNumber")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("billToName"), "")), like),
                         cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), like)));
             }
             if (status != null && !status.isBlank())
                 predicates.add(cb.equal(root.get("status"), Quotation.QuotationStatus.valueOf(status)));
             if (clientId != null)
                 predicates.add(cb.equal(root.get("clientId"), clientId));
+            if (clientName != null && !clientName.isBlank()) {
+                predicates.add(cb.like(cb.lower(cb.coalesce(root.get("billToName"), "")),
+                        "%" + clientName.toLowerCase() + "%"));
+            }
+            if (itemName != null && !itemName.isBlank()) {
+                String like = "%" + itemName.toLowerCase() + "%";
+                jakarta.persistence.criteria.Subquery<Long> sub = cq.subquery(Long.class);
+                jakarta.persistence.criteria.Root<Quotation> sr = sub.from(Quotation.class);
+                Join<Quotation, QuotationItem> sj = sr.join("items");
+                sub.select(sr.get("id")).where(cb.and(
+                        cb.equal(sr.get("id"), root.get("id")),
+                        cb.like(cb.lower(sj.get("description")), like)));
+                predicates.add(cb.exists(sub));
+            }
+            if (dateFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("issueDate"), dateFrom.atStartOfDay()));
+            }
+            if (dateTo != null) {
+                predicates.add(cb.lessThan(root.get("issueDate"), dateTo.plusDays(1).atStartOfDay()));
+            }
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
         return quotationRepository.findAll(spec, pageable).map(this::toDTO);
