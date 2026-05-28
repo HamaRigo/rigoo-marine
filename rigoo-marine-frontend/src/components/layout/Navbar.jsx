@@ -3,6 +3,7 @@ import {
   List, ListItem, ListItemButton, ListItemText, ListItemIcon,
   Badge, Slide, Divider, Avatar, Chip, useScrollTrigger,
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,7 @@ import { useCart } from '../../hooks/useCart';
 import CartDrawer from '../shop/CartDrawer';
 import { WAVE_DELAY } from '../../utils/waveSync';
 
-function BrandMark({ size = 44, animated = false }) {
+function BrandMark({ size, animated }) {
   const [broken, setBroken] = useState(false);
   const animationSx = animated ? { animation: `rmWave 5s ease-in-out ${WAVE_DELAY} infinite` } : {};
   if (broken) {
@@ -60,6 +61,12 @@ function BrandMark({ size = 44, animated = false }) {
   );
 }
 
+BrandMark.propTypes = {
+  size:     PropTypes.number,
+  animated: PropTypes.bool,
+};
+BrandMark.defaultProps = { size: 44, animated: false };
+
 function NavLinkButton({ to, label, active }) {
   return (
     <Button
@@ -93,6 +100,13 @@ function NavLinkButton({ to, label, active }) {
     </Button>
   );
 }
+
+NavLinkButton.propTypes = {
+  to:     PropTypes.string.isRequired,
+  label:  PropTypes.string.isRequired,
+  active: PropTypes.bool,
+};
+NavLinkButton.defaultProps = { active: false };
 
 // ── User avatar dropdown (desktop) ────────────────────────────────────────
 
@@ -128,6 +142,15 @@ function UserMenu({ user, isAdmin, isTeamLead, isDelivery, isTechnician }) {
     />
   );
 }
+
+UserMenu.propTypes = {
+  user:        PropTypes.shape({ name: PropTypes.string }),
+  isAdmin:     PropTypes.bool,
+  isTeamLead:  PropTypes.bool,
+  isDelivery:  PropTypes.bool,
+  isTechnician: PropTypes.bool,
+};
+UserMenu.defaultProps = { user: null, isAdmin: false, isTeamLead: false, isDelivery: false, isTechnician: false };
 
 // ── Navbar ─────────────────────────────────────────────────────────────────
 
