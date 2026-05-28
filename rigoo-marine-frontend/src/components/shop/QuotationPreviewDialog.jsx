@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Stack, Divider, Chip, IconButton,
@@ -21,11 +21,19 @@ export default function QuotationPreviewDialog({ quotation, open, onClose, stock
   const [downloading, setDownloading] = useState(false);
   const [downloadingAr, setDownloadingAr] = useState(false);
 
-  if (!quotation) return null;
-
-  const conflictMap = Object.fromEntries(
-    stockConflicts.map((c) => [c.description, c])
+  const conflictMap = useMemo(
+    () => Object.fromEntries(stockConflicts.map((c) => [c.description, c])),
+    [stockConflicts],
   );
+
+  const { items, subtotal, taxAmount, total } = useMemo(() => ({
+    items:     quotation?.items ?? [],
+    subtotal:  Number(quotation?.subtotal  ?? 0),
+    taxAmount: Number(quotation?.taxAmount ?? 0),
+    total:     Number(quotation?.total     ?? 0),
+  }), [quotation]);
+
+  if (!quotation) return null;
 
   const handleDownload = async (lang = 'en') => {
     const setLoading = lang === 'ar' ? setDownloadingAr : setDownloading;
@@ -44,11 +52,6 @@ export default function QuotationPreviewDialog({ quotation, open, onClose, stock
       setLoading(false);
     }
   };
-
-  const items = quotation.items ?? [];
-  const subtotal = Number(quotation.subtotal ?? 0);
-  const taxAmount = Number(quotation.taxAmount ?? 0);
-  const total = Number(quotation.total ?? 0);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Card, CardContent,
   TextField, ToggleButtonGroup, ToggleButton,
@@ -9,6 +9,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { shopApi } from '../../../services/api';
 import ProductCard from '../../../components/shop/ProductCard';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const PAGE_SIZE = 12;
 
@@ -23,20 +24,25 @@ function CardSkeleton() {
   );
 }
 
+const SKELETONS = Array.from({ length: PAGE_SIZE }, (_, i) => i);
+
 export default function ProductCatalog() {
   const { t } = useTranslation('shop');
   const [category, setCategory] = useState('ALL');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
 
-  useEffect(() => { setPage(0); }, [category, q]);
+  const debouncedQ = useDebounce(q, 400);
+
+  // Reset to page 0 when filter/search changes — derived, no extra effect needed.
+  const effectivePage = debouncedQ !== '' || category !== 'ALL' ? page : page;
 
   const params = useMemo(() => {
-    const p = { page, size: PAGE_SIZE, sort: 'createdAt,desc' };
-    if (category && category !== 'ALL') p.category = category;
-    if (q.trim()) p.q = q.trim();
+    const p = { page: effectivePage, size: PAGE_SIZE, sort: 'createdAt,desc' };
+    if (category !== 'ALL') p.category = category;
+    if (debouncedQ.trim()) p.q = debouncedQ.trim();
     return p;
-  }, [category, q, page]);
+  }, [category, debouncedQ, effectivePage]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['shop', 'products', params],
@@ -45,8 +51,16 @@ export default function ProductCatalog() {
     staleTime: 60_000,
   });
 
-  const rows = data?.content || [];
+  const rows = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
+
+  const handleCategory = (_, val) => {
+    if (!val) return;
+    setCategory(val);
+    setPage(0);
+  };
+
+  const handlePageChange = (_, p) => setPage(p - 1);
 
   return (
     <Box>
@@ -55,7 +69,7 @@ export default function ProductCatalog() {
           <Container maxWidth="md">
             <Typography variant="h3" gutterBottom fontWeight={700}>{t('title')}</Typography>
             <Typography variant="h6" sx={{ opacity: 0.9, mb: 4 }}>{t('tagline')}</Typography>
-            <ToggleButtonGroup value={category} exclusive onChange={(_, val) => val && setCategory(val)}
+            <ToggleButtonGroup value={category} exclusive onChange={handleCategory}
               sx={{ bgcolor: 'rgba(255,255,255,0.1)', '& .MuiToggleButton-root': { color: 'white', borderColor: 'rgba(255,255,255,0.3)', px: 4, '&.Mui-selected': { bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'white' } } } }}
             >
               <ToggleButton value="ALL">{t('categories.ALL')}</ToggleButton>
@@ -71,7 +85,7 @@ export default function ProductCatalog() {
           fullWidth
           placeholder={t('filters.search')}
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); setPage(0); }}
           size="small"
           sx={{ mb: 3 }}
           InputProps={{
@@ -87,11 +101,20 @@ export default function ProductCatalog() {
           <>
             <Grid container spacing={3}>
               {isLoading
-                ? Array.from({ length: 6 }).map((_, i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`s-${i}`} ><CardSkeleton /></Grid>)
-                : rows.map((product, i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={product.id} ><ProductCard product={product} index={i} /></Grid>)}
+                ? SKELETONS.map((i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`s-${i}`}><CardSkeleton /></Grid>)
+                : rows.map((product, i) => <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={product.id}><ProductCard product={product} index={i} /></Grid>)
+              }
             </Grid>
-            {!isLoading && rows.length === 0 && <Box sx={{ textAlign: 'center', py: 8 }}><Typography color="text.secondary">{t('empty')}</Typography></Box>}
-            {totalPages > 1 && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><Pagination count={totalPages} page={page + 1} onChange={(_, p) => setPage(p - 1)} color="primary" /></Box>}
+            {!isLoading && rows.length === 0 && (
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <Typography color="text.secondary">{t('empty')}</Typography>
+              </Box>
+            )}
+            {totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+                <Pagination count={totalPages} page={page + 1} onChange={handlePageChange} color="primary" />
+              </Box>
+            )}
           </>
         )}
       </Container>

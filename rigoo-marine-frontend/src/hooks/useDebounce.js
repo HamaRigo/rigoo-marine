@@ -1,35 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
- * Custom hook for debouncing values
- * @param {any} value - Value to debounce
- * @param {number} delay - Debounce delay in ms
- * @returns {any} Debounced value
- *
- * @example
- * const [searchTerm, setSearchTerm] = useState('');
- * const debouncedSearch = useDebounce(searchTerm, 500);
- *
- * useEffect(() => {
- *   if (debouncedSearch) {
- *     // API call with debounced search term
- *   }
- * }, [debouncedSearch]);
+ * Returns a debounced copy of `value` that only updates after `delay` ms of
+ * silence. The timer is stored in a ref so changing `delay` at runtime never
+ * triggers a spurious state update — only actual value changes do.
  */
-export function useDebounce(value, delay = 500) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+export function useDebounce(value, delay = 400) {
+  const [debounced, setDebounced] = useState(value);
+  const delayRef = useRef(delay);
+  delayRef.current = delay;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+    const id = setTimeout(() => setDebounced(value), delayRef.current);
+    return () => clearTimeout(id);
+  }, [value]);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
+  return debounced;
 }
 
 export default useDebounce;

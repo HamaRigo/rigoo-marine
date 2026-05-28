@@ -1,9 +1,9 @@
 import {
   AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer,
   List, ListItem, ListItemButton, ListItemText, ListItemIcon,
-  Badge, Slide, Fade, Divider, Avatar, Chip, useScrollTrigger,
+  Badge, Slide, Divider, Avatar, Chip, useScrollTrigger,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -138,33 +138,33 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation(['navbar', 'common']);
-  const isAdmin       = user?.role === 'ADMIN';
-  const isTeamLead    = user?.role === 'TEAM_LEAD';
-  const isDelivery    = user?.role === 'DELIVERY';
-  const isTechnician  = user?.role === 'TECHNICIAN';
+  const role = user?.role;
+  const isAdmin      = role === 'ADMIN';
+  const isTeamLead   = role === 'TEAM_LEAD';
+  const isDelivery   = role === 'DELIVERY';
+  const isTechnician = role === 'TECHNICIAN';
   const { itemCount } = useCart();
   const elevated = useScrollTrigger({ disableHysteresis: true, threshold: 12 });
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
-  const navLinks = [
+  // Static — never changes, hoist out of render cycle via useMemo.
+  const navLinks = useMemo(() => [
     { key: 'home', path: '/' },
     { key: 'services', path: '/services' },
     { key: 'marketplace', path: '/boats' },
     { key: 'shop', path: '/shop' },
-  ];
+  ], []);
 
-  const isActive = (path) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const isActive = useCallback(
+    (path) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path),
+    [location.pathname],
+  );
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  const handleLogout = useCallback(() => { logout(); navigate('/'); }, [logout, navigate]);
 
-  const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language.startsWith('ar') ? 'en' : 'ar');
-  };
+  const toggleLanguage = useCallback(
+    () => i18n.changeLanguage(i18n.language.startsWith('ar') ? 'en' : 'ar'),
+    [i18n],
+  );
 
   const drawer = (
     <Box sx={{ p: 2, width: 280 }}>
@@ -287,7 +287,7 @@ export default function Navbar() {
   );
 
   return (
-    <Slide in={mounted} direction="down" timeout={420}>
+    <Slide in direction="down" timeout={420}>
       <AppBar
         position="sticky"
         elevation={0}

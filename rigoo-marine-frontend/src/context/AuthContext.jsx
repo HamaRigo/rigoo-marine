@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../services/api';
 
 export const AuthContext = createContext(null);
@@ -155,7 +155,7 @@ export function AuthProvider({ children }) {
   const isDelivery   = useCallback(() => hasRole(ROLES.DELIVERY),   [hasRole]);
   const isClient     = useCallback(() => hasRole(ROLES.CLIENT),     [hasRole]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     isAuthenticated: !!user,
@@ -173,7 +173,7 @@ export function AuthProvider({ children }) {
     isDelivery,
     isClient,
     ROLES,
-  };
+  }), [user, loading, login, loginWithOtp, logout, register, refreshToken, updateProfile, hasRole, isAdmin, isTechnician, isTeamLead, isDelivery, isClient]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
