@@ -41,14 +41,7 @@ const CATEGORY_IMAGE = {
   Specialized: '/services_img/posters/poster-specialized.png',
 };
 
-const LOCAL_POSTERS = [
-  { label: 'Mechanical',  src: '/services_img/posters/poster-mechanical.png'  },
-  { label: 'Structural',  src: '/services_img/posters/poster-structural.png'  },
-  { label: 'Cosmetic',    src: '/services_img/posters/poster-cosmetic.png'    },
-  { label: 'Renovation',  src: '/services_img/posters/poster-renovation.png'  },
-  { label: 'Specialized', src: '/services_img/posters/poster-specialized.png' },
-  { label: 'Overview',    src: '/services_img/posters/poster-overview.png'    },
-];
+const DEFAULT_POSTER = '/services_img/posters/poster-overview.png';
 
 const EMPTY_FORM = {
   name: '', nameAr: '',
@@ -240,7 +233,15 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
   } : { ...EMPTY_FORM });
 
   const [tab, setTab] = useState(0);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => {
+    const next = { ...f, [k]: v };
+    // auto-assign category poster unless user has set a custom image
+    if (k === 'category') {
+      const isAutoPoster = Object.values(CATEGORY_IMAGE).includes(f.imageUrl) || !f.imageUrl;
+      if (isAutoPoster) next.imageUrl = CATEGORY_IMAGE[v] ?? DEFAULT_POSTER;
+    }
+    return next;
+  });
 
   const canSave = form.name.trim() && form.category;
 
@@ -299,58 +300,23 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
 
         {/* ── Image ── */}
         {tab === 1 && (
-          <Stack spacing={2.5}>
-            <Typography variant="subtitle2" fontWeight={700}>Preset posters</Typography>
-            <Grid container spacing={1.5}>
-              {LOCAL_POSTERS.map((p) => {
-                const selected = form.imageUrl === p.src;
-                return (
-                  <Grid size={{ xs: 6, sm: 4 }} key={p.label}>
-                    <Box
-                      onClick={() => set('imageUrl', p.src)}
-                      sx={{
-                        position: 'relative', borderRadius: 2, overflow: 'hidden',
-                        cursor: 'pointer', height: 110,
-                        border: '2px solid',
-                        borderColor: selected ? 'primary.main' : 'transparent',
-                        boxShadow: selected ? '0 0 0 3px rgba(25,118,210,.25)' : 'none',
-                        transition: 'border-color .2s, box-shadow .2s, transform .15s',
-                        '&:hover': { transform: 'scale(1.03)' },
-                      }}
-                    >
-                      <Box component="img" src={p.src} alt={p.label}
-                        sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      <Box sx={{
-                        position: 'absolute', bottom: 0, left: 0, right: 0,
-                        bgcolor: 'rgba(0,0,0,.55)', py: 0.5, px: 1,
-                      }}>
-                        <Typography variant="caption" color="#fff" fontWeight={600}>{p.label}</Typography>
-                      </Box>
-                      {selected && (
-                        <CheckCircleRoundedIcon sx={{
-                          position: 'absolute', top: 6, right: 6, fontSize: 20,
-                          color: 'primary.main', bgcolor: '#fff', borderRadius: '50%',
-                        }} />
-                      )}
-                    </Box>
-                  </Grid>
-                );
-              })}
-            </Grid>
-
-            <Divider>or upload a custom image</Divider>
-
+          <Stack spacing={2}>
+            {form.imageUrl && Object.values(CATEGORY_IMAGE).includes(form.imageUrl) && (
+              <Alert severity="info" sx={{ fontSize: 12 }}>
+                Poster automatically assigned from the selected category. Upload a custom image below to override it.
+              </Alert>
+            )}
             <ImageUploadCell
-              url={LOCAL_POSTERS.some(p => p.src === form.imageUrl) ? '' : form.imageUrl}
+              url={Object.values(CATEGORY_IMAGE).includes(form.imageUrl) ? '' : form.imageUrl}
               onUrl={url => set('imageUrl', url)}
             />
-            {form.imageUrl && (
+            {form.imageUrl && !Object.values(CATEGORY_IMAGE).includes(form.imageUrl) && (
               <Button
                 size="small" color="error" variant="outlined"
-                onClick={() => set('imageUrl', '')}
+                onClick={() => set('imageUrl', CATEGORY_IMAGE[form.category] ?? DEFAULT_POSTER)}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Clear image
+                Restore category poster
               </Button>
             )}
           </Stack>
