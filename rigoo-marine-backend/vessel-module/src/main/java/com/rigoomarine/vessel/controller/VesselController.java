@@ -6,6 +6,9 @@ import com.rigoomarine.common.security.SecurityUtils;
 import com.rigoomarine.vessel.service.VesselService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +38,9 @@ public class VesselController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN','TEAM_LEAD')")
     @GetMapping
-    public ResponseEntity<List<VesselDTO>> getAllVessels() {
-        return ResponseEntity.ok(vesselService.getAllVessels());
+    public ResponseEntity<Page<VesselDTO>> getAllVessels(
+            @PageableDefault(size = 50, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(vesselService.getAllVessels(pageable));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','TEAM_LEAD') or @vesselSecurity.canAccess(#id)")

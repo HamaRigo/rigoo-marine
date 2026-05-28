@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import httpClient from '../services/httpClient';
 
 /**
@@ -60,26 +60,27 @@ export function useGet(url, options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const optionsKey = JSON.stringify(options);
+  // Stable ref so fetchData doesn't need options in its dep array (avoids
+  // an infinite loop when caller passes an inline object literal).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const response = await httpClient.get(url, JSON.parse(optionsKey));
+      const response = await httpClient.get(url, optionsRef.current);
       setData(response.data);
     } catch (err) {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
-   
-  }, [url, optionsKey]);
+  }, [url]);
 
-  useState(() => {
+  useEffect(() => {
     fetchData();
-  });
+  }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 }

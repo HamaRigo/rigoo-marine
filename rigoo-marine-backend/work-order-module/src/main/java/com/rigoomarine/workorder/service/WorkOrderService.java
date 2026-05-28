@@ -190,10 +190,8 @@ public class WorkOrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<WorkOrderDTO> getAllWorkOrders() {
-        return workOrderRepository.findAll().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+    public Page<WorkOrderDTO> getAllWorkOrders(Pageable pageable) {
+        return workOrderRepository.findAll(pageable).map(this::toDTO);
     }
 
     /**

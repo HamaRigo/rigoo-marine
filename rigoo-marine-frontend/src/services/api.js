@@ -544,28 +544,19 @@ export const invoiceApi = {
 // ============== DASHBOARD APIs ==============
 export const dashboardApi = {
   /**
-   * Get dashboard statistics. clientId is derived from the JWT server-side.
-   * @returns {Promise<{activeOrders: number, vessels: number, pendingInvoices: number, completedOrders: number}>}
+   * Single fetch — callers derive both stats and the recent list from the same
+   * array so no second round-trip is needed.
+   * @returns {Promise<{activeOrders,completedOrders,recentOrders,rawOrders}>}
    */
-  getStats: async () => {
+  getSummary: async (limit = 5) => {
     const response = await httpClient.get('/api/work-orders/my');
     const orders = response.data || [];
     return {
-      activeOrders: orders.filter((o) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length,
-      vessels: 0, // Will be fetched separately
-      pendingInvoices: 0, // Will be fetched separately
+      activeOrders:    orders.filter((o) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length,
       completedOrders: orders.filter((o) => o.status === 'COMPLETED').length,
+      recentOrders:    orders.slice(0, limit),
+      rawOrders:       orders,
     };
-  },
-
-  /**
-   * Get recent orders. clientId is derived from the JWT server-side.
-   * @param {number} limit
-   * @returns {Promise<Array>}
-   */
-  getRecentOrders: async (limit = 5) => {
-    const response = await httpClient.get('/api/work-orders/my');
-    return (response.data || []).slice(0, limit);
   },
 };
 
@@ -1293,10 +1284,10 @@ export const technicianApi = {
 
   getAttachments: async (id) => workOrderApi.getAttachments(id),
 
-  // History (completed orders for the technician)
+  // History — filter on the server to avoid pulling the full queue payload.
   getWorkHistory: async () => {
-    const orders = await workOrderApi.getAssigned();
-    return (orders || []).filter(o => o.status === 'COMPLETED');
+    const response = await httpClient.get('/api/work-orders/assigned', { params: { status: 'COMPLETED' } });
+    return response.data || [];
   },
 };
 
@@ -1310,8 +1301,7 @@ export const driverApi = {
 // ============== DELIVERY APIs ==============
 export const deliveryApi = {
   getTodayTasks: async () => {
-    const d = new Date();
-    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const date = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, locale-independent
     const res = await httpClient.get('/api/delivery/tasks/today', { params: { date } });
     return res.data;
   },

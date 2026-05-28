@@ -10,6 +10,8 @@ import com.rigoomarine.common.security.AuthenticatedUser;
 import com.rigoomarine.common.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -61,10 +63,8 @@ public class VesselService {
     }
 
     @Transactional(readOnly = true)
-    public List<VesselDTO> getAllVessels() {
-        return vesselRepository.findAll().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+    public Page<VesselDTO> getAllVessels(Pageable pageable) {
+        return vesselRepository.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -50,12 +50,14 @@ const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 function greeting(name) {
   const h = new Date().getHours();
   const salut = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  return `${salut}, ${name?.split(' ')[0] || 'Captain'}`;
+  return `${salut}, ${name?.split(' ')[0] ?? 'Captain'}`;
 }
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 // ── KPI card ───────────────────────────────────────────────────────────────
 
-function KpiCard({ icon: Icon, label, value, sub, accent, to, loading }) {
+const KpiCard = memo(function KpiCard({ icon: Icon, label, value, sub, accent, to, loading }) {
   return (
     <HoverLift lift={4}>
       <Card
@@ -116,11 +118,11 @@ function KpiCard({ icon: Icon, label, value, sub, accent, to, loading }) {
       </Card>
     </HoverLift>
   );
-}
+});
 
 // ── Section heading ────────────────────────────────────────────────────────
 
-function SectionTitle({ icon: Icon, title, action }) {
+const SectionTitle = memo(function SectionTitle({ icon: Icon, title, action }) {
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
       <Stack direction="row" spacing={1} alignItems="center">
@@ -132,11 +134,11 @@ function SectionTitle({ icon: Icon, title, action }) {
       {action}
     </Stack>
   );
-}
+});
 
 // ── Chart card wrapper ─────────────────────────────────────────────────────
 
-function ChartCard({ title, icon: Icon, action, children, loading, skeletonH = 220 }) {
+const ChartCard = memo(function ChartCard({ title, icon: Icon, action, children, loading, skeletonH = 220 }) {
   return (
     <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}>
       <CardContent>
@@ -145,7 +147,7 @@ function ChartCard({ title, icon: Icon, action, children, loading, skeletonH = 2
       </CardContent>
     </Card>
   );
-}
+});
 
 // ── Custom recharts tooltip ────────────────────────────────────────────────
 
@@ -175,12 +177,15 @@ function OrdersAreaChart({ orders }) {
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
-      return { month: d.getMonth() + 1, year: d.getFullYear(), label: MONTH_LABELS[d.getMonth()], count: 0 };
+      return { key: `${d.getFullYear()}-${d.getMonth() + 1}`, label: MONTH_LABELS[d.getMonth()], count: 0 };
     });
+    // O(1) lookup via Map instead of O(6) .find() per order
+    const index = new Map(months.map((m, i) => [m.key, i]));
     (orders || []).forEach((o) => {
       const d = new Date(o.createdAt);
-      const slot = months.find(m => m.month === d.getMonth() + 1 && m.year === d.getFullYear());
-      if (slot) slot.count += 1;
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      const i = index.get(key);
+      if (i !== undefined) months[i].count += 1;
     });
     return months;
   }, [orders]);
@@ -381,7 +386,8 @@ function ActivityFeed({ orders, shopOrders, loading }) {
       to:    '/dashboard/shop-orders',
     }));
     return [...wo, ...so]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .map(item => ({ ...item, _ts: item.date ? new Date(item.date).getTime() : 0 }))
+      .sort((a, b) => b._ts - a._ts)
       .slice(0, 6);
   }, [orders, shopOrders]);
 
@@ -511,7 +517,7 @@ function UpcomingPanel({ loading }) {
 
 export default function DashboardHome() {
   const { user } = useAuth();
-  const year = new Date().getFullYear();
+  const year = CURRENT_YEAR;
 
   const { data: vessels,    isLoading: loadV } = useQuery({ queryKey: ['vessels', 'my'],      queryFn: vesselApi.getMyVessels,       staleTime: 5 * 60_000 });
   const { data: orders,     isLoading: loadO } = useQuery({ queryKey: ['workOrders', 'my'],   queryFn: workOrderApi.getMyWorkOrders, staleTime: 2 * 60_000 });

@@ -43,13 +43,23 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Hidden source maps: stack traces point to original source on error
+    // monitoring (Sentry etc.) without shipping map files to the browser.
+    sourcemap: 'hidden',
+    // Warn when any individual chunk exceeds 600 KB uncompressed.
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          query: ['@tanstack/react-query'],
+          vendor:   ['react', 'react-dom', 'react-router-dom'],
+          mui:      ['@mui/material', '@emotion/react', '@emotion/styled'],
+          'mui-icons': ['@mui/icons-material'],
+          query:    ['@tanstack/react-query'],
+          // recharts is ~500 KB; keep it in its own async chunk so it only
+          // loads for pages that render charts (Dashboard, Analytics).
+          recharts: ['recharts'],
+          // i18next runtime + react bindings — not needed until first t() call.
+          i18n:     ['i18next', 'react-i18next'],
         },
       },
     },

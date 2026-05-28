@@ -99,17 +99,19 @@ export default function AuthProvider({ children }) {
     return roleList.includes(user.role);
   }, [user]);
 
-  const isAdmin      = useCallback(() => hasRole(ROLES.ADMIN),      [hasRole]);
-  const isTechnician = useCallback(() => hasRole(ROLES.TECHNICIAN), [hasRole]);
-  const isTeamLead   = useCallback(() => hasRole(ROLES.TEAM_LEAD),  [hasRole]);
-  const isDelivery   = useCallback(() => hasRole(ROLES.DELIVERY),   [hasRole]);
-  const isClient     = useCallback(() => hasRole(ROLES.CLIENT),     [hasRole]);
+  // Stable derived booleans — no extra closure per role, computed once per user change.
+  const role         = user?.role ?? null;
+  const isAdmin      = useCallback(() => role === ROLES.ADMIN,      [role]);
+  const isTechnician = useCallback(() => role === ROLES.TECHNICIAN, [role]);
+  const isTeamLead   = useCallback(() => role === ROLES.TEAM_LEAD,  [role]);
+  const isDelivery   = useCallback(() => role === ROLES.DELIVERY,   [role]);
+  const isClient     = useCallback(() => role === ROLES.CLIENT,     [role]);
 
   const value = useMemo(() => ({
     user,
     loading,
     isAuthenticated: !!user,
-    role: user?.role,
+    role,
     login,
     loginWithOtp,
     logout,
@@ -123,7 +125,7 @@ export default function AuthProvider({ children }) {
     isDelivery,
     isClient,
     ROLES,
-  }), [user, loading, login, loginWithOtp, logout, register, refreshToken, updateProfile, hasRole, isAdmin, isTechnician, isTeamLead, isDelivery, isClient]);
+  }), [user, role, loading, login, loginWithOtp, logout, register, refreshToken, updateProfile, hasRole, isAdmin, isTechnician, isTeamLead, isDelivery, isClient]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
