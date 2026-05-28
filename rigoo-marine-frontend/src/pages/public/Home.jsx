@@ -17,6 +17,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import CloseIcon from '@mui/icons-material/Close';
+import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import SpeedIcon from '@mui/icons-material/Speed';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
@@ -301,6 +302,8 @@ export default function Home() {
   const [heroIn, setHeroIn]           = useState(false);
   const [slide, setSlide]             = useState(0);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
+  const [brochureOpen, setBrochureOpen]   = useState(false);
+  const [brochurePage, setBrochurePage]   = useState(0);
   const [serviceIdx, setServiceIdx]   = useState(0);
   const [svcVisible, setSvcVisible]   = useState(true);
   const [galleryCat, setGalleryCat]   = useState('all');
@@ -580,24 +583,119 @@ export default function Home() {
                 </Box>
               </Reveal>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }} >
+            <Grid size={{ xs: 12, md: 6 }}>
               <Reveal variant="slide" direction="left" timeout={640}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                {/* Brochure booklet — click either page to open full-size */}
+                <Box sx={{
+                  display: 'flex',
+                  gap: { xs: 2, sm: 3 },
+                  justifyContent: 'center',
+                  alignItems: 'flex-start',
+                  px: { xs: 2, sm: 4, md: 2 },
+                  pt: 1,
+                  pb: 4,
+                }}>
                   {[0, 1].map((page) => (
                     <Box
                       key={page}
-                      component="img"
-                      src={`/flyers/rigoo-services-${i18n.language.startsWith('ar') ? 'ar' : 'en'}-${page}.jpg`}
-                      alt={`Rigoo Marine Services ${page + 1}`}
-                      loading="lazy"
+                      onClick={() => { setBrochurePage(page); setBrochureOpen(true); }}
                       sx={{
-                        width: '50%', borderRadius: 2,
-                        boxShadow: '0 14px 40px rgba(15,23,42,0.18)',
-                        transition: 'transform 360ms cubic-bezier(0.2,0,0,1), box-shadow 360ms',
-                        '&:hover': { transform: 'scale(1.03)', boxShadow: '0 20px 52px rgba(15,23,42,0.24)' },
+                        flex: 1,
+                        maxWidth: 240,
+                        position: 'relative',
+                        cursor: 'zoom-in',
+                        // slight tilt gives the two pages a booklet feel
+                        transform: page === 0
+                          ? 'rotate(-2.5deg) translateY(0px)'
+                          : 'rotate(1.8deg)  translateY(14px)',
+                        transition: 'transform 340ms cubic-bezier(0.2,0,0,1), filter 340ms',
+                        '&:hover': {
+                          transform: 'rotate(0deg) translateY(-10px) scale(1.05)',
+                          zIndex: 2,
+                          filter: 'drop-shadow(0 24px 40px rgba(15,23,42,0.28))',
+                        },
+                        '&:hover .brochure-overlay': { opacity: 1 },
+                        '&:hover .page-badge': { opacity: 0 },
                       }}
-                    />
+                    >
+                      <Box
+                        component="img"
+                        src={`/flyers/rigoo-services-${i18n.language.startsWith('ar') ? 'ar' : 'en'}-${page}.jpg`}
+                        alt={`Rigoo Marine brochure page ${page + 1}`}
+                        loading="lazy"
+                        sx={{
+                          width: '100%',
+                          display: 'block',
+                          borderRadius: 2.5,
+                          boxShadow: '0 8px 32px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.10)',
+                          border: '1px solid rgba(255,255,255,0.6)',
+                        }}
+                      />
+
+                      {/* Hover gradient + zoom hint */}
+                      <Box
+                        className="brochure-overlay"
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 2.5,
+                          background: 'linear-gradient(to bottom, transparent 45%, rgba(0,42,68,0.78) 100%)',
+                          opacity: 0,
+                          transition: 'opacity 280ms',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          pb: 2.5,
+                          gap: 0.5,
+                        }}
+                      >
+                        <OpenInFullRoundedIcon sx={{ color: 'white', fontSize: 20 }} />
+                        <Typography sx={{
+                          color: 'white', fontWeight: 700,
+                          fontSize: '0.72rem', letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                        }}>
+                          View full size
+                        </Typography>
+                      </Box>
+
+                      {/* Page badge — hides on hover */}
+                      <Box
+                        className="page-badge"
+                        sx={{
+                          position: 'absolute',
+                          bottom: -14,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          bgcolor: 'background.paper',
+                          border: '1.5px solid',
+                          borderColor: 'divider',
+                          borderRadius: 10,
+                          px: 1.5,
+                          py: 0.3,
+                          fontSize: '0.66rem',
+                          fontWeight: 700,
+                          color: 'text.secondary',
+                          whiteSpace: 'nowrap',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          transition: 'opacity 200ms',
+                        }}
+                      >
+                        Page {page + 1} / 2
+                      </Box>
+                    </Box>
                   ))}
+                </Box>
+
+                {/* Hint below */}
+                <Box sx={{ textAlign: 'center', mt: 1 }}>
+                  <Typography variant="caption" color="text.disabled" sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 0.5,
+                  }}>
+                    <OpenInFullRoundedIcon sx={{ fontSize: 13 }} />
+                    Click a page to view full-size
+                  </Typography>
                 </Box>
               </Reveal>
             </Grid>
@@ -805,6 +903,68 @@ export default function Home() {
           </Container>
         </Box>
       </Reveal>
+
+      {/* ── Brochure lightbox ────────────────────────────────────────────── */}
+      <Dialog
+        open={brochureOpen}
+        onClose={() => setBrochureOpen(false)}
+        maxWidth="md"
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={{ enter: 320, exit: 200 }}
+        PaperProps={{ sx: { bgcolor: '#0a0e14', borderRadius: 3, overflow: 'hidden' } }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setBrochureOpen(false)}
+            sx={{ position: 'absolute', top: 10, right: 10, zIndex: 10, bgcolor: 'rgba(255,255,255,0.12)', color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.22)' } }}
+          >
+            <CloseIcon />
+          </IconButton>
+
+          {/* Brochure image */}
+          <Box
+            component="img"
+            key={brochurePage}
+            src={`/flyers/rigoo-services-${i18n.language.startsWith('ar') ? 'ar' : 'en'}-${brochurePage}.jpg`}
+            alt={`Rigoo Marine brochure page ${brochurePage + 1}`}
+            sx={{ width: '100%', display: 'block' }}
+          />
+
+          {/* Page navigation bar */}
+          <Box sx={{
+            position: 'absolute',
+            bottom: 0, left: 0, right: 0,
+            py: 1.5,
+            px: 3,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+          }}>
+            <IconButton
+              onClick={() => setBrochurePage(0)}
+              disabled={brochurePage === 0}
+              size="small"
+              sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' }, '&.Mui-disabled': { opacity: 0.3 } }}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+            <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.08em', userSelect: 'none' }}>
+              Page {brochurePage + 1} / 2
+            </Typography>
+            <IconButton
+              onClick={() => setBrochurePage(1)}
+              disabled={brochurePage === 1}
+              size="small"
+              sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' }, '&.Mui-disabled': { opacity: 0.3 } }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Gallery lightbox ─────────────────────────────────────────────── */}
       <Dialog
