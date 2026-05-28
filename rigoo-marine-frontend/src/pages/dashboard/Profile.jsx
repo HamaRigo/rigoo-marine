@@ -62,7 +62,7 @@ export default function Profile() {
   });
   const { data: orders = [] } = useQuery({
     queryKey: ['work-orders', 'my'],
-    queryFn:  workOrderApi.getMyOrders,
+    queryFn:  workOrderApi.getMyWorkOrders,
     staleTime: 60_000,
   });
 

@@ -44,7 +44,7 @@ function AccountStatsBanner() {
 
   const [ordersQuery, invoicesQuery] = useQueries({
     queries: [
-      { queryKey: ['work-orders', 'my'], queryFn: workOrderApi.getMyOrders, staleTime: 60_000 },
+      { queryKey: ['work-orders', 'my'], queryFn: workOrderApi.getMyWorkOrders, staleTime: 60_000 },
       { queryKey: ['invoices', 'my'], queryFn: () => invoiceApi.getMyInvoices(clientId), enabled: !!clientId, staleTime: 60_000 },
     ],
   });
@@ -263,7 +263,7 @@ function ServiceOrdersTab() {
   const { t } = useTranslation('dashboard');
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['work-orders', 'my'],
-    queryFn:  workOrderApi.getMyOrders,
+    queryFn:  workOrderApi.getMyWorkOrders,
   });
 
   if (isLoading) return (

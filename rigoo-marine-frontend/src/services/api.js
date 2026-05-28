@@ -1222,6 +1222,14 @@ export const maintenanceApi = {
     });
     return response.data;
   },
+
+  downloadDossierPdf: async (vesselId, lang = 'en') => {
+    const response = await httpClient.get(`/api/maintenance/vessels/${vesselId}/dossier/pdf`, {
+      responseType: 'blob',
+      params: lang !== 'en' ? { lang } : {},
+    });
+    return response.data;
+  },
 };
 
 // ============== VESSEL INSPECTION APIs ==============
