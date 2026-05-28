@@ -188,7 +188,7 @@ export default function TeamLeadTeamRequests() {
 
   const { data: clients = [] } = useQuery({
     queryKey: ['admin-clients'],
-    queryFn: adminApi.getAll,
+    queryFn: adminApi.getAllUsers,
   });
 
   useEffect(() => {

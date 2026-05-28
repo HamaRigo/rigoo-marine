@@ -75,7 +75,7 @@ export default function TeamLeadDashboard() {
         setTeamReqs(reqsResult.value?.content || []);
       }
 
-      adminApi.getAll().then(list => setClients(list || [])).catch(() => {});
+      adminApi.getAllUsers().then(list => setClients(list || [])).catch(() => {});
       setLoading(false);
     };
     load();

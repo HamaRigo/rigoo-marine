@@ -39,7 +39,7 @@ export default function TeamLeadOrders() {
 
   const { data: clients = [] } = useQuery({
     queryKey: ['admin-clients'],
-    queryFn: adminApi.getAll,
+    queryFn: adminApi.getAllUsers,
   });
 
   /* ── Optimistic cache patch ── */
