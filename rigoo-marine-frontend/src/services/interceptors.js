@@ -30,7 +30,8 @@ export function setupInterceptors() {
         if (!onLogin) {
           // Authenticated request expired — flag for Login page to show banner
           sessionStorage.setItem(SESSION_KEY, '1');
-          window.location.href = '/login';
+          const next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/login?next=${next}`;
         }
         // If already on /login the 401 is for wrong credentials — let the
         // form's catch block handle it (getApiError will extract the message).

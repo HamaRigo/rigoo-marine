@@ -19,16 +19,20 @@ import {
   Grow,
   Alert,
   TextField,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { shopApi } from '../../../services/api';
+import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
+import { shopApi, adminApi } from '../../../services/api';
 import ProductPhotoCarousel from '../../../components/shop/ProductPhotoCarousel';
 import ProductInquiryDialog from '../../../components/shop/ProductInquiryDialog';
+import QuotationPreviewDialog from '../../../components/shop/QuotationPreviewDialog';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../hooks/useCart';
 import { useToast } from '../../../hooks/useToast';
 import { formatPrice } from '../../../utils/format';
+import toast from 'react-hot-toast';
 
 
 function SpecRow({ label, value }) {
@@ -46,13 +50,15 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation('shop');
   const isAr = i18n.language === 'ar';
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { addItem } = useCart();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [inquiryType, setInquiryType] = useState('QUOTE');
+  const [inquiryType, setInquiryType] = useState('STOCK_CHECK');
   const [qty, setQty] = useState(1);
+  const [requestingQuote, setRequestingQuote] = useState(false);
+  const [quotationPreview, setQuotationPreview] = useState(null);
 
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['shop', 'product-by-slug', slug],
@@ -64,6 +70,59 @@ export default function ProductDetail() {
   const openInquiry = (type) => {
     setInquiryType(type);
     setInquiryOpen(true);
+  };
+
+  const handleRequestQuote = async () => {
+    if (!isAuthenticated) {
+      navigate(`/login?next=/shop/products/${product?.slug}`);
+      return;
+    }
+    setRequestingQuote(true);
+    try {
+      const fullUser = user ?? {};
+
+      const name = (i18n.language === 'ar' ? product.nameAr : product.nameEn) || product.nameEn || 'Product';
+      const sku = product.sku ? ` [${product.sku}]` : '';
+      const hasConflict = product.stockQty != null && qty > product.stockQty;
+      const stockNote = hasConflict
+        ? ` — in stock: ${product.stockQty}, requested: ${qty}`
+        : product.stockQty != null ? ` — in stock: ${product.stockQty}` : '';
+
+      const stockConflicts = hasConflict
+        ? [{ description: `${name}${sku}`, requested: qty, available: product.stockQty }]
+        : [];
+
+      const noteLines = [`Quotation requested for product: ${name}.`];
+      if (hasConflict) {
+        noteLines.push('');
+        noteLines.push('⚠ Limited stock:');
+        noteLines.push(`  • ${name}${sku}: requested ${qty}, available ${product.stockQty}`);
+      }
+
+      const payload = {
+        status: 'DRAFT',
+        clientId: fullUser.id || user?.id || null,
+        billToName:    fullUser.name    || user?.name    || '',
+        billToEmail:   fullUser.email   || user?.email   || '',
+        billToPhone:   fullUser.phone   || user?.phone   || '',
+        billToAddress: fullUser.address || user?.address || '',
+        billToCompany: fullUser.company || user?.company || '',
+        notes: noteLines.join('\n'),
+        items: [{
+          description: `${name}${sku}${stockNote}`,
+          quantity: qty,
+          unitPrice: Number(product.priceQar) || 0,
+          taxRate: 5,
+        }],
+      };
+
+      const result = await adminApi.requestCartQuotation(payload);
+      setQuotationPreview({ quotation: result, stockConflicts });
+    } catch {
+      toast.error('Failed to generate quotation. Please try again.');
+    } finally {
+      setRequestingQuote(false);
+    }
   };
 
   if (isLoading) {
@@ -192,9 +251,13 @@ export default function ProductDetail() {
                       variant="contained"
                       size="large"
                       fullWidth
-                      onClick={() => openInquiry('QUOTE')}
+                      disabled={requestingQuote}
+                      startIcon={requestingQuote
+                        ? <CircularProgress size={16} color="inherit" />
+                        : <RequestQuoteRoundedIcon />}
+                      onClick={handleRequestQuote}
                     >
-                      {t('cta.requestQuote')}
+                      {requestingQuote ? t('cta.generatingQuote', 'Generating…') : t('cta.requestQuote')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -262,6 +325,13 @@ export default function ProductDetail() {
         onClose={() => setInquiryOpen(false)}
         productId={product.id}
         defaultType={inquiryType}
+      />
+
+      <QuotationPreviewDialog
+        open={!!quotationPreview}
+        quotation={quotationPreview?.quotation ?? null}
+        stockConflicts={quotationPreview?.stockConflicts ?? []}
+        onClose={() => setQuotationPreview(null)}
       />
     </Box>
   );

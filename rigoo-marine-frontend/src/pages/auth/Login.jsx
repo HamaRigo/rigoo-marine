@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
@@ -79,6 +79,7 @@ function PasswordForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('auth');
   const { t: tv } = useTranslation('validation');
 
@@ -100,7 +101,8 @@ function PasswordForm() {
     setLoading(true);
     try {
       const userData = await login(formData.identifier.trim(), formData.password);
-      const target = location.state?.from?.pathname || defaultPathForRole(userData?.role);
+      const next = searchParams.get('next');
+      const target = location.state?.from?.pathname || next || defaultPathForRole(userData?.role);
       navigate(target, { replace: true });
     } catch (err) {
       if (err.response?.status === 429) {
@@ -176,6 +178,7 @@ function OtpForm() {
   const { loginWithOtp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('auth');
   const { t: tv } = useTranslation('validation');
 
@@ -221,7 +224,8 @@ function OtpForm() {
     setLoading(true);
     try {
       const userData = await loginWithOtp(phone.trim(), code);
-      const target = location.state?.from?.pathname || defaultPathForRole(userData?.role);
+      const next = searchParams.get('next');
+      const target = location.state?.from?.pathname || next || defaultPathForRole(userData?.role);
       navigate(target, { replace: true });
     } catch (err) {
       const status = err.response?.status;
