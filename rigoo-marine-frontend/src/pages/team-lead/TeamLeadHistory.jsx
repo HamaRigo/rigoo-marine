@@ -3,7 +3,7 @@ import { Box, Typography, Chip, IconButton, Tooltip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Reveal } from '../../components/common/Motion';
 import FilterableTable from '../../components/admin/FilterableTable';
-import { adminApi } from '../../services/api';
+import { workOrderApi } from '../../services/api';
 
 export default function TeamLeadHistory() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export default function TeamLeadHistory() {
 
       <FilterableTable
         queryKey={['team-lead', 'history']}
-        fetchPage={(params) => adminApi.searchOrders({ ...params, status: 'COMPLETED' })}
+        fetchPage={(params) => workOrderApi.searchOrders({ ...params, status: 'COMPLETED' })}
         columns={columns}
         rowKey={r => r.id}
         defaultFilters={{ status: 'COMPLETED' }}

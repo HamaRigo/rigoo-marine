@@ -6,7 +6,7 @@ import {
   TextField, FormControl, InputLabel, Select, MenuItem, Button,
 } from '@mui/material';
 import toast from 'react-hot-toast';
-import { adminApi, workOrderApi, technicianApi } from '../../services/api';
+import { workOrderApi, technicianApi, clientApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Reveal } from '../../components/common/Motion';
 import WorkOrderKanban from '../../components/common/WorkOrderKanban';
@@ -28,7 +28,7 @@ export default function TeamLeadOrders() {
   /* ── Data ── */
   const { data: pageData, isLoading, isError } = useQuery({
     queryKey: ['tl-orders'],
-    queryFn: () => adminApi.searchOrders({ size: 300, sort: 'createdAt,desc' }),
+    queryFn: () => workOrderApi.searchOrders({ size: 300, sort: 'createdAt,desc' }),
   });
   const orders = pageData?.content ?? [];
 
@@ -39,7 +39,7 @@ export default function TeamLeadOrders() {
 
   const { data: clients = [] } = useQuery({
     queryKey: ['admin-clients'],
-    queryFn: adminApi.getAllUsers,
+    queryFn: clientApi.getAll,
   });
 
   /* ── Optimistic cache patch ── */

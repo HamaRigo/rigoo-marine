@@ -11,7 +11,7 @@ import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import { Reveal, Stagger } from '../../components/common/Motion';
-import { adminApi, teamRequestApi } from '../../services/api';
+import { workOrderApi, clientApi, teamRequestApi } from '../../services/api';
 import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 
@@ -61,7 +61,7 @@ export default function TeamLeadDashboard() {
   useEffect(() => {
     const load = async () => {
       const [ordersResult, reqsResult] = await Promise.allSettled([
-        adminApi.searchOrders({ size: 50, sort: 'createdAt,desc' }),
+        workOrderApi.searchOrders({ size: 50, sort: 'createdAt,desc' }),
         teamRequestApi.list({ size: 20 }),
       ]);
 
@@ -75,7 +75,7 @@ export default function TeamLeadDashboard() {
         setTeamReqs(reqsResult.value?.content || []);
       }
 
-      adminApi.getAllUsers().then(list => setClients(list || [])).catch(() => {});
+      clientApi.getAll().then(list => setClients(list || [])).catch(() => {});
       setLoading(false);
     };
     load();

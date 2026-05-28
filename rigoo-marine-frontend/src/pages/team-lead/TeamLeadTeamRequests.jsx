@@ -15,7 +15,7 @@ import InfoOutlinedIcon        from '@mui/icons-material/InfoOutlined';
 import WhatsAppIcon            from '@mui/icons-material/WhatsApp';
 import AttachFileIcon          from '@mui/icons-material/AttachFile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { teamRequestApi, technicianApi, adminApi } from '../../services/api';
+import { teamRequestApi, technicianApi, clientApi } from '../../services/api';
 import { Reveal } from '../../components/common/Motion';
 import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
@@ -188,7 +188,7 @@ export default function TeamLeadTeamRequests() {
 
   const { data: clients = [] } = useQuery({
     queryKey: ['admin-clients'],
-    queryFn: adminApi.getAllUsers,
+    queryFn: clientApi.getAll,
   });
 
   useEffect(() => {

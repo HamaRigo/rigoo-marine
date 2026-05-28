@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import { Reveal, Stagger } from '../../components/common/Motion';
-import { adminApi, technicianApi } from '../../services/api';
+import { workOrderApi, technicianApi } from '../../services/api';
 
 export default function TeamLeadTechnicians() {
   const [techs, setTechs]     = useState([]);
@@ -18,7 +18,7 @@ export default function TeamLeadTechnicians() {
       try {
         const [techList, ordersPage] = await Promise.all([
           technicianApi.getAll(),
-          adminApi.searchOrders({ size: 200, status: 'IN_PROGRESS' }),
+          workOrderApi.searchOrders({ size: 200, status: 'IN_PROGRESS' }),
         ]);
         setTechs(techList || []);
         setOrders(ordersPage?.content || []);

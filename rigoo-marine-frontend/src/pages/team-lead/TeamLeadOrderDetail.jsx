@@ -11,7 +11,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import toast from 'react-hot-toast';
-import { adminApi, workOrderApi, technicianApi } from '../../services/api';
+import { workOrderApi, technicianApi } from '../../services/api';
 
 const STATUS_COLORS = {
   PENDING_APPROVAL: 'default',
@@ -51,7 +51,7 @@ export default function TeamLeadOrderDetail() {
     try {
       setLoading(true);
       const [orderData, updatesData, techList] = await Promise.all([
-        adminApi.getOrderById(id),
+        workOrderApi.getWorkOrderById(id),
         workOrderApi.getUpdates(id),
         technicianApi.getAll().catch(() => []),
       ]);

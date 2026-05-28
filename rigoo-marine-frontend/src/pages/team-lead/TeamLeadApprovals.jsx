@@ -13,7 +13,7 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import { useAuth } from '../../context/AuthContext';
-import { workOrderApi, adminApi, marketplaceApi } from '../../services/api';
+import { workOrderApi, marketplaceApi } from '../../services/api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import { Reveal, Stagger } from '../../components/common/Motion';
@@ -32,7 +32,7 @@ function WorkOrderApprovals() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tl-approvals'],
-    queryFn: () => adminApi.searchOrders({ status: 'PENDING_APPROVAL', size: 50, sort: 'createdAt,asc' }),
+    queryFn: () => workOrderApi.searchOrders({ status: 'PENDING_APPROVAL', size: 50, sort: 'createdAt,asc' }),
     refetchInterval: 60_000,
   });
 
@@ -366,7 +366,7 @@ export default function TeamLeadApprovals() {
 
   const { data: ordersData } = useQuery({
     queryKey: ['tl-approvals'],
-    queryFn: () => adminApi.searchOrders({ status: 'PENDING_APPROVAL', size: 50, sort: 'createdAt,asc' }),
+    queryFn: () => workOrderApi.searchOrders({ status: 'PENDING_APPROVAL', size: 50, sort: 'createdAt,asc' }),
     refetchInterval: 60_000,
   });
 

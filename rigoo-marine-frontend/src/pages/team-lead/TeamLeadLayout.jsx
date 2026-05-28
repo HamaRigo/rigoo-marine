@@ -6,7 +6,7 @@ import {
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { adminApi } from '../../services/api';
+import { workOrderApi } from '../../services/api';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
@@ -44,7 +44,7 @@ export default function TeamLeadLayout() {
 
   const { data: pendingApprovals } = useQuery({
     queryKey: ['tl-pending-approvals-count'],
-    queryFn: () => adminApi.searchOrders({ status: 'PENDING_APPROVAL', size: 1 }),
+    queryFn: () => workOrderApi.searchOrders({ status: 'PENDING_APPROVAL', size: 1 }),
     refetchInterval: 60_000,
     select: (d) => d?.totalElements ?? 0,
   });
