@@ -64,9 +64,19 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+    # Reduce noise if Eureka is slow to start: wait 10 s before first attempt,
+    # retry every 5 s, give up retrying after 3 attempts per round.
+    eureka-server-connect-timeout-seconds: 5
+    eureka-server-read-timeout-seconds: 8
+    initial-instance-info-replication-interval-seconds: 10
+    instance-info-replication-interval-seconds: 30
+    registry-fetch-interval-seconds: 30
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+    # Heartbeat + lease settings keep stale registrations from lingering
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 jwt:
   secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}

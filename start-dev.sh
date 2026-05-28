@@ -47,13 +47,25 @@ echo "Redis:      localhost:6379"
 echo "Kafka:      localhost:9092"
 echo "Kafka UI:   http://localhost:8090"
 echo ""
-echo "Now start each Spring service in its own terminal (mvn spring-boot:run):"
-for m in discovery-service gateway-module client-module vessel-module service-module \
+echo "Start each Spring service in its own terminal — ORDER MATTERS:"
+echo ""
+echo "  STEP 1 — Eureka (must be up before any other service)"
+echo "  cd rigoo-marine-backend/discovery-service && mvn spring-boot:run"
+echo "  Wait until you see: 'Started EurekaServerApplication' (port 8761)"
+echo ""
+echo "  STEP 2 — Gateway + all backend services (any order after step 1)"
+for m in gateway-module client-module vessel-module service-module \
          work-order-module technician-module invoice-module notification-module \
-         marketplace-module shop-module; do
+         marketplace-module shop-module delivery-module; do
     echo "  cd rigoo-marine-backend/$m && mvn spring-boot:run"
 done
 echo ""
-echo "Then the frontend:"
-echo "  cd rigoo-marine-frontend && npm run dev   # http://localhost:5173"
+echo "  STEP 3 — Frontend"
+echo "  cd rigoo-marine-frontend && npm run dev   # http://localhost:3000"
+echo ""
+echo "Service ports:"
+echo "  Eureka dashboard : http://localhost:8761"
+echo "  API Gateway      : http://localhost:8080"
+echo "  Frontend         : http://localhost:3000"
+echo "  Kafka UI         : http://localhost:8090"
 echo "========================================="
