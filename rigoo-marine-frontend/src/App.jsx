@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Box, CircularProgress } from '@mui/material';
 import DirectionProvider from './i18n/DirectionProvider';
-import { AuthProvider } from './context/AuthContext';
+import AuthProvider from './context/AuthProvider';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Shell components — tiny, needed on every route, eager-load is correct.
