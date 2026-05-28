@@ -20,7 +20,7 @@ import { useCart } from '../../hooks/useCart';
 import CartDrawer from '../shop/CartDrawer';
 import { WAVE_DELAY } from '../../utils/waveSync';
 
-function BrandMark({ size, animated }) {
+function BrandMark({ size = 44, animated = false }) {
   const [broken, setBroken] = useState(false);
   const animationSx = animated ? { animation: `rmWave 5s ease-in-out ${WAVE_DELAY} infinite` } : {};
   if (broken) {
@@ -65,9 +65,8 @@ BrandMark.propTypes = {
   size:     PropTypes.number,
   animated: PropTypes.bool,
 };
-BrandMark.defaultProps = { size: 44, animated: false };
 
-function NavLinkButton({ to, label, active }) {
+function NavLinkButton({ to, label, active = false }) {
   return (
     <Button
       component={Link}
@@ -106,11 +105,10 @@ NavLinkButton.propTypes = {
   label:  PropTypes.string.isRequired,
   active: PropTypes.bool,
 };
-NavLinkButton.defaultProps = { active: false };
 
 // ── User avatar dropdown (desktop) ────────────────────────────────────────
 
-function UserMenu({ user, isAdmin, isTeamLead, isDelivery, isTechnician }) {
+function UserMenu({ user = null, isAdmin = false, isTeamLead = false, isDelivery = false, isTechnician = false }) {
   const navigate = useNavigate();
 
   const initials = (user?.name || 'U')
@@ -150,7 +148,6 @@ UserMenu.propTypes = {
   isDelivery:  PropTypes.bool,
   isTechnician: PropTypes.bool,
 };
-UserMenu.defaultProps = { user: null, isAdmin: false, isTeamLead: false, isDelivery: false, isTechnician: false };
 
 // ── Navbar ─────────────────────────────────────────────────────────────────
 
