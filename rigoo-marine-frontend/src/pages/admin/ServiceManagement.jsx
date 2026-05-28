@@ -16,7 +16,6 @@ import CloudUploadRoundedIcon   from '@mui/icons-material/CloudUploadRounded';
 import EngineeringIcon          from '@mui/icons-material/Engineering';
 import CheckCircleRoundedIcon   from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon        from '@mui/icons-material/CancelRounded';
-import ImageNotSupportedRoundedIcon from '@mui/icons-material/ImageNotSupportedRounded';
 import toast from 'react-hot-toast';
 import { adminApi, fileApi } from '../../services/api';
 import { Reveal, Stagger } from '../../components/common/Motion';
@@ -24,15 +23,32 @@ import { formatPrice } from '../../utils/format';
 
 /* ── Constants ───────────────────────────────────────────────────────────── */
 
-const SERVICE_CATEGORIES = ['Mechanical', 'Structural', 'Finishing', 'Renovation', 'Specialized'];
+const SERVICE_CATEGORIES = ['Mechanical', 'Structural', 'Cosmetic', 'Renovation', 'Specialized'];
 
 const CATEGORY_COLOR = {
   Mechanical:  'warning',
   Structural:  'info',
-  Finishing:   'secondary',
+  Cosmetic:    'secondary',
   Renovation:  'success',
   Specialized: 'primary',
 };
+
+const CATEGORY_IMAGE = {
+  Mechanical:  '/services_img/posters/poster-mechanical.png',
+  Structural:  '/services_img/posters/poster-structural.png',
+  Cosmetic:    '/services_img/posters/poster-cosmetic.png',
+  Renovation:  '/services_img/posters/poster-renovation.png',
+  Specialized: '/services_img/posters/poster-specialized.png',
+};
+
+const LOCAL_POSTERS = [
+  { label: 'Mechanical',  src: '/services_img/posters/poster-mechanical.png'  },
+  { label: 'Structural',  src: '/services_img/posters/poster-structural.png'  },
+  { label: 'Cosmetic',    src: '/services_img/posters/poster-cosmetic.png'    },
+  { label: 'Renovation',  src: '/services_img/posters/poster-renovation.png'  },
+  { label: 'Specialized', src: '/services_img/posters/poster-specialized.png' },
+  { label: 'Overview',    src: '/services_img/posters/poster-overview.png'    },
+];
 
 const EMPTY_FORM = {
   name: '', nameAr: '',
@@ -128,16 +144,13 @@ function ServiceCard({ service, onEdit, onDelete, onToggle }) {
     >
       {/* Image */}
       <Box sx={{ position: 'relative', height: 180, overflow: 'hidden', bgcolor: 'grey.100', flexShrink: 0 }}>
-        {service.imageUrl ? (
-          <Box component="img" src={service.imageUrl} alt={service.name}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        ) : (
-          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', flexDirection: 'column', gap: 1 }}>
-            <ImageNotSupportedRoundedIcon sx={{ fontSize: 40, color: 'text.disabled' }} />
-            <Typography variant="caption" color="text.disabled">No image</Typography>
-          </Box>
-        )}
+        {(() => {
+          const src = service.imageUrl || CATEGORY_IMAGE[service.category] || '/services_img/posters/poster-overview.png';
+          return (
+            <Box component="img" src={src} alt={service.name}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          );
+        })()}
 
         {/* Active / Inactive badge */}
         <Chip
@@ -286,12 +299,49 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
 
         {/* ── Image ── */}
         {tab === 1 && (
-          <Stack spacing={2}>
-            <Alert severity="info" sx={{ fontSize: 12 }}>
-              Upload a representative photo for this service. Supported formats: JPG, PNG, WebP.
-            </Alert>
+          <Stack spacing={2.5}>
+            <Typography variant="subtitle2" fontWeight={700}>Preset posters</Typography>
+            <Grid container spacing={1.5}>
+              {LOCAL_POSTERS.map((p) => {
+                const selected = form.imageUrl === p.src;
+                return (
+                  <Grid size={{ xs: 6, sm: 4 }} key={p.label}>
+                    <Box
+                      onClick={() => set('imageUrl', p.src)}
+                      sx={{
+                        position: 'relative', borderRadius: 2, overflow: 'hidden',
+                        cursor: 'pointer', height: 110,
+                        border: '2px solid',
+                        borderColor: selected ? 'primary.main' : 'transparent',
+                        boxShadow: selected ? '0 0 0 3px rgba(25,118,210,.25)' : 'none',
+                        transition: 'border-color .2s, box-shadow .2s, transform .15s',
+                        '&:hover': { transform: 'scale(1.03)' },
+                      }}
+                    >
+                      <Box component="img" src={p.src} alt={p.label}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <Box sx={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0,
+                        bgcolor: 'rgba(0,0,0,.55)', py: 0.5, px: 1,
+                      }}>
+                        <Typography variant="caption" color="#fff" fontWeight={600}>{p.label}</Typography>
+                      </Box>
+                      {selected && (
+                        <CheckCircleRoundedIcon sx={{
+                          position: 'absolute', top: 6, right: 6, fontSize: 20,
+                          color: 'primary.main', bgcolor: '#fff', borderRadius: '50%',
+                        }} />
+                      )}
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            <Divider>or upload a custom image</Divider>
+
             <ImageUploadCell
-              url={form.imageUrl}
+              url={LOCAL_POSTERS.some(p => p.src === form.imageUrl) ? '' : form.imageUrl}
               onUrl={url => set('imageUrl', url)}
             />
             {form.imageUrl && (
@@ -300,7 +350,7 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
                 onClick={() => set('imageUrl', '')}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Remove image
+                Clear image
               </Button>
             )}
           </Stack>
