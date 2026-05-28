@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,7 +46,6 @@ const localDate = (offsetDays = 0) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const TODAY_STR     = localDate(0);
 const YESTERDAY_STR = localDate(-1);
 
 const TaskCard = memo(function TaskCard({ task, isToday, busyId, onAction, onNavigate }) {

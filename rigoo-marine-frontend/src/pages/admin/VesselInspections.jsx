@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import AddIcon      from '@mui/icons-material/Add';
 import DeleteIcon   from '@mui/icons-material/Delete';
-import EditIcon     from '@mui/icons-material/Edit';
 import toast        from 'react-hot-toast';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { vesselInspectionApi } from '../../services/api';

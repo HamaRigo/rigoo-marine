@@ -1,11 +1,12 @@
+/* eslint-disable react/prop-types */
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Typography, Grid, Stack, Card, CardMedia, CardContent, CardActions,
+  Box, Typography, Grid, Stack, Card, CardContent, CardActions,
   Button, IconButton, Tooltip, Chip, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, FormControl, InputLabel, Select, MenuItem,
   Switch, FormControlLabel, CircularProgress, Alert, Tabs, Tab,
-  Skeleton, Divider, Avatar, LinearProgress, Badge,
+  Skeleton, Divider, Avatar, LinearProgress,
 } from '@mui/material';
 import AddRoundedIcon          from '@mui/icons-material/AddRounded';
 import EditRoundedIcon         from '@mui/icons-material/EditRounded';

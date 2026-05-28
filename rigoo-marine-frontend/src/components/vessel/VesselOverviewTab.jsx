@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -500,9 +501,9 @@ function VesselSpecsCard({ vessel }) {
 export default function VesselOverviewTab({ vessel, vesselId, dossier }) {
   const { t } = useTranslation('dashboard');
   const year = new Date().getFullYear();
-  const d = dossier || {};
-  const records  = d.recentHistory || [];
-  const schedule = d.schedule || [];
+  const records  = useMemo(() => dossier?.recentHistory ?? [], [dossier]);
+  const schedule = useMemo(() => dossier?.schedule ?? [], [dossier]);
+  const d = dossier ?? {};
 
   // Per-vessel fuel analytics (backend may return 500 if no data — treat as unavailable)
   const { data: fuelAnalytics, isLoading: fuelLoading } = useQuery({
@@ -533,7 +534,6 @@ export default function VesselOverviewTab({ vessel, vesselId, dossier }) {
   }, [schedule, t]);
 
   const nextAccent  = nextUrgency === 'OVERDUE' ? '#e53935' : nextUrgency === 'DUE_SOON' ? '#f5a623' : '#43a047';
-  const totalRecords = records.length;
 
   return (
     <Stack spacing={2.5}>

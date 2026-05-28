@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /**
  * InventoryManagement — Admin/Team-Lead parts catalogue.
  *
@@ -24,7 +25,7 @@ import {
   TablePagination, TextField, MenuItem, Select, FormControl,
   InputLabel, InputAdornment, IconButton, Chip, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Alert, Skeleton, Badge, Divider,
+  Button, Alert, Skeleton, Divider,
   CircularProgress,
 } from '@mui/material';
 import SearchRoundedIcon         from '@mui/icons-material/SearchRounded';
@@ -37,7 +38,7 @@ import WarningAmberRoundedIcon   from '@mui/icons-material/WarningAmberRounded';
 import InventoryRoundedIcon      from '@mui/icons-material/InventoryRounded';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi }          from '../../services/api';
-import { Reveal, Stagger }       from '../../components/common/Motion';
+import { Reveal }                from '../../components/common/Motion';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -18,8 +19,6 @@ import { formatPrice } from '../../utils/format';
 import { Reveal, Stagger, HoverLift } from '../../components/common/Motion';
 
 // ── Constants ──────────────────────────────────────────────────────────────
-
-const FLOW_STEPS = ['PENDING_PAYMENT', 'PAID'];
 
 const STATUS_META = {
   PENDING_PAYMENT: { color: 'warning', bg: '#fff8e1' },

@@ -1,8 +1,9 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Box, Typography, Card, CardContent, CardHeader, Chip, Stack, Skeleton,
+  Box, Typography, Card, CardContent, Chip, Stack, Skeleton,
   Alert, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses,
   Divider, IconButton, Tabs, Tab, Grid,
 } from '@mui/material';
@@ -23,8 +24,6 @@ import { Reveal, Stagger, HoverLift } from '../../components/common/Motion';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const FLOW_STEPS = ['PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS', 'COMPLETED'];
-
 const STATUS_META = {
   PENDING_APPROVAL: { color: 'default',   label: 'Awaiting Approval', bg: '#f5f5f5' },
   PENDING:          { color: 'warning',   label: 'Pending',           bg: '#fff8e1' },
@@ -39,7 +38,7 @@ const CATEGORY_EMOJIS = {
   NAVIGATION: '🧭', PLUMBING: '💧', SAFETY: '🆘', MAINTENANCE: '🔄', OTHER: '❓',
 };
 
-const ALL_STATUSES = ['ALL', 'PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS', 'WAITING_PARTS', 'COMPLETED', 'CANCELLED'];
+const FLOW_STEPS = ['PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS', 'COMPLETED'];
 
 // ── Custom stepper connector ───────────────────────────────────────────────
 

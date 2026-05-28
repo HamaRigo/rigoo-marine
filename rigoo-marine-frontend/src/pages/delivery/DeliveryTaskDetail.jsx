@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Card, CardContent, Chip, Button, Stack, Divider,
+  Box, Typography, Card, CardContent, Chip, Button, Stack,
   TextField, CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogActions, IconButton,
 } from '@mui/material';

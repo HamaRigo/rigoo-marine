@@ -44,18 +44,11 @@ export function useToast() {
     toast(message, { duration, icon: 'ℹ️' });
   };
 
-  const promise = async (promise, messages) => {
-    try {
-      const result = await toast.promise(promise, {
-        loading: messages.loading || 'Loading...',
-        success: messages.success || 'Success!',
-        error: messages.error || 'Error occurred',
-      });
-      return result;
-    } catch (err) {
-      throw err;
-    }
-  };
+  const promise = (promise, messages) => toast.promise(promise, {
+    loading: messages.loading || 'Loading...',
+    success: messages.success || 'Success!',
+    error: messages.error || 'Error occurred',
+  });
 
   const dismiss = (toastId) => {
     toast.dismiss(toastId);

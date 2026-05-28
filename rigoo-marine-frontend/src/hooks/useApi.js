@@ -60,20 +60,22 @@ export function useGet(url, options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const optionsKey = JSON.stringify(options);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await httpClient.get(url, options);
+      const response = await httpClient.get(url, JSON.parse(optionsKey));
       setData(response.data);
     } catch (err) {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
-  }, [url, JSON.stringify(options)]);
+   
+  }, [url, optionsKey]);
 
   useState(() => {
     fetchData();

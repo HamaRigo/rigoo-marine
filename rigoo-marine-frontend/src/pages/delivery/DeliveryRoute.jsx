@@ -4,7 +4,6 @@ import {
   LinearProgress, Alert, IconButton, Tooltip,
 } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -221,7 +220,7 @@ export default function DeliveryRoute() {
     if (stops.length > 0 && !myPosRef.current) {
       map.setView([parseFloat(stops[0].deliveryLat), parseFloat(stops[0].deliveryLng)], 13);
     }
-  }, [tasks, selectedStopId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tasks, selectedStopId]);  
 
   // Update live GPS dot and auto-center on first fix
   useEffect(() => {
@@ -241,7 +240,7 @@ export default function DeliveryRoute() {
       centeredOnGpsRef.current = true;
       map.setView([myPos.lat, myPos.lng], 15);
     }
-  }, [myPos]);
+  }, [myPos, user?.name]);  
 
   return (
     <Box>

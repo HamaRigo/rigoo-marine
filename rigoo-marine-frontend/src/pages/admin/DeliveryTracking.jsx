@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -95,7 +96,10 @@ export default function DeliveryTracking() {
     return () => clearInterval(id);
   }, [techId]);
 
-  const queryKey = techId ? ['admin-delivery-driver', techId, trackDate] : ['admin-delivery-all', trackDate];
+  const queryKey = useMemo(
+    () => techId ? ['admin-delivery-driver', techId, trackDate] : ['admin-delivery-all', trackDate],
+    [techId, trackDate],
+  );
   const { data: tasksPage, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey,
     queryFn: () => techId

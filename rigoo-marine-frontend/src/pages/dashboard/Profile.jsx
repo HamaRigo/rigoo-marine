@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, TextField, Button, Grid, Avatar,
   CircularProgress, ToggleButtonGroup, ToggleButton, Divider,
-  FormControlLabel, Switch, Chip, Stack, InputAdornment, Collapse, IconButton,
+  Switch, Chip, Stack, InputAdornment, Collapse, IconButton,
 } from '@mui/material';
 import LanguageRoundedIcon    from '@mui/icons-material/LanguageRounded';
 import WhatsAppIcon           from '@mui/icons-material/WhatsApp';
@@ -53,7 +53,7 @@ export default function Profile() {
   useEffect(() => {
     if (user?.preferredLanguage) setPreferredLanguage(user.preferredLanguage);
     if (user) setWhatsappOptIn(Boolean(user.whatsappOptIn));
-  }, [user?.preferredLanguage, user?.whatsappOptIn]);
+  }, [user]);
 
   const { data: vessels = [] } = useQuery({
     queryKey: ['vessels', 'my'],

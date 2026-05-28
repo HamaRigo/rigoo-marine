@@ -4,12 +4,12 @@ import {
   Box, Typography, Card, CardContent, Grid, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, IconButton, Chip, MenuItem,
   ImageList, ImageListItem, ImageListItemBar, CircularProgress, Alert,
-  FormControl, InputLabel, Select, ToggleButtonGroup, ToggleButton
+  FormControl, InputLabel, Select
 } from '@mui/material';
 import {
   Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon,
   PhotoLibrary as PhotoIcon, Videocam as VideoIcon, Description as DocumentIcon,
-  FilterList as FilterIcon, Refresh as RefreshIcon
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { adminApi } from '../../services/api';
 import toast from 'react-hot-toast';

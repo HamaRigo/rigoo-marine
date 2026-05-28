@@ -1,4 +1,5 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+/* eslint-disable react/prop-types */
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Chip, Stack, Divider, Button,
   Stepper, Step, StepLabel, StepConnector, stepConnectorClasses,
@@ -18,7 +19,7 @@ import CalendarTodayIcon       from '@mui/icons-material/CalendarToday';
 import AttachFileIcon          from '@mui/icons-material/AttachFile';
 import PendingActionsIcon      from '@mui/icons-material/PendingActions';
 import { useQuery }            from '@tanstack/react-query';
-import { useTranslation }      from 'react-i18next';
+
 
 import { workOrderApi }          from '../../services/api';
 import { Reveal, Stagger }       from '../../components/common/Motion';
@@ -148,7 +149,6 @@ function UpdateEntry({ update }) {
 export default function ClientOrderDetail() {
   const { id }     = useParams();
   const navigate   = useNavigate();
-  const { t }      = useTranslation('dashboard');
 
   const orderQ = useQuery({
     queryKey: ['work-orders', 'detail', id],
@@ -253,7 +253,7 @@ export default function ClientOrderDetail() {
                 sx={{ mb: 2, borderRadius: 2 }}>
                 <Typography variant="body2" fontWeight={600}>Under Review</Typography>
                 <Typography variant="caption">
-                  Our team is reviewing your request. You'll be notified once it's approved and assigned.
+                  Our team is reviewing your request. You&apos;ll be notified once it&apos;s approved and assigned.
                 </Typography>
               </Alert>
             )}
@@ -343,7 +343,7 @@ export default function ClientOrderDetail() {
             ) : visibleUpdates.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
                 <Typography variant="body2" color="text.disabled">
-                  No updates yet. We'll notify you when your technician posts a progress note.
+                  No updates yet. We&apos;ll notify you when your technician posts a progress note.
                 </Typography>
               </Box>
             ) : (

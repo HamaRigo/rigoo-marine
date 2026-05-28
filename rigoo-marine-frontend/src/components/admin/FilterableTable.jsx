@@ -1,6 +1,7 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Box, Card, CardContent, Stack, TextField, MenuItem, Table, TableHead,
+  Card, CardContent, Stack, TextField, MenuItem, Table, TableHead,
   TableRow, TableCell, TableBody, TableContainer, TablePagination, Typography,
   CircularProgress, Alert,
 } from '@mui/material';
@@ -53,7 +54,9 @@ export default function FilterableTable({
   }, [JSON.stringify(filterValues)]);
 
   // Reset to first page when search/filter changes
-  useEffect(() => { setPage(0); }, [debouncedQ, JSON.stringify(debouncedFilterValues)]);
+  const debouncedFilterKey = JSON.stringify(debouncedFilterValues);
+   
+  useEffect(() => { setPage(0); }, [debouncedQ, debouncedFilterKey]);
 
   const params = useMemo(() => {
     const p = { page, size, sort: defaultSort };

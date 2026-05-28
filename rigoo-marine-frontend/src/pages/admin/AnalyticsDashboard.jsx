@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /**
  * AnalyticsDashboard — Admin revenue & operations view.
  *
@@ -26,9 +27,9 @@ import ReceiptRoundedIcon      from '@mui/icons-material/ReceiptRounded';
 import PeopleRoundedIcon       from '@mui/icons-material/PeopleRounded';
 import SpeedRoundedIcon        from '@mui/icons-material/SpeedRounded';
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
-  ResponsiveContainer, Legend,
+  ResponsiveContainer,
 } from 'recharts';
 import { useQuery }          from '@tanstack/react-query';
 import { adminApi }          from '../../services/api';

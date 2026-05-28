@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 import { useCallback, useRef, useState } from 'react';
-import { Box, Typography, IconButton, Chip, Stack } from '@mui/material';
+import { Box, Typography, Chip, Stack } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';

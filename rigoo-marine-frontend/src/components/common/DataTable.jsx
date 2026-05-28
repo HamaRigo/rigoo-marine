@@ -1,7 +1,8 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TablePagination, TextField, InputAdornment, Chip, Box, Typography
+  TablePagination, TextField, InputAdornment, Box, Typography
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 

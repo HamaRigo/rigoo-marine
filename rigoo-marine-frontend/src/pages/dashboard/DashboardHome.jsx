@@ -1,9 +1,10 @@
+/* eslint-disable react/prop-types */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Grid, Card, CardContent, Button, Chip, Stack,
-  Skeleton, Divider, Avatar, LinearProgress,
+  Skeleton, Avatar, LinearProgress,
 } from '@mui/material';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -19,7 +20,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import { useAuth } from '../../context/AuthContext';
-import { vesselApi, workOrderApi, invoiceApi, shopApi, teamRequestApi } from '../../services/api';
+import { vesselApi, workOrderApi, invoiceApi, shopApi } from '../../services/api';
 import useMaintenanceCost from '../../hooks/maintenance/useMaintenanceCost';
 import useUpcomingServices from '../../hooks/maintenance/useUpcomingServices';
 import { Reveal, Stagger, HoverLift } from '../../components/common/Motion';
@@ -411,7 +412,7 @@ function ActivityFeed({ orders, shopOrders, loading }) {
 
   return (
     <Stack spacing={0.5}>
-      {items.map((item, idx) => {
+      {items.map((item) => {
         const Icon = item.icon;
         return (
           <Box
@@ -570,7 +571,7 @@ export default function DashboardHome() {
                 {greeting(user?.name)} 👋
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.65)', maxWidth: 420 }}>
-                Here's an overview of your fleet and service activity today.
+                Here&apos;s an overview of your fleet and service activity today.
               </Typography>
             </Box>
             <Button

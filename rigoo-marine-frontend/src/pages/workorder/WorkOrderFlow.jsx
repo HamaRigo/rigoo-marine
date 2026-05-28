@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Container, Typography, Card, CardContent, TextField, Button, Grid, Chip, Stepper, Step, StepLabel, Alert, Paper, MenuItem, CircularProgress, IconButton, List, ListItem, ListItemText, Input } from '@mui/material';
+import { Box, Container, Typography, Card, CardContent, TextField, Button, Grid, Chip, Stepper, Step, StepLabel, Alert, Paper, MenuItem, CircularProgress, IconButton, List, ListItem, ListItemText } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApi, workOrderApi, vesselApi, fileApi } from '../../services/api';
@@ -48,7 +48,7 @@ export default function WorkOrderFlow() {
     symptoms: '',
   });
   const [uploadedMedia, setUploadedMedia] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   // Fetch services from API
@@ -571,7 +571,7 @@ export default function WorkOrderFlow() {
                 Almost Done!
               </Typography>
               <Typography align="center" paragraph>
-                To submit your service request and track its progress, you'll need to create an account or sign in.
+                To submit your service request and track its progress, you&apos;ll need to create an account or sign in.
               </Typography>
               <Alert severity="info" sx={{ mb: 3 }}>
                 Your information will be saved when you register.

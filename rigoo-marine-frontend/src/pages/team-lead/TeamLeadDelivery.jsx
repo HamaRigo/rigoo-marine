@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -95,7 +96,10 @@ export default function TeamLeadDelivery() {
     return () => clearInterval(id);
   }, [techId]);
 
-  const queryKey = techId ? ['tl-delivery-driver', techId, trackDate] : ['tl-delivery-tasks', trackDate];
+  const queryKey = useMemo(
+    () => techId ? ['tl-delivery-driver', techId, trackDate] : ['tl-delivery-tasks', trackDate],
+    [techId, trackDate],
+  );
   const { data: tasksPage, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey,
     queryFn: () => techId
@@ -506,7 +510,7 @@ function SingleDriverDetail({ tasks, openAssign, openForce, setCancelTarget, sel
         <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>All stops completed.</Typography>
       ) : (
         <Stack spacing={0.75} sx={{ mb: 2 }}>
-          {activeTasks.map((task, i) => (
+          {activeTasks.map((task) => (
             <StopCard key={task.id} task={task} index={tasks.indexOf(task)} {...stopProps} />
           ))}
         </Stack>

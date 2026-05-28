@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,13 +6,12 @@ import {
   Box, Typography, Grid, Button, Card, CardContent, CardActions,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
   TextField, MenuItem, Chip, Stack, Skeleton, Divider, IconButton,
-  Tooltip, InputAdornment, useTheme, useMediaQuery, Collapse, Alert,
+  Tooltip, InputAdornment, useTheme, Collapse, Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import SpeedIcon from '@mui/icons-material/Speed';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import toast from 'react-hot-toast';

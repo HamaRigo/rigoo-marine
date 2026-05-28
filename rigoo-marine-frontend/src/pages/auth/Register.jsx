@@ -58,6 +58,7 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // eslint-disable-next-line no-unused-vars
       const { confirmPassword, userType, ...rest } = formData;
       const newUser = await register({ ...rest, role: userType });
       const target = location.state?.from?.pathname || defaultPathForRole(newUser?.role);

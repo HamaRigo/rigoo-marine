@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Card, CardContent,
@@ -84,7 +85,12 @@ export default function BoatGallery() {
     marketplaceApi.getBoatTypes().then(setBoatTypes).catch(() => {});
   }, []);
 
-  useEffect(() => { setPage(0); }, [mode, JSON.stringify(filters), JSON.stringify(lengthCommit), JSON.stringify(yearCommit), JSON.stringify(priceCommit)]);
+  const filtersKey     = JSON.stringify(filters);
+  const lengthKey      = JSON.stringify(lengthCommit);
+  const yearKey        = JSON.stringify(yearCommit);
+  const priceKey       = JSON.stringify(priceCommit);
+   
+  useEffect(() => { setPage(0); }, [mode, filtersKey, lengthKey, yearKey, priceKey]);
 
   const activeCount = useMemo(() => {
     const text = Object.values(filters).filter((v) => v !== '').length;

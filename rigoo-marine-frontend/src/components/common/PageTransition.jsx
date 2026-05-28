@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from 'react';
 import { Fade, Box } from '@mui/material';
 import { useLocation } from 'react-router-dom';

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useRef, useEffect, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';

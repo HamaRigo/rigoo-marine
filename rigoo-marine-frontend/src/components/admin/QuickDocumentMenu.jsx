@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /**
  * QuickDocumentMenu — compact icon-button dropdown that lets Admin / Team Lead
  * instantly generate an invoice or quotation directly from a work order card

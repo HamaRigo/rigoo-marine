@@ -1,10 +1,10 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Button, IconButton, Menu, MenuItem,
   ListItemIcon, ListItemText, Tooltip,
   Box, Stack, Typography, Divider,
 } from '@mui/material';
-import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import ArrowDropDownRoundedIcon from '@mui/icons-material/ArrowDropDownRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { useTranslation } from 'react-i18next';

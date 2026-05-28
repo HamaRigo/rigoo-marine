@@ -1,9 +1,10 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Container, Typography, Button, Card, CardContent,
-  Chip, Dialog, DialogContent, IconButton, Zoom, Slide, Fade, Grid,
-  Avatar, Skeleton,
+  Chip, Dialog, DialogContent, IconButton, Zoom, Fade, Grid,
+  Avatar,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -320,7 +321,7 @@ export default function Home() {
     return () => window.cancelAnimationFrame(id);
   }, []);
 
-  useEffect(() => { resetTimer(); return () => clearInterval(timerRef.current); }, []); // eslint-disable-line
+  useEffect(() => { resetTimer(); return () => clearInterval(timerRef.current); }, []);  
 
   useEffect(() => {
     videoRefs.current.forEach((vid, idx) => {

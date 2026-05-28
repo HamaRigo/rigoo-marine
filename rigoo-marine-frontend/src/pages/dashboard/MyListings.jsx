@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Typography, Stack, Button, Chip, Card, CardContent, CardActions,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Checkbox,
+  Dialog, DialogContent, DialogActions, TextField, Checkbox,
   FormControlLabel, Grid, CircularProgress, InputAdornment, Alert,
   Skeleton, Divider,
 } from '@mui/material';

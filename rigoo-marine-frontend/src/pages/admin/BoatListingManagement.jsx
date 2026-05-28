@@ -1,8 +1,9 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Box, Button, Chip, Stack, Typography, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  InputAdornment, Alert, CircularProgress, Divider,
+  InputAdornment, Alert, CircularProgress,
 } from '@mui/material';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import EditIcon from '@mui/icons-material/Edit';

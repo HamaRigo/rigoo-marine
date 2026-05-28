@@ -7,8 +7,6 @@ import EngineeringIcon from '@mui/icons-material/Engineering';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { adminApi, technicianApi } from '../../services/api';
 
-const ROLE_COLORS = { TECHNICIAN: 'primary', TEAM_LEAD: 'warning' };
-
 export default function TeamLeadTechnicians() {
   const [techs, setTechs]     = useState([]);
   const [orders, setOrders]   = useState([]);

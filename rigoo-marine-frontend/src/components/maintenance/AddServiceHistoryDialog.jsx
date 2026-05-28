@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -70,7 +71,7 @@ export default function AddServiceHistoryDialog({ open, onClose, vesselId, sugge
           // We've already saved the history row, so a single attachment
           // failure shouldn't roll the whole thing back. Surface via
           // toast and move on.
-          // eslint-disable-next-line no-console
+           
           console.warn('attachment upload failed', err);
           toast.error(t('attachments.uploadFailed', { name: p.file.name }));
         }

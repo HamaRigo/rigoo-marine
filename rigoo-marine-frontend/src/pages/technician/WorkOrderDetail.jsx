@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,7 @@ import {
   TextField, List, ListItem, ListItemText, Divider,
   CircularProgress, Alert, FormControlLabel, Checkbox,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  IconButton, Tooltip, Stack, LinearProgress,
+  Tooltip, Stack, LinearProgress,
 } from '@mui/material';
 import ArrowBackIcon        from '@mui/icons-material/ArrowBack';
 import AddIcon              from '@mui/icons-material/Add';

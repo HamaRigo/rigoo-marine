@@ -30,15 +30,12 @@ export default function UserManagement() {
 
   const [resetTarget, setResetTarget] = useState(null);
   const [formTarget, setFormTarget] = useState(null); // null = closed, false = create, user = edit
-  const [deleteTarget, setDeleteTarget] = useState(null);
-
   const deleteMutation = useMutation({
     mutationFn: (id) => adminApi.deleteUser(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'audit'] });
       toastSuccess(t('users.deleteSuccess'));
-      setDeleteTarget(null);
     },
     onError: () => toastError(t('users.deleteFailed')),
   });

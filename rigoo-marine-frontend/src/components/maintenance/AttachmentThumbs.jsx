@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Box, Stack, IconButton, Tooltip } from '@mui/material';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';

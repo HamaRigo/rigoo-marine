@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Box, AppBar, Toolbar, Button, IconButton, Avatar, Tabs, Tab,

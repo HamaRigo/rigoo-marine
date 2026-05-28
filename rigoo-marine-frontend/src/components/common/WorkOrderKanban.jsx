@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /**
  * Shared drag-and-drop work order kanban board.
  * Used by TeamLeadOrders and admin OrderManagement.
@@ -9,6 +10,7 @@
  *   onAction('approve'|'reject'|'assign', order) – for actions needing dialogs
  *   detailBasePath – e.g. '/team-lead/orders'
  */
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {

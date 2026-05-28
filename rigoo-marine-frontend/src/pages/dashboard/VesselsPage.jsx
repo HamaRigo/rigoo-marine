@@ -1,11 +1,12 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+/* eslint-disable react/prop-types */
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Stack, Button, IconButton, Chip, Avatar, Skeleton,
   TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
   DialogContentText, Divider, Tooltip, ToggleButtonGroup, ToggleButton,
-  useTheme, useMediaQuery, Fade, Card, CardContent, Grid, Tabs, Tab,
-  Alert, CircularProgress, InputAdornment,
+  useTheme, useMediaQuery, Fade, Grid, Tabs, Tab,
+  CircularProgress, InputAdornment,
 } from '@mui/material';
 import AddRoundedIcon        from '@mui/icons-material/AddRounded';
 import EditOutlinedIcon      from '@mui/icons-material/EditOutlined';
@@ -29,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import { vesselApi, maintenanceApi } from '../../services/api';
 import { useAuth }                   from '../../context/AuthContext';
-import { HoverLift, Reveal }         from '../../components/common/Motion';
+import { HoverLift }                 from '../../components/common/Motion';
 import useVesselDossier              from '../../hooks/maintenance/useVesselDossier';
 import VesselOverviewTab             from '../../components/vessel/VesselOverviewTab';
 import ServiceHistoryTimeline        from '../../components/maintenance/ServiceHistoryTimeline';
@@ -372,7 +373,7 @@ function DeleteVesselDialog({ vessel, onClose, onConfirm, deleting }) {
 // ── Vessel dossier (right panel) ───────────────────────────────────────────
 
 function VesselDossier({ vesselId, vessel, onBack }) {
-  const { t: tm, i18n } = useTranslation('maintenance');
+  const { i18n } = useTranslation('maintenance');
   const { t }           = useTranslation('dashboard');
   const [tab, setTab]             = useState(0);
   const [scheduleView, setScheduleView] = useState('list');

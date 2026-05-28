@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -165,7 +166,7 @@ export default function TeamLeadDashboard() {
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <QuickDocumentMenu
                               label={`WO #${o.id}`}
-                              onCreateInvoice={(e) => { handleDocumentOrder('invoice', o); }}
+                              onCreateInvoice={() => { handleDocumentOrder('invoice', o); }}
                               onCreateQuotation={() => handleDocumentOrder('quotation', o)}
                             />
                             <Chip label={o.status} color={STATUS_COLORS[o.status] || 'default'} size="small" />

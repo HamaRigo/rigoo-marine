@@ -1,10 +1,11 @@
+/* eslint-disable react/prop-types */
 import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Box, Typography, Stack, Card, CardContent, CardActionArea,
+  Box, Typography, Stack, Card, CardActionArea,
   Chip, Collapse, Divider, IconButton, Tooltip,
-  CircularProgress, Alert, TextField, Button, LinearProgress,
+  CircularProgress, Alert, TextField, LinearProgress,
   ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import ArrowBackRoundedIcon   from '@mui/icons-material/ArrowBackRounded';

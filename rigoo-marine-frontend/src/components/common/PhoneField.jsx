@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable react/prop-types, react-refresh/only-export-components */
 import { useState, useEffect } from 'react';
 import {
   TextField, InputAdornment, Select, MenuItem, Divider, Box,
@@ -77,7 +77,7 @@ export default function PhoneField({
   // Sync country when parent loads/resets the value to a new phone number
   useEffect(() => {
     setSelectedCode(parseE164(value).countryCode);
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value]);  
 
   const country = PHONE_COUNTRIES.find(c => c.code === selectedCode) || PHONE_COUNTRIES[0];
 

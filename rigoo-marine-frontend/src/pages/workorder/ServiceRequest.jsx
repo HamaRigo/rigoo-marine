@@ -71,7 +71,7 @@ export default function ServiceRequest() {
         vesselPreFilled.current = true;
       }
     }
-  }, [vesselsQuery.data, paramVesselId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vesselsQuery.data, paramVesselId]);  
 
   const selectedVessel = useMemo(
     () => (vesselsQuery.data || []).find((v) => v.id === Number(vesselId)),

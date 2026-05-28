@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   IconButton, Badge, Popover, Box, Typography, List, ListItem, ListItemText,
@@ -6,7 +7,6 @@ import {
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUnreadCount, useUnreadList, useMarkRead, useMarkAllRead } from '../../hooks/notifications/useNotifications';

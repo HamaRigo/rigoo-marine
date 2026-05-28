@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Component } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -50,7 +51,7 @@ export class ErrorBoundary extends Component {
             <Typography variant="body1" color="text.secondary" paragraph>
               {this.state.error?.message || 'An unexpected error occurred'}
             </Typography>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <Paper
                 variant="outlined"
                 sx={{

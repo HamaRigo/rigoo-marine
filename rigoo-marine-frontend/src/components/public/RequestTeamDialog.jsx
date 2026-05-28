@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogTitle, Box, Typography, IconButton,

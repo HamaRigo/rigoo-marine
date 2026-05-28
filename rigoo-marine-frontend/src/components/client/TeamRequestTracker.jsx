@@ -1,8 +1,9 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Box, Typography, Card, CardContent, CardHeader, Chip, Stack, Skeleton,
   Alert, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses,
-  Collapse, IconButton, Pagination, Divider, Tooltip, useTheme, useMediaQuery,
+  IconButton, Pagination, Divider, Tooltip, useTheme, useMediaQuery,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';

@@ -1,7 +1,8 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Typography, Card, CardContent, Chip, Button,
+  Box, Typography, Card, CardContent, Button,
   IconButton, Tooltip, CircularProgress, Alert, Stack,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';

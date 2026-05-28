@@ -1,11 +1,12 @@
+/* eslint-disable react/prop-types */
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Typography, Grid, Stack, Card, CardMedia, CardContent, CardActions,
+  Box, Typography, Grid, Stack, Card, CardContent, CardActions,
   Button, IconButton, Tooltip, Chip, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, FormControl, InputLabel, Select, MenuItem,
   Switch, FormControlLabel, CircularProgress, Alert, Tabs, Tab,
-  Skeleton, Divider, Badge, LinearProgress,
+  Skeleton, Divider, LinearProgress,
 } from '@mui/material';
 import AddRoundedIcon           from '@mui/icons-material/AddRounded';
 import EditRoundedIcon          from '@mui/icons-material/EditRounded';
@@ -327,7 +328,7 @@ function GalleryDialog({ open, item, onClose, onSave, isSaving }) {
         {tab === 1 && (
           <Stack spacing={2}>
             <Alert severity="info" sx={{ fontSize:12 }}>
-              Upload the "before" photo first, then the "after" result. Both are required.
+              Upload the &quot;before&quot; photo first, then the &quot;after&quot; result. Both are required.
               Supported formats: JPG, PNG, WebP.
             </Alert>
             <Grid container spacing={2}>
@@ -617,7 +618,7 @@ export default function GalleryManagement() {
         <DialogTitle fontWeight={700}>Delete gallery item?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            "<strong>{deleteTarget?.title}</strong>" will be permanently removed and
+            &quot;<strong>{deleteTarget?.title}</strong>&quot; will be permanently removed and
             will no longer appear on the website.
           </Typography>
         </DialogContent>

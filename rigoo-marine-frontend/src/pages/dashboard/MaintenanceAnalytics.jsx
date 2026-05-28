@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Stack, MenuItem, TextField, Skeleton,
@@ -225,7 +226,7 @@ function KpiTile({ icon: Icon, label, value, subValue }) {
 
 /** ─── Monthly bar chart (recharts) ─────────────────────────────────────── */
 
-function MonthlyBarChart({ data, locale }) {
+function MonthlyBarChart({ data }) {
   const chartData = data.map(m => ({
     month: MONTH_LABELS[m.month - 1],
     cost:  Math.round(Number(m.totalQar) || 0),

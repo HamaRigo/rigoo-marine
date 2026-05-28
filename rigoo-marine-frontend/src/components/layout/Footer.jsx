@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
 import { Box, Container, Typography, Link as MuiLink, Divider } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';

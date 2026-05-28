@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, CardActionArea, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup,
-  ToggleButton, Avatar, IconButton, Tooltip, Stack,
+  ToggleButton, Avatar, IconButton, Tooltip,
 } from '@mui/material';
 import {
   People as PeopleIcon,

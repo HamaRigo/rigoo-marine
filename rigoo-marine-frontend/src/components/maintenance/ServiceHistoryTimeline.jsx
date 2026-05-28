@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import {
   Box, Card, CardContent, Typography, Stack, Chip, IconButton, Tooltip, Divider,
 } from '@mui/material';

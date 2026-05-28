@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import {
@@ -22,7 +23,6 @@ import ExpandMoreIcon          from '@mui/icons-material/ExpandMore';
 import LocationOnIcon          from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon       from '@mui/icons-material/CalendarToday';
 import DirectionsBoatIcon      from '@mui/icons-material/DirectionsBoat';
-import InventoryRoundedIcon    from '@mui/icons-material/InventoryRounded';
 import AddIcon                 from '@mui/icons-material/Add';
 import { Link }                from 'react-router-dom';
 import { useTranslation }      from 'react-i18next';

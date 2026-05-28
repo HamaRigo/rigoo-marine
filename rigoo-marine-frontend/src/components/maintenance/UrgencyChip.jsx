@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Chip } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';

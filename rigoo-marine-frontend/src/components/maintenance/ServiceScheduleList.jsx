@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Stack, Button, IconButton, Tooltip,

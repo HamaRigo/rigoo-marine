@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useMemo, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, IconButton, Stack, Tooltip, Chip, useTheme,
