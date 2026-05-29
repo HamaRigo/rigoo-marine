@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Box, Container, Typography, Button, Card, CardContent,
   Chip, Dialog, DialogContent, IconButton, Zoom, Fade, Grid,
-  Avatar, Skeleton,
+  Avatar,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -61,14 +61,6 @@ const STATS = [
   { value: 100, suffix: '%',  key: 'satisfaction', delay: 280 },
   { value: 24,  suffix: '/7', key: 'support',      delay: 420 },
 ];
-
-const CATEGORY_IMAGE = {
-  Mechanical:  '/services_img/posters/poster-mechanical.png',
-  Structural:  '/services_img/posters/poster-structural.png',
-  Cosmetic:    '/services_img/posters/poster-cosmetic.png',
-  Renovation:  '/services_img/posters/poster-renovation.png',
-  Specialized: '/services_img/posters/poster-specialized.png',
-};
 
 const GALLERY_CATEGORY_LABELS = {
   en: {
@@ -279,14 +271,6 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: rawServices = [], isLoading: servicesLoading } = useQuery({
-    queryKey: ['public-services'],
-    queryFn: publicApi.getServices,
-    staleTime: 5 * 60 * 1000,
-  });
-  const activeServices = (Array.isArray(rawServices) ? rawServices : rawServices?.content ?? [])
-    .filter(s => s.active);
-
   const { data: rawGallery = [] } = useQuery({
     queryKey: ['public-gallery'],
     queryFn: publicApi.getGallery,
@@ -492,99 +476,6 @@ export default function Home() {
           </Box>
         </Container>
       </Box>
-
-      {/* ── Services preview ─────────────────────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ py: { xs: 7, md: 11 }, px: { xs: 2, sm: 3 } }}>
-        <Reveal variant="fade" timeout={700}>
-          <Typography variant="h3" textAlign="center" gutterBottom>{t('services.title')}</Typography>
-        </Reveal>
-        <Reveal variant="fade" timeout={700} delay={120}>
-          <Typography variant="h6" color="text.secondary" textAlign="center" sx={{ mb: 7 }}>
-            {t('services.subtitle')}
-          </Typography>
-        </Reveal>
-
-        {servicesLoading ? (
-          <Grid container spacing={3}>
-            {[1, 2, 3].map(n => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={n}>
-                <Skeleton variant="rounded" height={280} />
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Stagger variant="slide" direction="up" step={100} timeout={580}>
-            <Grid container spacing={3}>
-              {activeServices.map((svc) => {
-                const imgSrc = svc.imageUrl
-                  || CATEGORY_IMAGE[svc.category]
-                  || '/services_img/posters/poster-overview.png';
-                const isAr = i18n.language.startsWith('ar');
-                const displayName = (isAr && svc.nameAr) ? svc.nameAr : svc.name;
-                const displayDesc = (isAr && svc.descriptionAr) ? svc.descriptionAr : svc.description;
-                return (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={svc.id}>
-                    <Card variant="outlined" sx={{
-                      height: '100%', display: 'flex', flexDirection: 'column',
-                      borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)',
-                      boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
-                      transition: 'transform 280ms cubic-bezier(0.2,0,0,1), box-shadow 280ms',
-                      '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 22px 44px rgba(15,23,42,0.13)' },
-                      '&:hover .svc-img': { transform: 'scale(1.06)' },
-                      '&::after': {
-                        content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                        background: 'linear-gradient(90deg, #006994, #ff8f00)',
-                        opacity: 0, transition: 'opacity 300ms ease',
-                      },
-                      '&:hover::after': { opacity: 1 },
-                      position: 'relative',
-                    }}>
-                      {/* image */}
-                      <Box sx={{ height: 200, overflow: 'hidden', flexShrink: 0 }}>
-                        <Box
-                          className="svc-img"
-                          component="img"
-                          src={imgSrc}
-                          alt={svc.name}
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 480ms cubic-bezier(0.2,0,0,1)' }}
-                        />
-                      </Box>
-
-                      <CardContent sx={{ flex: 1, p: 2.5 }}>
-                        {svc.category && (
-                          <Chip
-                            label={svc.category}
-                            size="small"
-                            sx={{ mb: 1, fontWeight: 700, fontSize: 11, bgcolor: 'rgba(0,105,148,0.09)', color: '#005a80' }}
-                          />
-                        )}
-                        <Typography variant="h6" fontWeight={700} gutterBottom dir={isAr ? 'rtl' : 'ltr'}>
-                          {displayName}
-                        </Typography>
-                        {displayDesc && (
-                          <Typography variant="body2" color="text.secondary"
-                            dir={isAr ? 'rtl' : 'ltr'}
-                            sx={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {displayDesc}
-                          </Typography>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Stagger>
-        )}
-
-        <Reveal variant="fade" delay={200}>
-          <Box textAlign="center" sx={{ mt: 5 }}>
-            <Button component={Link} to="/services" variant="contained" size="large" endIcon={<ArrowForwardIcon />} sx={{ px: 4 }}>
-              {t('services.viewAll')}
-            </Button>
-          </Box>
-        </Reveal>
-      </Container>
 
       {/* ── Our Story ────────────────────────────────────────────────────── */}
       <Box id="story" sx={{

@@ -1,73 +1,62 @@
-import { useState, useEffect } from 'react';
 import {
-  Box, Container, Typography, Card, CardContent, CardActions, CardMedia,
-  Button, Chip, Slide, Fade, Collapse, Dialog, DialogContent, IconButton, Zoom,
+  Box, Container, Typography, Card, CardContent, CardActions,
+  Button, Chip, Grid, Skeleton, Slide, Fade,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import CloseIcon from '@mui/icons-material/Close';
-import BuildIcon from '@mui/icons-material/Build';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Reveal, Stagger } from '../../components/common/Motion';
-import { SkeletonCardGrid } from '../../components/common/SkeletonCard';
 import { publicApi } from '../../services/api';
 
+const CATEGORY_IMAGE = {
+  Mechanical:  '/services_img/posters/poster-mechanical.png',
+  Structural:  '/services_img/posters/poster-structural.png',
+  Cosmetic:    '/services_img/posters/poster-cosmetic.png',
+  Renovation:  '/services_img/posters/poster-renovation.png',
+  Specialized: '/services_img/posters/poster-specialized.png',
+};
+
 export default function Services() {
-  const { t } = useTranslation('public');
-  const [services, setServices] = useState([]);
-  const [categories, setCategories] = useState(['All']);
+  const { t, i18n } = useTranslation('public');
+  const isAr = i18n.language.startsWith('ar');
+
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState(null);
-  const [posterOpen, setPosterOpen] = useState(null);
 
-  const toggleExpand = (id) => setExpandedId((prev) => (prev === id ? null : id));
+  const { data: rawData = [], isLoading } = useQuery({
+    queryKey: ['public-services'],
+    queryFn: publicApi.getServices,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (expandedId === null) return;
-    const handler = () => setExpandedId(null);
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [expandedId]);
+  const services = (Array.isArray(rawData) ? rawData : rawData?.content ?? [])
+    .filter(s => s.active !== false);
 
-  useEffect(() => {
-    publicApi.getServices()
-      .then((data) => {
-        const list = (Array.isArray(data) ? data : data?.content ?? [])
-          .filter((s) => s.active !== false);
-        setServices(list);
-        const uniqueCats = [...new Set(list.map((s) => s.category).filter(Boolean))];
-        setCategories(['All', ...uniqueCats]);
-      })
-      .catch(() => setServices([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const categories = ['All', ...new Set(services.map(s => s.category).filter(Boolean))];
 
-  const filteredServices = selectedCategory === 'All'
+  const filtered = selectedCategory === 'All'
     ? services
-    : services.filter((s) => s.category === selectedCategory);
+    : services.filter(s => s.category === selectedCategory);
 
   const categoryLabel = (cat) =>
     cat === 'All'
-      ? t('services.categories.all')
+      ? t('services.categories.all', { defaultValue: 'All' })
       : t(`services.categories.${cat}`, { defaultValue: cat });
 
   return (
     <Box>
-      <Box
-        sx={{
-          color: 'white',
-          py: { xs: 5, md: 8 },
-          px: { xs: 2, sm: 3 },
-          textAlign: 'center',
-          background: 'linear-gradient(125deg, #004263 0%, #006994 60%, #0a8fbf 100%)',
-          backgroundSize: '200% 200%',
-          animation: 'rmShimmer 16s ease infinite',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+      {/* ── Header banner ── */}
+      <Box sx={{
+        color: 'white',
+        py: { xs: 5, md: 8 },
+        px: { xs: 2, sm: 3 },
+        textAlign: 'center',
+        background: 'linear-gradient(125deg, #004263 0%, #006994 60%, #0a8fbf 100%)',
+        backgroundSize: '200% 200%',
+        animation: 'rmShimmer 16s ease infinite',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
         <Container maxWidth="md">
           <Slide in direction="down" timeout={600}>
             <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>
@@ -82,198 +71,117 @@ export default function Services() {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 }, px: { xs: 2, sm: 3 } }}>
+
+        {/* ── Category filter chips ── */}
         <Reveal variant="fade" timeout={500}>
-          <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {categories.map((category) => (
+          <Box sx={{ display: 'flex', gap: 1, mb: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {categories.map((cat) => (
               <Chip
-                key={category}
-                label={categoryLabel(category)}
-                onClick={() => setSelectedCategory(category)}
-                color={selectedCategory === category ? 'primary' : 'default'}
-                variant={selectedCategory === category ? 'filled' : 'outlined'}
+                key={cat}
+                label={categoryLabel(cat)}
+                onClick={() => setSelectedCategory(cat)}
+                color={selectedCategory === cat ? 'primary' : 'default'}
+                variant={selectedCategory === cat ? 'filled' : 'outlined'}
                 sx={{ px: 2, fontWeight: 600 }}
               />
             ))}
           </Box>
         </Reveal>
 
-        {loading ? (
-          <SkeletonCardGrid count={6} />
+        {/* ── Grid ── */}
+        {isLoading ? (
+          <Grid container spacing={3}>
+            {[1, 2, 3, 4, 5, 6].map(n => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={n}>
+                <Skeleton variant="rounded" height={340} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : filtered.length === 0 ? (
+          <Box textAlign="center" py={8}>
+            <Typography variant="h6" color="text.secondary">
+              {t('services.empty', { defaultValue: 'No services available yet.' })}
+            </Typography>
+          </Box>
         ) : (
-          <Stagger
-            key={selectedCategory}
-            variant="grow"
-            step={70}
-            timeout={520}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-              gap: 3,
-            }}
-          >
-            {filteredServices.map((service) => (
-              <Card
-                key={service.id}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'box-shadow 260ms ease, transform 260ms ease',
-                  '&:hover': { boxShadow: '0 18px 44px rgba(15,23,42,0.14)', transform: 'translateY(-4px)' },
-                }}
-              >
-                {/* Image / poster */}
-                {service.imageUrl ? (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      overflow: 'hidden',
-                      bgcolor: '#f0f4f8',
-                      cursor: 'zoom-in',
-                      '&:hover .poster-overlay': { opacity: 1 },
-                      '&:hover .poster-img': { transform: 'scale(1.02)' },
-                    }}
-                    onClick={() => setPosterOpen(service)}
-                  >
-                    <CardMedia
-                      component="img"
-                      className="poster-img"
-                      image={service.imageUrl}
-                      alt={service.name}
-                      sx={{
-                        height: { xs: 340, sm: 460, md: 520 },
-                        objectFit: 'contain',
-                        p: 1.5,
-                        transition: 'transform 400ms cubic-bezier(0.2,0,0,1)',
-                      }}
-                    />
-                    <Box
-                      className="poster-overlay"
-                      sx={{
-                        position: 'absolute', inset: 0,
-                        bgcolor: 'rgba(0,66,99,0.45)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: 0,
-                        transition: 'opacity 260ms ease',
-                      }}
-                    >
-                      <Box sx={{
-                        display: 'flex', alignItems: 'center', gap: 1,
-                        bgcolor: 'white', color: 'primary.dark',
-                        px: 2.5, py: 1, borderRadius: '20px',
-                        fontWeight: 700, fontSize: '0.9rem',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-                      }}>
-                        <OpenInFullIcon sx={{ fontSize: 18 }} />
-                        View Full Size
-                      </Box>
-                    </Box>
-                  </Box>
-                ) : (
-                  <Box
-                    sx={{
-                      height: 180,
-                      bgcolor: 'action.hover',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <BuildIcon sx={{ fontSize: 64, color: 'primary.light', opacity: 0.4 }} />
-                  </Box>
-                )}
+          <Stagger key={selectedCategory} variant="slide" direction="up" step={80} timeout={540}>
+            <Grid container spacing={3}>
+              {filtered.map((svc) => {
+                const imgSrc = svc.imageUrl
+                  || CATEGORY_IMAGE[svc.category]
+                  || '/services_img/posters/poster-overview.png';
+                const name = (isAr && svc.nameAr) ? svc.nameAr : svc.name;
+                const desc = (isAr && svc.descriptionAr) ? svc.descriptionAr : svc.description;
 
-                <CardContent sx={{ flexGrow: 1 }}>
-                  {service.category && (
-                    <Chip
-                      label={categoryLabel(service.category)}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                      sx={{ mb: 1.5 }}
-                    />
-                  )}
-                  <Typography variant="h6" gutterBottom fontWeight={700}>
-                    {service.name}
-                  </Typography>
-                  <Collapse in={expandedId === service.id} timeout={300}>
-                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                      {service.description}
-                    </Typography>
-                  </Collapse>
-                </CardContent>
-                <CardActions sx={{ px: 2, pb: 2 }}>
-                  <Button component={Link} to="/register" size="small" variant="contained">
-                    {t('services.request')}
-                  </Button>
-                  {service.description && (
-                    <Button
-                      size="small"
-                      onClick={(e) => { e.stopPropagation(); toggleExpand(service.id); }}
-                      endIcon={
-                        <ExpandMoreIcon
-                          fontSize="small"
+                return (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={svc.id}>
+                    <Card sx={{
+                      height: '100%', display: 'flex', flexDirection: 'column',
+                      borderRadius: 3, overflow: 'hidden',
+                      border: '1px solid rgba(0,0,0,0.07)',
+                      boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
+                      position: 'relative',
+                      transition: 'transform 280ms cubic-bezier(0.2,0,0,1), box-shadow 280ms',
+                      '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 22px 44px rgba(15,23,42,0.13)' },
+                      '&:hover .svc-img': { transform: 'scale(1.06)' },
+                      '&::after': {
+                        content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                        background: 'linear-gradient(90deg, #006994, #ff8f00)',
+                        opacity: 0, transition: 'opacity 300ms ease',
+                      },
+                      '&:hover::after': { opacity: 1 },
+                    }}>
+                      {/* Photo */}
+                      <Box sx={{ height: 220, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box
+                          className="svc-img"
+                          component="img"
+                          src={imgSrc}
+                          alt={svc.name}
                           sx={{
-                            transform: expandedId === service.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 280ms cubic-bezier(0.2,0,0,1)',
+                            width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                            transition: 'transform 480ms cubic-bezier(0.2,0,0,1)',
                           }}
                         />
-                      }
-                    >
-                      {expandedId === service.id ? t('services.showLess') : t('services.learnMore')}
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
-            ))}
+                      </Box>
+
+                      <CardContent sx={{ flex: 1, p: 2.5 }}>
+                        {svc.category && (
+                          <Chip
+                            label={categoryLabel(svc.category)}
+                            size="small"
+                            sx={{ mb: 1.5, fontWeight: 700, fontSize: 11, bgcolor: 'rgba(0,105,148,0.09)', color: '#005a80' }}
+                          />
+                        )}
+                        <Typography variant="h6" fontWeight={700} gutterBottom dir={isAr ? 'rtl' : 'ltr'}>
+                          {name}
+                        </Typography>
+                        {desc && (
+                          <Typography variant="body2" color="text.secondary"
+                            dir={isAr ? 'rtl' : 'ltr'}
+                            sx={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {desc}
+                          </Typography>
+                        )}
+                      </CardContent>
+
+                      <CardActions sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
+                        <Button component={Link} to="/register" size="small" variant="contained" sx={{ borderRadius: 2 }}>
+                          {t('services.request', { defaultValue: 'Request Service' })}
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Stagger>
         )}
 
-        {/* Poster lightbox */}
-        <Dialog
-          open={!!posterOpen}
-          onClose={() => setPosterOpen(null)}
-          maxWidth="lg"
-          fullWidth
-          TransitionComponent={Zoom}
-          transitionDuration={{ enter: 300, exit: 200 }}
-          PaperProps={{ sx: { bgcolor: '#f0f4f8' } }}
-        >
-          <DialogContent sx={{ p: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-            <IconButton
-              onClick={() => setPosterOpen(null)}
-              sx={{
-                position: 'absolute', top: 10, right: 10, zIndex: 1,
-                bgcolor: 'rgba(0,0,0,0.48)', color: 'white',
-                '&:hover': { bgcolor: 'rgba(0,0,0,0.70)' },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-            {posterOpen && (
-              <Box>
-                <Box
-                  component="img"
-                  src={posterOpen.imageUrl}
-                  alt={posterOpen.name}
-                  sx={{ width: '100%', maxHeight: '88vh', objectFit: 'contain', display: 'block' }}
-                />
-                <Box sx={{ px: 3, py: 2, bgcolor: 'white' }}>
-                  <Typography variant="h6" fontWeight={700}>{posterOpen.name}</Typography>
-                  {posterOpen.description && (
-                    <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5 }}>
-                      {posterOpen.description}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            )}
-          </DialogContent>
-        </Dialog>
-
+        {/* ── CTA ── */}
         <Reveal variant="slide" direction="up" timeout={620}>
-          <Box textAlign="center" sx={{ mt: 6 }}>
+          <Box textAlign="center" sx={{ mt: 8 }}>
             <Typography variant="h6" paragraph>
               {t('services.cta.title')}
             </Typography>
