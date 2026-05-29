@@ -40,6 +40,8 @@ export default function CartDrawer({ open, onClose }) {
     setCheckingOut(true);
     try {
       const resp = await shopApi.checkout();
+      const url = new URL(resp.checkoutUrl);
+      if (url.hostname !== 'checkout.stripe.com') throw new Error('Invalid checkout URL');
       window.location.href = resp.checkoutUrl;
     } catch (err) {
       const status = err?.response?.status;

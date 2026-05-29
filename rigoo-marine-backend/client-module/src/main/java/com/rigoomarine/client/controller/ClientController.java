@@ -74,6 +74,7 @@ public class ClientController {
 
     // ============== File Upload Endpoints ==============
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MediaDTO> uploadFile(
             @RequestParam("file") MultipartFile file,

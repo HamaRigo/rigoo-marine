@@ -102,7 +102,8 @@ function PasswordForm() {
     try {
       const userData = await login(formData.identifier.trim(), formData.password);
       const next = searchParams.get('next');
-      const target = location.state?.from?.pathname || next || defaultPathForRole(userData?.role);
+      const safeNext = next && /^\/[^/\\]/.test(next) ? next : null;
+      const target = location.state?.from?.pathname || safeNext || defaultPathForRole(userData?.role);
       navigate(target, { replace: true });
     } catch (err) {
       if (err.response?.status === 429) {
@@ -225,7 +226,8 @@ function OtpForm() {
     try {
       const userData = await loginWithOtp(phone.trim(), code);
       const next = searchParams.get('next');
-      const target = location.state?.from?.pathname || next || defaultPathForRole(userData?.role);
+      const safeNext = next && /^\/[^/\\]/.test(next) ? next : null;
+      const target = location.state?.from?.pathname || safeNext || defaultPathForRole(userData?.role);
       navigate(target, { replace: true });
     } catch (err) {
       const status = err.response?.status;
