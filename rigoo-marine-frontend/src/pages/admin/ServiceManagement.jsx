@@ -33,6 +33,7 @@ const CATEGORY_COLOR = {
   Specialized: 'primary',
 };
 
+// Fallback poster shown on cards when no imageUrl is stored in DB
 const CATEGORY_IMAGE = {
   Mechanical:  '/services_img/posters/poster-mechanical.png',
   Structural:  '/services_img/posters/poster-structural.png',
@@ -43,6 +44,66 @@ const CATEGORY_IMAGE = {
 
 const DEFAULT_POSTER = '/services_img/posters/poster-overview.png';
 
+// Presets derived from actual named images in public/services_img/posters/
+const SERVICE_PRESETS = [
+  {
+    name:     'Engine Diagnostics',
+    nameAr:   'تشخيص المحرك',
+    category: 'Mechanical',
+    image:    '/services_img/posters/Engine Diagnostics.jpeg',
+  },
+  {
+    name:     'Oil Change',
+    nameAr:   'تغيير الزيت',
+    category: 'Mechanical',
+    image:    '/services_img/posters/Oil Change.jpg',
+  },
+  {
+    name:     'Generator Service',
+    nameAr:   'خدمة المولد',
+    category: 'Mechanical',
+    image:    '/services_img/posters/Generator Service.jpg',
+  },
+  {
+    name:     'Transmission Service',
+    nameAr:   'خدمة ناقل الحركة',
+    category: 'Mechanical',
+    image:    '/services_img/posters/Transmission.jpg',
+  },
+  {
+    name:     'Hull Cleaning',
+    nameAr:   'تنظيف الهيكل',
+    category: 'Structural',
+    image:    '/services_img/posters/Hull Cleaning.jpg',
+  },
+  {
+    name:     'Propeller Repair',
+    nameAr:   'إصلاح المراوح',
+    category: 'Structural',
+    image:    '/services_img/posters/Propeller Repair.jpeg',
+  },
+  {
+    name:     'Bottom Paint',
+    nameAr:   'طلاء قاع السفينة',
+    category: 'Cosmetic',
+    image:    '/services_img/posters/bottom paint .jpeg',
+  },
+  {
+    name:     'Complete Electrical System Inspection',
+    nameAr:   'فحص النظام الكهربائي الكامل',
+    category: 'Specialized',
+    image:    '/services_img/posters/Complete electrical system inspection .jpeg',
+  },
+  {
+    name:     'De-winterization',
+    nameAr:   'إزالة الشتوة',
+    category: 'Renovation',
+    image:    '/services_img/posters/De-winterization.jpeg',
+  },
+];
+
+const PRESET_IMAGES = new Set(SERVICE_PRESETS.map(p => p.image));
+
 const EMPTY_FORM = {
   name: '', nameAr: '',
   description: '', descriptionAr: '',
@@ -52,7 +113,7 @@ const EMPTY_FORM = {
   imageUrl: '',
 };
 
-/* ── Image upload cell (same pattern as GalleryManagement) ───────────────── */
+/* ── Image upload cell ────────────────────────────────────────────────────── */
 
 function ImageUploadCell({ url, onUrl }) {
   const fileRef = useRef(null);
@@ -81,7 +142,7 @@ function ImageUploadCell({ url, onUrl }) {
         position: 'relative', borderRadius: 2, overflow: 'hidden',
         border: '2px dashed', borderColor: url ? 'transparent' : 'divider',
         bgcolor: url ? 'transparent' : 'action.hover',
-        height: 200, cursor: 'pointer', transition: 'border-color .2s',
+        height: 180, cursor: 'pointer', transition: 'border-color .2s',
         '&:hover': { borderColor: url ? 'transparent' : 'primary.main' },
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
@@ -92,7 +153,6 @@ function ImageUploadCell({ url, onUrl }) {
           <CircularProgress size={32} sx={{ color: '#fff' }} />
         </Box>
       )}
-
       {url ? (
         <>
           <Box component="img" src={url} alt="Service"
@@ -109,11 +169,10 @@ function ImageUploadCell({ url, onUrl }) {
         <Stack alignItems="center" spacing={1}>
           <CloudUploadRoundedIcon sx={{ fontSize: 40, color: 'text.disabled' }} />
           <Typography variant="caption" color="text.disabled" textAlign="center">
-            Service image<br />Click to upload
+            Custom image<br />Click to upload
           </Typography>
         </Stack>
       )}
-
       <input ref={fileRef} type="file" accept="image/*"
         style={{ display: 'none' }} onChange={handleFile} />
     </Box>
@@ -124,6 +183,9 @@ function ImageUploadCell({ url, onUrl }) {
 
 function ServiceCard({ service, onEdit, onDelete, onToggle }) {
   const catColor = CATEGORY_COLOR[service.category] ?? 'default';
+  const imgSrc   = service.imageUrl
+    || CATEGORY_IMAGE[service.category]
+    || DEFAULT_POSTER;
 
   return (
     <Card
@@ -135,35 +197,23 @@ function ServiceCard({ service, onEdit, onDelete, onToggle }) {
         '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(0,0,0,.12)' },
       }}
     >
-      {/* Image */}
       <Box sx={{ position: 'relative', height: 180, overflow: 'hidden', bgcolor: 'grey.100', flexShrink: 0 }}>
-        {(() => {
-          const src = service.imageUrl || CATEGORY_IMAGE[service.category] || '/services_img/posters/poster-overview.png';
-          return (
-            <Box component="img" src={src} alt={service.name}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          );
-        })()}
+        <Box component="img" src={imgSrc} alt={service.name}
+          sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
 
-        {/* Active / Inactive badge */}
         <Chip
           label={service.active ? 'Active' : 'Inactive'}
           size="small"
           color={service.active ? 'success' : 'default'}
           sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1, fontWeight: 700, fontSize: 10 }}
         />
-
-        {/* Category badge */}
         {service.category && (
           <Chip
             label={service.category}
             size="small"
             color={catColor}
             variant="filled"
-            sx={{
-              position: 'absolute', top: 8, left: 8, zIndex: 1,
-              fontWeight: 700, fontSize: 10, opacity: 0.9,
-            }}
+            sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1, fontWeight: 700, fontSize: 10, opacity: 0.9 }}
           />
         )}
       </Box>
@@ -210,9 +260,7 @@ function ServiceCard({ service, onEdit, onDelete, onToggle }) {
           </IconButton>
         </Tooltip>
         <Box flex={1} />
-        <Typography variant="caption" color="text.disabled">
-          #{service.id}
-        </Typography>
+        <Typography variant="caption" color="text.disabled">#{service.id}</Typography>
       </CardActions>
     </Card>
   );
@@ -221,6 +269,8 @@ function ServiceCard({ service, onEdit, onDelete, onToggle }) {
 /* ── Create / Edit dialog ─────────────────────────────────────────────────── */
 
 function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
+  const isNew = !item;
+
   const [form, setForm] = useState(item ? {
     name:          item.name          ?? '',
     nameAr:        item.nameAr        ?? '',
@@ -233,15 +283,20 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
   } : { ...EMPTY_FORM });
 
   const [tab, setTab] = useState(0);
-  const set = (k, v) => setForm(f => {
-    const next = { ...f, [k]: v };
-    // auto-assign category poster unless user has set a custom image
-    if (k === 'category') {
-      const isAutoPoster = Object.values(CATEGORY_IMAGE).includes(f.imageUrl) || !f.imageUrl;
-      if (isAutoPoster) next.imageUrl = CATEGORY_IMAGE[v] ?? DEFAULT_POSTER;
-    }
-    return next;
-  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const applyPreset = (preset) => {
+    setForm(f => ({
+      ...f,
+      imageUrl:  preset.image,
+      // on new service: also fill name, Arabic, category
+      ...(isNew ? {
+        name:     preset.name,
+        nameAr:   preset.nameAr,
+        category: preset.category,
+      } : {}),
+    }));
+  };
 
   const canSave = form.name.trim() && form.category;
 
@@ -300,23 +355,68 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
 
         {/* ── Image ── */}
         {tab === 1 && (
-          <Stack spacing={2}>
-            {form.imageUrl && Object.values(CATEGORY_IMAGE).includes(form.imageUrl) && (
+          <Stack spacing={2.5}>
+            {isNew && (
               <Alert severity="info" sx={{ fontSize: 12 }}>
-                Poster automatically assigned from the selected category. Upload a custom image below to override it.
+                Pick a template below — it fills the service name, Arabic name, category and image automatically.
               </Alert>
             )}
+
+            <Typography variant="subtitle2" fontWeight={700}>Service templates</Typography>
+            <Grid container spacing={1.5}>
+              {SERVICE_PRESETS.map((p) => {
+                const selected = form.imageUrl === p.image;
+                return (
+                  <Grid size={{ xs: 6, sm: 4 }} key={p.name}>
+                    <Box
+                      onClick={() => applyPreset(p)}
+                      sx={{
+                        position: 'relative', borderRadius: 2, overflow: 'hidden',
+                        cursor: 'pointer', height: 120,
+                        border: '2px solid',
+                        borderColor: selected ? 'primary.main' : 'divider',
+                        boxShadow: selected ? '0 0 0 3px rgba(25,118,210,.2)' : 'none',
+                        transition: 'border-color .2s, box-shadow .2s, transform .15s',
+                        '&:hover': { transform: 'scale(1.03)', borderColor: 'primary.light' },
+                      }}
+                    >
+                      <Box component="img" src={p.image} alt={p.name}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <Box sx={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0,
+                        bgcolor: 'rgba(0,0,0,.6)', py: 0.5, px: 1,
+                      }}>
+                        <Typography variant="caption" color="#fff" fontWeight={600}
+                          sx={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {p.name}
+                        </Typography>
+                      </Box>
+                      {selected && (
+                        <CheckCircleRoundedIcon sx={{
+                          position: 'absolute', top: 6, right: 6, fontSize: 20,
+                          color: 'primary.main', bgcolor: '#fff', borderRadius: '50%',
+                        }} />
+                      )}
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            <Divider>or upload a custom image</Divider>
+
             <ImageUploadCell
-              url={Object.values(CATEGORY_IMAGE).includes(form.imageUrl) ? '' : form.imageUrl}
+              url={PRESET_IMAGES.has(form.imageUrl) ? '' : form.imageUrl}
               onUrl={url => set('imageUrl', url)}
             />
-            {form.imageUrl && !Object.values(CATEGORY_IMAGE).includes(form.imageUrl) && (
+
+            {form.imageUrl && !PRESET_IMAGES.has(form.imageUrl) && (
               <Button
-                size="small" color="error" variant="outlined"
+                size="small" color="warning" variant="outlined"
                 onClick={() => set('imageUrl', CATEGORY_IMAGE[form.category] ?? DEFAULT_POSTER)}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Restore category poster
+                Use category poster instead
               </Button>
             )}
           </Stack>
@@ -398,10 +498,10 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
 
 export default function ServiceManagement() {
   const qc = useQueryClient();
-  const [dialogOpen, setDialogOpen]   = useState(false);
-  const [editItem, setEditItem]       = useState(null);
+  const [dialogOpen, setDialogOpen]     = useState(false);
+  const [editItem, setEditItem]         = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [filterCat, setFilterCat]     = useState('all');
+  const [filterCat, setFilterCat]       = useState('all');
   const [filterActive, setFilterActive] = useState('all');
 
   const { data: rawPages = {}, isLoading, isError, refetch } = useQuery({
