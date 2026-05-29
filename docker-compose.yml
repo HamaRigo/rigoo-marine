@@ -5,8 +5,7 @@ services:
       context: ./rigoo-marine-backend
       dockerfile: discovery-service/Dockerfile
     container_name: discovery-service
-    ports:
-      - "8761:8761"
+    # Port not exposed externally — only gateway and services need Eureka
     environment:
       # Was unset — the JVM sized its heap off the whole VM, making Eureka the
       # fattest OOM target. Cap it and bound the container.
@@ -21,15 +20,16 @@ services:
       start_period: 40s
     networks:
       - marine-network
+    restart: unless-stopped
 
-  # API Gateway
+  # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
   api-gateway:
     build:
       context: ./rigoo-marine-backend
       dockerfile: gateway-module/Dockerfile
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -40,6 +40,8 @@ services:
       - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     mem_limit: 560m
     mem_reservation: 420m
     healthcheck:
@@ -50,6 +52,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Client Service (internal, no exposed port)
   client-service:
@@ -68,10 +71,12 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
     mem_limit: 900m
     mem_reservation: 700m
     healthcheck:
@@ -82,6 +87,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Vessel Service (internal, no exposed port)
   vessel-service:
@@ -100,10 +106,12 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -112,6 +120,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Service Service (internal, no exposed port)
   service-service:
@@ -130,10 +139,12 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -142,6 +153,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Work Order Service (internal, no exposed port)
   work-order-service:
@@ -162,11 +174,13 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
       interval: 30s
@@ -175,6 +189,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Technician Service (internal, no exposed port)
   technician-service:
@@ -193,10 +208,12 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
       interval: 30s
@@ -205,6 +222,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   delivery-service:
     build:
@@ -224,11 +242,13 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8092/actuator/health"]
       interval: 30s
@@ -237,6 +257,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Invoice Service (internal, no exposed port)
   invoice-service:
@@ -255,13 +276,15 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-rigoo-internal-token-change-in-production}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 30s
@@ -270,6 +293,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Marketplace Service (internal, no exposed port)
   marketplace-service:
@@ -288,10 +312,12 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
       interval: 30s
@@ -300,8 +326,9 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
-  # Shop Service — Parts & Tools catalog + cart + orders (PLAN.md §2 Phases 1+2).
+  # Shop Service — Parts & Tools catalog + cart + orders
   shop-service:
     build:
       context: ./rigoo-marine-backend
@@ -318,14 +345,16 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx384m -Xms192m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-rigoo-internal-token-change-in-production}
-      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
       interval: 30s
@@ -334,6 +363,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Notification Service (internal, no exposed port)
   notification-service:
@@ -354,11 +384,13 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx384m -Xms192m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET=${JWT_SECRET}
       - MAIL_ENABLED=${MAIL_ENABLED:-false}
       - SPRING_MAIL_HOST=${SPRING_MAIL_HOST:-smtp.example.com}
       - SPRING_MAIL_PORT=${SPRING_MAIL_PORT:-587}
@@ -372,7 +404,7 @@ services:
       - WHATSAPP_TWILIO_FROM=${WHATSAPP_TWILIO_FROM:-}
       - WHATSAPP_META_PHONE_NUMBER_ID=${WHATSAPP_META_PHONE_NUMBER_ID:-}
       - WHATSAPP_META_ACCESS_TOKEN=${WHATSAPP_META_ACCESS_TOKEN:-}
-      - WHATSAPP_META_VERIFY_TOKEN=${WHATSAPP_META_VERIFY_TOKEN:-rigoo-meta-webhook-secret}
+      - WHATSAPP_META_VERIFY_TOKEN=${WHATSAPP_META_VERIFY_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
       interval: 30s
@@ -381,6 +413,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Maintenance Service — service history, scheduling, vessel inspections
   maintenance-service:
@@ -399,9 +432,10 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
       interval: 30s
@@ -410,6 +444,7 @@ services:
       start_period: 240s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Zookeeper (for Kafka)
   zookeeper:
@@ -430,33 +465,33 @@ services:
     networks:
       - marine-network
 
-  # Kafka Message Broker
+  # Kafka Message Broker — internal only, no external port
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     depends_on:
       zookeeper:
         condition: service_healthy
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # PostgreSQL Database (SECURED - internal network only, no external port)
   postgres:
@@ -480,22 +515,25 @@ services:
       - marine-network
     restart: unless-stopped
 
-  # Redis Cache
+  # Redis Cache — internal only, no external port
   redis:
     image: redis:7-alpine
     container_name: redis
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-}
+      --bind 0.0.0.0
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Elasticsearch (commented out — disabled by default to conserve memory on dev hosts)
   # elasticsearch:
@@ -565,18 +603,19 @@ services:
   #   networks:
   #     - marine-network
 
-  # Frontend (React)
+  # Frontend (React) — served by Nginx on host, this container is optional when using Vercel
   frontend:
     build:
       context: ./rigoo-marine-frontend
     container_name: marine-frontend
     ports:
-      - "80:80"
+      - "127.0.0.1:3080:80"
     depends_on:
       api-gateway:
         condition: service_healthy
     networks:
       - marine-network
+    restart: unless-stopped
 
 networks:
   marine-network:

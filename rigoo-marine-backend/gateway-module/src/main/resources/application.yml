@@ -415,4 +415,6 @@ eureka:
 
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    root: WARN
+    org.springframework.cloud.gateway: WARN
+    org.springframework.security: WARN
