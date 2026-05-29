@@ -34,6 +34,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
+                    // Uploaded files are public (gallery images, avatars, etc.)
+                    "/uploads/**",
                     // Public auth endpoints (no JWT required)
                     "/api/auth/register",
                     "/api/auth/login",
