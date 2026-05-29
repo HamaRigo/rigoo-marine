@@ -86,13 +86,13 @@ const SERVICE_PRESETS = [
     name:     'Bottom Paint',
     nameAr:   'طلاء قاع السفينة',
     category: 'Cosmetic',
-    image:    '/services_img/posters/bottom paint .jpeg',
+    image:    '/services_img/posters/bottom-paint.jpeg',
   },
   {
     name:     'Complete Electrical System Inspection',
     nameAr:   'فحص النظام الكهربائي الكامل',
     category: 'Specialized',
-    image:    '/services_img/posters/Complete electrical system inspection .jpeg',
+    image:    '/services_img/posters/complete-electrical-inspection.jpeg',
   },
   {
     name:     'De-winterization',

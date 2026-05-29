@@ -25,8 +25,8 @@ const PRESET_BY_NAME = {
   'transmission service':                  '/services_img/posters/Transmission.jpg',
   'hull cleaning':                         '/services_img/posters/Hull Cleaning.jpg',
   'propeller repair':                      '/services_img/posters/Propeller Repair.jpeg',
-  'bottom paint':                          '/services_img/posters/bottom paint .jpeg',
-  'complete electrical system inspection': '/services_img/posters/Complete electrical system inspection .jpeg',
+  'bottom paint':                          '/services_img/posters/bottom-paint.jpeg',
+  'complete electrical system inspection': '/services_img/posters/complete-electrical-inspection.jpeg',
   'de-winterization':                      '/services_img/posters/De-winterization.jpeg',
 };
 
