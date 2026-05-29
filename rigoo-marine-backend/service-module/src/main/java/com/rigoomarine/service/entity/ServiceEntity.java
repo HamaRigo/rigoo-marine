@@ -20,11 +20,17 @@ public class ServiceEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "name_ar", columnDefinition = "TEXT")
+    private String nameAr;
+
     @Column(nullable = false)
     private String category;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "description_ar", columnDefinition = "TEXT")
+    private String descriptionAr;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal price;

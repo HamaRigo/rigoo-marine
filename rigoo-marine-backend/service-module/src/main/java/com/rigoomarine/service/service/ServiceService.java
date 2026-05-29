@@ -30,8 +30,10 @@ public class ServiceService {
     public ServiceDTO createService(ServiceDTO dto) {
         ServiceEntity entity = ServiceEntity.builder()
             .name(dto.getName())
+            .nameAr(dto.getNameAr())
             .category(dto.getCategory())
             .description(dto.getDescription())
+            .descriptionAr(dto.getDescriptionAr())
             .price(dto.getPrice())
             .active(dto.getActive() != null ? dto.getActive() : true)
             .imageUrl(dto.getImageUrl())
@@ -91,8 +93,10 @@ public class ServiceService {
             .orElseThrow(() -> new RuntimeException("Service not found"));
 
         entity.setName(dto.getName());
+        entity.setNameAr(dto.getNameAr());
         entity.setCategory(dto.getCategory());
         entity.setDescription(dto.getDescription());
+        entity.setDescriptionAr(dto.getDescriptionAr());
         entity.setPrice(dto.getPrice());
         entity.setActive(dto.getActive());
         if (dto.getImageUrl() != null) {
@@ -112,8 +116,10 @@ public class ServiceService {
         return ServiceDTO.builder()
             .id(entity.getId())
             .name(entity.getName())
+            .nameAr(entity.getNameAr())
             .category(entity.getCategory())
             .description(entity.getDescription())
+            .descriptionAr(entity.getDescriptionAr())
             .price(entity.getPrice())
             .active(entity.getActive())
             .imageUrl(entity.getImageUrl())
