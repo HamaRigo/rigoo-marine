@@ -17,6 +17,25 @@ const CATEGORY_IMAGE = {
   Specialized: '/services_img/posters/poster-specialized.png',
 };
 
+// name-based lookup so services without a stored imageUrl still get the right photo
+const PRESET_BY_NAME = {
+  'engine diagnostics':                    '/services_img/posters/Engine Diagnostics.jpeg',
+  'oil change':                            '/services_img/posters/Oil Change.jpg',
+  'generator service':                     '/services_img/posters/Generator Service.jpg',
+  'transmission service':                  '/services_img/posters/Transmission.jpg',
+  'hull cleaning':                         '/services_img/posters/Hull Cleaning.jpg',
+  'propeller repair':                      '/services_img/posters/Propeller Repair.jpeg',
+  'bottom paint':                          '/services_img/posters/bottom paint .jpeg',
+  'complete electrical system inspection': '/services_img/posters/Complete electrical system inspection .jpeg',
+  'de-winterization':                      '/services_img/posters/De-winterization.jpeg',
+};
+
+const resolveImage = (svc) =>
+  svc.imageUrl
+  || PRESET_BY_NAME[svc.name?.toLowerCase()]
+  || CATEGORY_IMAGE[svc.category]
+  || '/services_img/posters/poster-overview.png';
+
 export default function Services() {
   const { t, i18n } = useTranslation('public');
   const isAr = i18n.language.startsWith('ar');
@@ -108,9 +127,7 @@ export default function Services() {
           <Stagger key={selectedCategory} variant="slide" direction="up" step={80} timeout={540}>
             <Grid container spacing={3}>
               {filtered.map((svc) => {
-                const imgSrc = svc.imageUrl
-                  || CATEGORY_IMAGE[svc.category]
-                  || '/services_img/posters/poster-overview.png';
+                const imgSrc = resolveImage(svc);
                 const name = (isAr && svc.nameAr) ? svc.nameAr : svc.name;
                 const desc = (isAr && svc.descriptionAr) ? svc.descriptionAr : svc.description;
 

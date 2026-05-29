@@ -102,7 +102,15 @@ const SERVICE_PRESETS = [
   },
 ];
 
-const PRESET_IMAGES = new Set(SERVICE_PRESETS.map(p => p.image));
+const PRESET_IMAGES   = new Set(SERVICE_PRESETS.map(p => p.image));
+// name → preset lookup (case-insensitive) for fallback image resolution
+const PRESET_BY_NAME  = Object.fromEntries(SERVICE_PRESETS.map(p => [p.name.toLowerCase(), p]));
+
+const resolveImage = (svc) =>
+  svc.imageUrl
+  || PRESET_BY_NAME[svc.name?.toLowerCase()]?.image
+  || CATEGORY_IMAGE[svc.category]
+  || DEFAULT_POSTER;
 
 const EMPTY_FORM = {
   name: '', nameAr: '',
@@ -183,9 +191,7 @@ function ImageUploadCell({ url, onUrl }) {
 
 function ServiceCard({ service, onEdit, onDelete, onToggle }) {
   const catColor = CATEGORY_COLOR[service.category] ?? 'default';
-  const imgSrc   = service.imageUrl
-    || CATEGORY_IMAGE[service.category]
-    || DEFAULT_POSTER;
+  const imgSrc   = resolveImage(service);
 
   return (
     <Card
@@ -283,7 +289,21 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
   } : { ...EMPTY_FORM });
 
   const [tab, setTab] = useState(0);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => {
+    const next = { ...f, [k]: v };
+    // auto-apply preset when name matches and no custom image is set yet
+    if (k === 'name' && !f.imageUrl) {
+      const match = PRESET_BY_NAME[v.toLowerCase()];
+      if (match) {
+        next.imageUrl = match.image;
+        if (isNew) {
+          if (!f.nameAr)   next.nameAr  = match.nameAr;
+          if (!f.category) next.category = match.category;
+        }
+      }
+    }
+    return next;
+  });
 
   const applyPreset = (preset) => {
     setForm(f => ({
@@ -413,10 +433,14 @@ function ServiceDialog({ open, item, onClose, onSave, isSaving }) {
             {form.imageUrl && !PRESET_IMAGES.has(form.imageUrl) && (
               <Button
                 size="small" color="warning" variant="outlined"
-                onClick={() => set('imageUrl', CATEGORY_IMAGE[form.category] ?? DEFAULT_POSTER)}
+                onClick={() => set('imageUrl',
+                  PRESET_BY_NAME[form.name?.toLowerCase()]?.image
+                  || CATEGORY_IMAGE[form.category]
+                  || DEFAULT_POSTER
+                )}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Use category poster instead
+                Use preset image instead
               </Button>
             )}
           </Stack>
