@@ -4,13 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Box, Container, Typography, Button, Card, CardContent,
   Chip, Dialog, DialogContent, IconButton, Zoom, Fade, Grid,
-  Avatar,
+  Avatar, Skeleton,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import BuildIcon from '@mui/icons-material/Build';
-import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
-import StarIcon from '@mui/icons-material/Star';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -65,11 +62,13 @@ const STATS = [
   { value: 24,  suffix: '/7', key: 'support',      delay: 420 },
 ];
 
-const SERVICES = [
-  { key: 'mechanical', Icon: BuildIcon,         color: 'primary.main'  },
-  { key: 'structural', Icon: DirectionsBoatIcon, color: 'secondary.main' },
-  { key: 'finishing',  Icon: StarIcon,           color: 'primary.light' },
-];
+const CATEGORY_IMAGE = {
+  Mechanical:  '/services_img/posters/poster-mechanical.png',
+  Structural:  '/services_img/posters/poster-structural.png',
+  Cosmetic:    '/services_img/posters/poster-cosmetic.png',
+  Renovation:  '/services_img/posters/poster-renovation.png',
+  Specialized: '/services_img/posters/poster-specialized.png',
+};
 
 const GALLERY_CATEGORY_LABELS = {
   en: {
@@ -279,6 +278,14 @@ export default function Home() {
     queryFn: publicApi.getTeamMembers,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: rawServices = [], isLoading: servicesLoading } = useQuery({
+    queryKey: ['public-services'],
+    queryFn: publicApi.getServices,
+    staleTime: 5 * 60 * 1000,
+  });
+  const activeServices = (Array.isArray(rawServices) ? rawServices : rawServices?.content ?? [])
+    .filter(s => s.active);
 
   const { data: rawGallery = [] } = useQuery({
     queryKey: ['public-gallery'],
@@ -497,28 +504,78 @@ export default function Home() {
           </Typography>
         </Reveal>
 
-        <Stagger variant="slide" direction="up" step={120} timeout={620}
-          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}
-        >
-          {SERVICES.map(({ key, Icon, color }) => (
-            <Box key={key} sx={{
-              p: 4, bgcolor: 'background.paper', borderRadius: 3,
-              border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
-              textAlign: 'center', position: 'relative', overflow: 'hidden',
-              transition: 'transform 280ms cubic-bezier(0.2,0,0,1), box-shadow 280ms',
-              '&::before': { content: '""', position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,105,148,0.06) 0%, rgba(255,143,0,0.04) 100%)', opacity: 0, transition: 'opacity 280ms ease' },
-              '&::after': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #006994, #ff8f00)', opacity: 0, transition: 'opacity 300ms ease' },
-              '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 22px 44px rgba(15,23,42,0.14)' },
-              '&:hover::before': { opacity: 1 },
-              '&:hover::after': { opacity: 1 },
-              '&:hover .svc-icon': { transform: 'scale(1.1) rotate(-4deg)', color: 'secondary.main' },
-            }}>
-              <Icon className="svc-icon" sx={{ fontSize: 56, color, mb: 2, transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1), color 280ms ease', position: 'relative' }} />
-              <Typography variant="h6" gutterBottom sx={{ position: 'relative' }}>{t(`services.${key}.title`)}</Typography>
-              <Typography color="text.secondary" sx={{ position: 'relative' }}>{t(`services.${key}.description`)}</Typography>
-            </Box>
-          ))}
-        </Stagger>
+        {servicesLoading ? (
+          <Grid container spacing={3}>
+            {[1, 2, 3].map(n => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={n}>
+                <Skeleton variant="rounded" height={280} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Stagger variant="slide" direction="up" step={100} timeout={580}>
+            <Grid container spacing={3}>
+              {activeServices.map((svc) => {
+                const imgSrc = svc.imageUrl
+                  || CATEGORY_IMAGE[svc.category]
+                  || '/services_img/posters/poster-overview.png';
+                const isAr = i18n.language.startsWith('ar');
+                const displayName = (isAr && svc.nameAr) ? svc.nameAr : svc.name;
+                const displayDesc = (isAr && svc.descriptionAr) ? svc.descriptionAr : svc.description;
+                return (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={svc.id}>
+                    <Card variant="outlined" sx={{
+                      height: '100%', display: 'flex', flexDirection: 'column',
+                      borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)',
+                      boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
+                      transition: 'transform 280ms cubic-bezier(0.2,0,0,1), box-shadow 280ms',
+                      '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 22px 44px rgba(15,23,42,0.13)' },
+                      '&:hover .svc-img': { transform: 'scale(1.06)' },
+                      '&::after': {
+                        content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                        background: 'linear-gradient(90deg, #006994, #ff8f00)',
+                        opacity: 0, transition: 'opacity 300ms ease',
+                      },
+                      '&:hover::after': { opacity: 1 },
+                      position: 'relative',
+                    }}>
+                      {/* image */}
+                      <Box sx={{ height: 200, overflow: 'hidden', flexShrink: 0 }}>
+                        <Box
+                          className="svc-img"
+                          component="img"
+                          src={imgSrc}
+                          alt={svc.name}
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 480ms cubic-bezier(0.2,0,0,1)' }}
+                        />
+                      </Box>
+
+                      <CardContent sx={{ flex: 1, p: 2.5 }}>
+                        {svc.category && (
+                          <Chip
+                            label={svc.category}
+                            size="small"
+                            sx={{ mb: 1, fontWeight: 700, fontSize: 11, bgcolor: 'rgba(0,105,148,0.09)', color: '#005a80' }}
+                          />
+                        )}
+                        <Typography variant="h6" fontWeight={700} gutterBottom dir={isAr ? 'rtl' : 'ltr'}>
+                          {displayName}
+                        </Typography>
+                        {displayDesc && (
+                          <Typography variant="body2" color="text.secondary"
+                            dir={isAr ? 'rtl' : 'ltr'}
+                            sx={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {displayDesc}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Stagger>
+        )}
 
         <Reveal variant="fade" delay={200}>
           <Box textAlign="center" sx={{ mt: 5 }}>
