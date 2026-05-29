@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -95,18 +96,40 @@ public class MediaService {
         log.info("Deleted media: {}", id);
     }
 
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+        "image/jpeg", "image/png", "image/webp", "image/gif",
+        "video/mp4", "video/quicktime", "video/webm",
+        "application/pdf"
+    );
+    private static final long MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
+
     public MediaDTO uploadFile(MultipartFile file, String title, String category, Long uploadedBy) throws IOException {
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("File type not allowed: " + contentType);
+        }
+        if (file.getSize() > MAX_UPLOAD_BYTES) {
+            throw new IllegalArgumentException("File exceeds maximum size of 20 MB");
+        }
+
         // Create upload directory if it doesn't exist
         Path uploadPath = Path.of(uploadDir);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-            ? originalFilename.substring(originalFilename.lastIndexOf("."))
-            : "";
+        // UUID filename — no original filename used (prevents path traversal)
+        String extension = switch (contentType) {
+            case "image/jpeg"        -> ".jpg";
+            case "image/png"         -> ".png";
+            case "image/webp"        -> ".webp";
+            case "image/gif"         -> ".gif";
+            case "video/mp4"         -> ".mp4";
+            case "video/quicktime"   -> ".mov";
+            case "video/webm"        -> ".webm";
+            case "application/pdf"   -> ".pdf";
+            default                  -> "";
+        };
         String filename = UUID.randomUUID().toString() + extension;
         Path filePath = uploadPath.resolve(filename);
 

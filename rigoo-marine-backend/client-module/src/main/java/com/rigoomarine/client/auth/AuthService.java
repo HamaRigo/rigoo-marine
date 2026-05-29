@@ -108,7 +108,7 @@ public class AuthService {
 
     @CacheEvict(value = "clients", allEntries = true)
     public boolean resetPassword(String rawToken, String newPassword) {
-        if (rawToken == null || rawToken.isBlank() || newPassword == null || newPassword.length() < 6) return false;
+        if (rawToken == null || rawToken.isBlank() || newPassword == null || newPassword.length() < 8) return false;
         String hash = tokenService.hash(rawToken);
         return resetTokenRepository.findByTokenHash(hash)
                 .filter(t -> t.getUsedAt() == null && t.getExpiresAt().isAfter(LocalDateTime.now()))

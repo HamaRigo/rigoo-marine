@@ -65,7 +65,7 @@ logging:
     com.rigoomarine.shop: DEBUG
 
 jwt:
-  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
+  secret: ${JWT_SECRET}
 
 stripe:
   # Test-mode keys: sk_test_… / whsec_… from the Stripe dashboard.

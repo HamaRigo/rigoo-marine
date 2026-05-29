@@ -65,7 +65,7 @@ logging:
     com.rigoomarine.invoice: DEBUG
 
 jwt:
-  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
+  secret: ${JWT_SECRET}
 
 stripe:
   # `sk_test_…` from the Stripe dashboard (test mode). Used by future API calls.

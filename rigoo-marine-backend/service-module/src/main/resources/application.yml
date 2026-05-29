@@ -59,4 +59,4 @@ eureka:
     ip-address: 127.0.0.1
 
 jwt:
-  secret: ${JWT_SECRET:rigoo-marine-secret-key-change-in-production-12345}
+  secret: ${JWT_SECRET}
