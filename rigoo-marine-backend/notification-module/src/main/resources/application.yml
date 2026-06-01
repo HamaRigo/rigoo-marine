@@ -111,9 +111,16 @@ app:
 
 # Disable mail health probe — default points at smtp.example.com which would drag /actuator/health DOWN.
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
   health:
     mail:
       enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 eureka:
   client:

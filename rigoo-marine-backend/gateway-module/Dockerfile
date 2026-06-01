@@ -17,6 +17,7 @@ COPY notification-module/pom.xml notification-module/pom.xml
 COPY marketplace-module/pom.xml  marketplace-module/pom.xml
 COPY shop-module/pom.xml         shop-module/pom.xml
 COPY maintenance-module/pom.xml  maintenance-module/pom.xml
+COPY delivery-module/pom.xml     delivery-module/pom.xml
 
 RUN mvn -B dependency:resolve -pl gateway-module --fail-never -q
 

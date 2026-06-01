@@ -1,0 +1,64 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: api-gateway
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['api-gateway:8080']
+
+  - job_name: client-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['client-service:8081']
+
+  - job_name: vessel-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['vessel-service:8082']
+
+  - job_name: service-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['service-service:8083']
+
+  - job_name: work-order-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['work-order-service:8084']
+
+  - job_name: invoice-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['invoice-service:8085']
+
+  - job_name: technician-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['technician-service:8086']
+
+  - job_name: notification-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['notification-service:8087']
+
+  - job_name: marketplace-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['marketplace-service:8088']
+
+  - job_name: shop-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['shop-service:8089']
+
+  - job_name: maintenance-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['maintenance-service:8091']
+
+  - job_name: delivery-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['delivery-service:8092']

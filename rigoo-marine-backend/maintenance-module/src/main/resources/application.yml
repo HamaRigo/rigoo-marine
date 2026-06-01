@@ -58,6 +58,15 @@ spring:
         spring.json.value.default.type: java.util.LinkedHashMap
         spring.json.use.type.headers: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 eureka:
   client:
     service-url:

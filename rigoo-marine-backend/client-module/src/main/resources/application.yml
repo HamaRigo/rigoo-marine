@@ -113,6 +113,10 @@ app:
     from: ${MAIL_FROM:no-reply@rigoomarine.qa}
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
   endpoint:
     health:
       show-details: always
@@ -125,3 +129,6 @@ management:
     # that's unavailable. Core business logic (DB, API) remains functional without Redis.
     redis:
       enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}

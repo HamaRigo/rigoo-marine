@@ -53,9 +53,16 @@ spring:
       time-to-live: 300000
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
   health:
     redis:
       enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 eureka:
   client:

@@ -565,6 +565,44 @@ services:
   #   networks:
   #     - marine-network
 
+  # Prometheus — scrapes /actuator/prometheus from all Spring Boot services
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - marine-network
+    restart: unless-stopped
+
+  # Grafana — dashboards at http://localhost:3001 (admin / admin)
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - marine-network
+    restart: unless-stopped
+
   # Frontend (React)
   frontend:
     build:
@@ -589,3 +627,5 @@ volumes:
   kafka-data:
   redis-data:
   elasticsearch-data:
+  prometheus-data:
+  grafana-data:
