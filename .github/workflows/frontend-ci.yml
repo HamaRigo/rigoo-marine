@@ -2,11 +2,11 @@ name: Frontend CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, production]
     paths:
       - 'rigoo-marine-frontend/**'
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, production]
     paths:
       - 'rigoo-marine-frontend/**'
 
