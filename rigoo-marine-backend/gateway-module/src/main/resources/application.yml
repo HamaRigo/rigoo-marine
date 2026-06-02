@@ -407,6 +407,25 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
+    loadbalancer:
+      configurations: health-check
+      health-check:
+        initial-delay: 0
+        interval: 25s
+        path:
+          default: /actuator/health
+        port:
+          client-service: 8081
+          vessel-service: 8082
+          service-service: 8083
+          work-order-service: 8084
+          invoice-service: 8085
+          technician-service: 8086
+          notification-service: 8087
+          marketplace-service: 8088
+          shop-service: 8089
+          maintenance-service: 8091
+          delivery-service: 8092
 
 eureka:
   client:
@@ -416,6 +435,7 @@ eureka:
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 

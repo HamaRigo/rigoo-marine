@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:0}
   base-url: ${SERVER_BASE_URL:http://localhost:8081}
 
 file:
@@ -97,6 +97,11 @@ eureka:
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
+    health-check-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/health
+    status-page-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/info
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 logging:
   level:
@@ -113,6 +118,8 @@ app:
     from: ${MAIL_FROM:no-reply@rigoomarine.qa}
 
 management:
+  server:
+    port: 8081
   endpoint:
     health:
       show-details: when-authorized

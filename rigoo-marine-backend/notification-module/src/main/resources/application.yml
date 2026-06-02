@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8087}
+  port: ${SERVER_PORT:0}
 
 spring:
   application:
@@ -111,6 +111,8 @@ app:
 
 # Disable mail health probe — default points at smtp.example.com which would drag /actuator/health DOWN.
 management:
+  server:
+    port: 8087
   health:
     mail:
       enabled: false
@@ -122,6 +124,11 @@ eureka:
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
+    health-check-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/health
+    status-page-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/info
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 logging:
   level:

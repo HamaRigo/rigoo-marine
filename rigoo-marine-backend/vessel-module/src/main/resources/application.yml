@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8082}
+  port: ${SERVER_PORT:0}
 
 internal:
   # Shared-secret token for service-to-service calls (work-order → vessel
@@ -51,6 +51,8 @@ spring:
       time-to-live: 300000
 
 management:
+  server:
+    port: 8082
   health:
     redis:
       enabled: false
@@ -62,6 +64,11 @@ eureka:
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
+    health-check-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/health
+    status-page-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/info
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 logging:
   level:
