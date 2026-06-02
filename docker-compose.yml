@@ -24,12 +24,16 @@ services:
     restart: unless-stopped
 
   # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
+  # container_name removed so `docker compose up --scale api-gateway=2` works.
+  # To scale: uncomment `deploy:` below. Each instance needs ~560 MiB so two
+  # instances require 1.1 GiB — verify host has headroom before enabling.
+  # deploy:
+  #   replicas: 2
   api-gateway:
     image: ${DOCKERHUB_USERNAME:-rigoomarine}/api-gateway:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: gateway-module/Dockerfile
-    container_name: api-gateway
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -341,12 +345,16 @@ services:
     restart: unless-stopped
 
   # Shop Service — Parts & Tools catalog + cart + orders
+  # container_name removed so `docker compose up --scale shop-service=2` works.
+  # To scale: uncomment `deploy:` below. Each instance needs ~384 MiB so two
+  # instances require 768 MiB — verify host has headroom before enabling.
+  # deploy:
+  #   replicas: 2
   shop-service:
     image: ${DOCKERHUB_USERNAME:-rigoomarine}/shop-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: shop-module/Dockerfile
-    container_name: shop-service
     depends_on:
       discovery-service:
         condition: service_healthy
