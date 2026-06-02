@@ -103,10 +103,24 @@ logs/
 *.seed
 *.pid.lock
 
-# Local-only planning notes
+# Local-only planning and dev notes
 MOBILE_PLAN.md
 PLAN.md
 PAUSE_TASKS.md
+DONE_WORK.md
+ARCHITECTURE.md
+CICD_SETUP_TASKS.md
+QUICKSTART.md
+RUN_LOCAL.md
+enhance.md
+start-all-docker.sh
+start-dev.sh
+docker-compose.dev.yml
+docker-compose.local.yml
+
+# Sensitive business documents — never commit
+INVOICE_*.html
+INVOICE_*.pdf
 
 # Claude Code project state
 .claude/
