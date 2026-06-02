@@ -1,0 +1,30 @@
+User-agent: *
+
+# Public pages — allow crawling
+Allow: /$
+Allow: /services$
+Allow: /boats$
+Allow: /boats/
+Allow: /shop$
+Allow: /shop/products/
+
+# Block all protected & internal routes
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /technician/
+Disallow: /team-lead/
+Disallow: /delivery/
+Disallow: /service-request
+Disallow: /checkout/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+# Block API and CDN noise
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /actuator/
+
+Sitemap: https://rigoomarine.com/sitemap.xml

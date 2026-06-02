@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Reveal, Stagger } from '../../components/common/Motion';
 import { publicApi } from '../../services/api';
+import PageSEO, { buildServiceListSchema } from '../../components/common/PageSEO';
 
 const CATEGORY_IMAGE = {
   Mechanical:  '/services_img/posters/poster-mechanical.png',
@@ -64,6 +65,11 @@ export default function Services() {
 
   return (
     <Box>
+      <PageSEO
+        titleKey="services.title"
+        descriptionKey="services.description"
+        jsonLd={buildServiceListSchema(rawData)}
+      />
       {/* ── Header banner ── */}
       <Box sx={{
         color: 'white',

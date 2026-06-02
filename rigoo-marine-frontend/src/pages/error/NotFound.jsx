@@ -1,10 +1,15 @@
 import { Box, Typography, Button, Container } from '@mui/material';
 import { Link } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
+import { useTranslation } from 'react-i18next';
+import PageSEO from '../../components/common/PageSEO';
 
 export default function NotFound() {
+  const { t } = useTranslation('common');
+
   return (
     <Container maxWidth="md">
+      <PageSEO titleKey="notFound.title" descriptionKey="notFound.description" noIndex />
       <Box
         sx={{
           display: 'flex',
@@ -19,10 +24,10 @@ export default function NotFound() {
           404
         </Typography>
         <Typography variant="h4" gutterBottom>
-          Page Not Found
+          {t('notFound.title', '404 — Page Not Found')}
         </Typography>
         <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          {t('notFound.body', "The page you're looking for doesn't exist or has been moved.")}
         </Typography>
         <Button
           component={Link}
@@ -32,7 +37,7 @@ export default function NotFound() {
           startIcon={<HomeIcon />}
           sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
         >
-          Go Home
+          {t('notFound.cta', 'Go Home')}
         </Button>
       </Box>
     </Container>

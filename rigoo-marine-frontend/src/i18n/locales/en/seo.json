@@ -1,0 +1,57 @@
+{
+  "site": {
+    "name": "Rigoo Marine",
+    "separator": " | "
+  },
+  "home": {
+    "title": "Rigoo Marine — Professional Marine Services in Qatar",
+    "description": "Rigoo Marine offers expert yacht and boat services in Qatar: maintenance, mechanical overhauls, structural repairs, anti-fouling, and finishing. Trusted by Qatar's maritime community."
+  },
+  "services": {
+    "title": "Marine Services — Boat Maintenance & Repair in Qatar | Rigoo Marine",
+    "description": "Explore Rigoo Marine's full range of services in Qatar: hull repairs, mechanical overhauls, anti-fouling treatments, structural reinforcements, and specialist finishing. Book online."
+  },
+  "boats": {
+    "title": "Boats & Yachts for Sale in Qatar — Rigoo Marine Marketplace",
+    "description": "Browse verified boats and yachts for sale in Qatar on the Rigoo Marine Marketplace. Expert-inspected listings, competitive prices, and secure transactions in QAR."
+  },
+  "boatDetail": {
+    "fallbackDescription": "View full specifications, photos, and pricing for this vessel on the Rigoo Marine Marketplace in Qatar."
+  },
+  "shop": {
+    "title": "Marine Parts & Tools Qatar — Rigoo Marine Shop",
+    "description": "Shop high-quality marine spare parts, tools, and accessories in Qatar. Fast delivery, expert advice, and competitive QAR prices at Rigoo Marine."
+  },
+  "productDetail": {
+    "fallbackDescription": "View full specifications, pricing, and availability for this marine product at Rigoo Marine Shop in Qatar."
+  },
+  "login": {
+    "title": "Sign In — Rigoo Marine",
+    "description": "Sign in to your Rigoo Marine account to manage your vessels, track service requests, and access your dashboard."
+  },
+  "register": {
+    "title": "Create Account — Rigoo Marine",
+    "description": "Join Rigoo Marine to manage your fleet, request marine services, and track work orders online in Qatar."
+  },
+  "notFound": {
+    "title": "Page Not Found — Rigoo Marine",
+    "description": "The page you are looking for does not exist. Return to Rigoo Marine homepage."
+  },
+  "jsonld": {
+    "business": {
+      "name": "Rigoo Marine",
+      "description": "Professional yacht and boat services, marketplace, and marine parts shop in Qatar.",
+      "addressLocality": "Doha",
+      "addressCountry": "QA",
+      "openingHours": "Mo-Sa 08:00-18:00",
+      "serviceTypes": [
+        "Boat Maintenance",
+        "Yacht Repair",
+        "Marine Mechanical Services",
+        "Hull Structural Work",
+        "Anti-fouling Treatment",
+        "Marine Finishing"
+      ]
+    }
+  }
+}

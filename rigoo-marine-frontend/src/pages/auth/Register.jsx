@@ -8,6 +8,7 @@ import PhoneField from '../../components/common/PhoneField';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { required, email, nameMin, passwordMin, passwordMatch, requiredPhone } from '../../utils/validators';
 import { getApiError } from '../../utils/apiError';
+import PageSEO from '../../components/common/PageSEO';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -77,6 +78,7 @@ export default function Register() {
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: { xs: 3, sm: 6 }, px: { xs: 1.5, sm: 3 } }}>
+      <PageSEO titleKey="register.title" descriptionKey="register.description" noIndex />
       <Container maxWidth="sm" disableGutters sx={{ px: 0 }}>
         <Paper elevation={3} sx={{ p: { xs: 2.5, sm: 4 }, borderRadius: { xs: 2, sm: 3 } }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">

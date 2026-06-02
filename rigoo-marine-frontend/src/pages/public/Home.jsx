@@ -18,6 +18,7 @@ import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import SpeedIcon from '@mui/icons-material/Speed';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import PageSEO, { buildLocalBusinessSchema } from '../../components/common/PageSEO';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import { useAuth } from '../../context/AuthContext';
 import { publicApi } from '../../services/api';
@@ -353,6 +354,12 @@ export default function Home() {
 
   return (
     <Box>
+      <PageSEO
+        titleKey="home.title"
+        descriptionKey="home.description"
+        ogType="website"
+        jsonLd={buildLocalBusinessSchema()}
+      />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <Box sx={{ position: 'relative', overflow: 'hidden', height: { xs: 320, sm: 460, md: 640 }, bgcolor: '#004263' }}>

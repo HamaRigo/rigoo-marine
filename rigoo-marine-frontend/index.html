@@ -2,10 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/brand/logo.PNG" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/png" href="/brand/logo.PNG" />
+    <link rel="apple-touch-icon" href="/brand/logo.PNG" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#004263" />
-    <title>Rigoo Marine Services</title>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Rigoo Marine" />
+
+    <!-- Fallback SEO — overridden per-page by PageSEO component -->
+    <title>Rigoo Marine — Professional Marine Services in Qatar</title>
+    <meta name="description" content="Rigoo Marine offers expert yacht and boat services in Qatar: maintenance, mechanical overhauls, structural repairs, and finishing. Book online." />
+    <meta name="robots" content="index,follow" />
+
+    <!-- Fallback Open Graph -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="Rigoo Marine" />
+    <meta property="og:title"       content="Rigoo Marine — Professional Marine Services in Qatar" />
+    <meta property="og:description" content="Expert yacht and boat services, marketplace, and marine parts shop in Qatar." />
+    <meta property="og:image"       content="https://rigoomarine.com/og-default.jpg" />
+    <meta property="og:url"         content="https://rigoomarine.com" />
+    <meta property="og:locale"      content="en_US" />
+
+    <!-- Fallback Twitter Card -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="Rigoo Marine — Marine Services Qatar" />
+    <meta name="twitter:description" content="Expert yacht and boat services, marketplace, and marine parts in Qatar." />
+    <meta name="twitter:image"       content="https://rigoomarine.com/og-default.jpg" />
+
+    <!-- Geo targeting -->
+    <meta name="geo.region"    content="QA" />
+    <meta name="geo.placename" content="Doha, Qatar" />
+
+    <!-- Performance: preconnect to API -->
+    <link rel="preconnect" href="https://api.rigoomarine.com" />
+    <link rel="dns-prefetch" href="https://api.rigoomarine.com" />
   </head>
   <body>
     <div id="root"></div>

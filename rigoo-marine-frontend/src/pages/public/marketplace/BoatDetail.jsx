@@ -29,6 +29,7 @@ import { marketplaceApi } from '../../../services/api';
 import BoatPhotoCarousel from '../../../components/marketplace/BoatPhotoCarousel';
 import InquiryDialog from '../../../components/marketplace/InquiryDialog';
 import { formatPrice } from '../../../utils/format';
+import PageSEO, { buildBoatSchema, buildBreadcrumbSchema } from '../../../components/common/PageSEO';
 
 const STATUS_COLORS = {
   AVAILABLE: 'success',
@@ -106,8 +107,27 @@ export default function BoatDetail() {
   const knownIssues = (isAr ? listing.knownIssuesAr : listing.knownIssuesEn) || listing.knownIssuesEn;
   const inclusions = (isAr ? listing.inclusionsAr : listing.inclusionsEn) || listing.inclusionsEn;
 
+  const seoTitle  = `${title} | Rigoo Marine`;
+  const seoDesc   = description?.slice(0, 160) || t('boatDetail.fallbackDescription', { ns: 'seo' });
+  const canonical = `https://rigoomarine.com/boats/${slug}`;
+
   return (
     <Box>
+      <PageSEO
+        title={seoTitle}
+        description={seoDesc}
+        ogImage={listing.mediaUrls?.[0]}
+        ogType="product"
+        canonical={canonical}
+        jsonLd={[
+          buildBoatSchema(listing, canonical),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Boats', url: '/boats' },
+            { name: title },
+          ]),
+        ]}
+      />
       <Container maxWidth="xl" sx={{ py: 3 }}>
         <Button
           startIcon={<ArrowBackIcon sx={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />}

@@ -12,6 +12,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { marketplaceApi } from '../../../services/api';
 import BoatCard from '../../../components/marketplace/BoatCard';
+import PageSEO, { buildBoatListSchema } from '../../../components/common/PageSEO';
 
 const PAGE_SIZE = 12;
 const YEAR_NOW = new Date().getFullYear();
@@ -135,6 +136,11 @@ export default function BoatGallery() {
 
   return (
     <Box>
+      <PageSEO
+        titleKey="boats.title"
+        descriptionKey="boats.description"
+        jsonLd={buildBoatListSchema()}
+      />
       <Fade in timeout={600}>
         <Box sx={{ background: 'linear-gradient(135deg, #0d47a1 0%, #1976d2 100%)', color: 'white', py: { xs: 5, md: 8 }, textAlign: 'center' }}>
           <Container maxWidth="md">

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Home -->
+  <url>
+    <loc>https://rigoomarine.com/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rigoomarine.com/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rigoomarine.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rigoomarine.com/"/>
+  </url>
+
+  <!-- Services -->
+  <url>
+    <loc>https://rigoomarine.com/services</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rigoomarine.com/services"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rigoomarine.com/services"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rigoomarine.com/services"/>
+  </url>
+
+  <!-- Boat Marketplace -->
+  <url>
+    <loc>https://rigoomarine.com/boats</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rigoomarine.com/boats"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rigoomarine.com/boats"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rigoomarine.com/boats"/>
+  </url>
+
+  <!-- Marine Parts Shop -->
+  <url>
+    <loc>https://rigoomarine.com/shop</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rigoomarine.com/shop"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rigoomarine.com/shop"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rigoomarine.com/shop"/>
+  </url>
+
+  <!--
+    Dynamic pages (individual boat & product listings) are NOT listed here because
+    their slugs change with inventory. Generate a dynamic sitemap from the API using
+    a serverless function or a scheduled script that calls:
+      GET /api/listings?status=AVAILABLE&fields=slug,updatedAt
+      GET /api/products?fields=slug,updatedAt
+    and appends entries in this format:
+      <url>
+        <loc>https://rigoomarine.com/boats/{slug}</loc>
+        <lastmod>{updatedAt}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+      </url>
+  -->
+
+</urlset>

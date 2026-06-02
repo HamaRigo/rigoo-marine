@@ -36,6 +36,7 @@
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
     "react-hot-toast": "^2.5.1",
     "react-i18next": "^17.0.6",
     "react-leaflet": "^4.2.1",

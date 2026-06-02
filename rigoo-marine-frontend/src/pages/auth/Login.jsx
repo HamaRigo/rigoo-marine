@@ -21,6 +21,7 @@ import { useFormValidation } from '../../hooks/useFormValidation';
 import { required, requiredPhone } from '../../utils/validators';
 import { getApiError } from '../../utils/apiError';
 import { consumeSessionExpiredFlag } from '../../services/interceptors';
+import PageSEO from '../../components/common/PageSEO';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -31,6 +32,7 @@ export default function Login() {
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', py: { xs: 3, sm: 6 }, px: { xs: 1.5, sm: 3 } }}>
+      <PageSEO titleKey="login.title" descriptionKey="login.description" noIndex />
       <Container maxWidth="sm" disableGutters sx={{ px: 0 }}>
         <Paper elevation={3} sx={{ p: { xs: 2.5, sm: 4 }, borderRadius: { xs: 2, sm: 3 } }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">

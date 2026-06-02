@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { shopApi } from '../../../services/api';
 import ProductCard from '../../../components/shop/ProductCard';
 import { useDebounce } from '../../../hooks/useDebounce';
+import PageSEO from '../../../components/common/PageSEO';
 
 const PAGE_SIZE = 12;
 
@@ -64,6 +65,7 @@ export default function ProductCatalog() {
 
   return (
     <Box>
+      <PageSEO titleKey="shop.title" descriptionKey="shop.description" />
       <Fade in timeout={600}>
         <Box sx={{ background: 'linear-gradient(135deg, #00695c 0%, #26a69a 100%)', color: 'white', py: { xs: 5, md: 8 }, textAlign: 'center' }}>
           <Container maxWidth="md">

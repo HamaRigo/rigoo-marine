@@ -32,6 +32,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../hooks/useCart';
 import { useToast } from '../../../hooks/useToast';
 import { formatPrice } from '../../../utils/format';
+import PageSEO, { buildProductSchema, buildBreadcrumbSchema } from '../../../components/common/PageSEO';
 import toast from 'react-hot-toast';
 
 
@@ -157,8 +158,27 @@ export default function ProductDetail() {
     ? { label: t('stock.low', { count: stock }), color: 'warning' }
     : { label: t('stock.available', { count: stock }), color: 'success' };
 
+  const seoTitle  = `${name} | Rigoo Marine Shop`;
+  const seoDesc   = description?.slice(0, 160) || t('productDetail.fallbackDescription', { ns: 'seo' });
+  const canonical = `https://rigoomarine.com/shop/products/${slug}`;
+
   return (
     <Box>
+      <PageSEO
+        title={seoTitle}
+        description={seoDesc}
+        ogImage={product.mediaUrls?.[0]}
+        ogType="product"
+        canonical={canonical}
+        jsonLd={[
+          buildProductSchema(product, canonical),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Shop', url: '/shop' },
+            { name: name },
+          ]),
+        ]}
+      />
       <Container maxWidth="xl" sx={{ py: 3 }}>
         <Button
           startIcon={<ArrowBackIcon sx={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />}
