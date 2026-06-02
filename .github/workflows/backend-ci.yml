@@ -9,6 +9,7 @@ on:
     branches: [main, develop, production]
     paths:
       - 'rigoo-marine-backend/**'
+  workflow_dispatch:
 
 env:
   MAVEN_OPTS: "-Xmx2g"
