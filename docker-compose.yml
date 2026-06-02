@@ -464,7 +464,7 @@ services:
 
   # Zookeeper (for Kafka)
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.7.1
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -483,7 +483,7 @@ services:
 
   # Kafka Message Broker — internal only, no external port
   kafka:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.7.1
     container_name: kafka
     depends_on:
       zookeeper:
