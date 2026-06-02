@@ -392,7 +392,7 @@ export default function Home() {
             transform: 'translateY(-65%)', zIndex: 3,
             textAlign: 'center', px: { xs: 2, sm: 4 }, pointerEvents: 'none',
           }}>
-            <Typography sx={{
+            <Typography component="h1" sx={{
               fontWeight: 900,
               fontSize: { xs: '1.9rem', sm: '2.8rem', md: '3.8rem' },
               letterSpacing: '0.1em', lineHeight: 1.1, textTransform: 'uppercase',

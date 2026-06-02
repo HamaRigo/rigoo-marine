@@ -84,7 +84,7 @@ export default function Services() {
       }}>
         <Container maxWidth="md">
           <Slide in direction="down" timeout={600}>
-            <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
               {t('services.header.title')}
             </Typography>
           </Slide>

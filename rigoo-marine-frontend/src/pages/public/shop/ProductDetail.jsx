@@ -211,7 +211,7 @@ export default function ProductDetail() {
                       </Typography>
                     )}
                   </Stack>
-                  <Typography variant="h4" fontWeight={700} gutterBottom>{name}</Typography>
+                  <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>{name}</Typography>
                   {product.brand && (
                     <Typography variant="body1" color="text.secondary">
                       {product.brand}

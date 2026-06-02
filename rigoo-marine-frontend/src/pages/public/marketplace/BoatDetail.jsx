@@ -160,7 +160,7 @@ export default function BoatDetail() {
                       </Typography>
                     )}
                   </Stack>
-                  <Typography variant="h4" fontWeight={700} gutterBottom>{title}</Typography>
+                  <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>{title}</Typography>
                   <Typography variant="body1" color="text.secondary">
                     {[listing.brand, listing.model, listing.yearBuilt].filter(Boolean).join(' · ')}
                   </Typography>

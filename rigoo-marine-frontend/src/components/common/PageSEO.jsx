@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://rigoomarine.com';
+// Falls back to the logo until a proper 1200×630 OG image is placed at /public/og-default.jpg
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.jpg`;
 
 /**
@@ -25,6 +26,7 @@ export default function PageSEO({
   ogType = 'website',
   noIndex = false,
   jsonLd,
+  paginationLinks = [],
 }) {
   const { t, i18n } = useTranslation('seo');
   const { pathname } = useLocation();
@@ -49,20 +51,29 @@ export default function PageSEO({
       }
 
       {/* Open Graph */}
-      <meta property="og:title"       content={resolvedTitle} />
-      <meta property="og:description" content={resolvedDescription} />
-      <meta property="og:image"       content={resolvedOgImage} />
-      <meta property="og:image:alt"   content={resolvedTitle} />
-      <meta property="og:url"         content={resolvedCanonical} />
-      <meta property="og:type"        content={ogType} />
-      <meta property="og:site_name"   content={t('site.name')} />
-      <meta property="og:locale"      content={isAr ? 'ar_QA' : 'en_US'} />
+      <meta property="og:title"            content={resolvedTitle} />
+      <meta property="og:description"      content={resolvedDescription} />
+      <meta property="og:image"            content={resolvedOgImage} />
+      <meta property="og:image:secure_url" content={resolvedOgImage} />
+      <meta property="og:image:alt"        content={resolvedTitle} />
+      <meta property="og:image:width"      content="1200" />
+      <meta property="og:image:height"     content="630" />
+      <meta property="og:image:type"       content="image/jpeg" />
+      <meta property="og:url"              content={resolvedCanonical} />
+      <meta property="og:type"             content={ogType} />
+      <meta property="og:site_name"        content={t('site.name')} />
+      <meta property="og:locale"           content={isAr ? 'ar_QA' : 'en_US'} />
 
       {/* Twitter Card */}
       <meta name="twitter:card"        content="summary_large_image" />
       <meta name="twitter:title"       content={resolvedTitle} />
       <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image"       content={resolvedOgImage} />
+
+      {/* Pagination — helps Google chain multi-page listings */}
+      {paginationLinks.map((l) => (
+        <link key={l.rel} rel={l.rel} href={l.href} />
+      ))}
 
       {/* Hreflang — same URL serves both languages via JS i18n */}
       <link rel="alternate" hrefLang="en"      href={resolvedCanonical} />
@@ -92,7 +103,8 @@ PageSEO.propTypes = {
   ogImage:        PropTypes.string,
   ogType:         PropTypes.string,
   noIndex:        PropTypes.bool,
-  jsonLd:         PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  jsonLd:          PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  paginationLinks: PropTypes.arrayOf(PropTypes.shape({ rel: PropTypes.string, href: PropTypes.string })),
 };
 
 /* ── Pre-built JSON-LD helpers ─────────────────────────────────────────────── */
@@ -108,7 +120,6 @@ export function buildLocalBusinessSchema() {
     url: SITE_URL,
     logo: `${SITE_URL}/brand/logo.PNG`,
     image: `${SITE_URL}/og-default.jpg`,
-    telephone: '',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Doha',
@@ -180,8 +191,7 @@ export function buildBoatSchema(listing, canonical) {
       : undefined,
     offers: {
       '@type': 'Offer',
-      price: listing.priceQar ?? '',
-      priceCurrency: 'QAR',
+      ...(listing.priceQar != null && { price: listing.priceQar, priceCurrency: 'QAR' }),
       availability:
         listing.status === 'AVAILABLE'
           ? 'https://schema.org/InStock'
@@ -214,8 +224,7 @@ export function buildProductSchema(product, canonical) {
       : undefined,
     offers: {
       '@type': 'Offer',
-      price: product.priceQar ?? '',
-      priceCurrency: 'QAR',
+      ...(product.priceQar != null && { price: product.priceQar, priceCurrency: 'QAR' }),
       availability:
         (product.stockQty ?? 0) > 0
           ? 'https://schema.org/InStock'

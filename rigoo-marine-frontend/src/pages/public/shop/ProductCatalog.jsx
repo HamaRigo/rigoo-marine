@@ -69,7 +69,7 @@ export default function ProductCatalog() {
       <Fade in timeout={600}>
         <Box sx={{ background: 'linear-gradient(135deg, #00695c 0%, #26a69a 100%)', color: 'white', py: { xs: 5, md: 8 }, textAlign: 'center' }}>
           <Container maxWidth="md">
-            <Typography variant="h3" gutterBottom fontWeight={700}>{t('title')}</Typography>
+            <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>{t('title')}</Typography>
             <Typography variant="h6" sx={{ opacity: 0.9, mb: 4 }}>{t('tagline')}</Typography>
             <ToggleButtonGroup value={category} exclusive onChange={handleCategory}
               sx={{ bgcolor: 'rgba(255,255,255,0.1)', '& .MuiToggleButton-root': { color: 'white', borderColor: 'rgba(255,255,255,0.3)', px: 4, '&.Mui-selected': { bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'white' } } } }}

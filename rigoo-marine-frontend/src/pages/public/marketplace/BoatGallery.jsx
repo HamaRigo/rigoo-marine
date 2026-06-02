@@ -134,17 +134,22 @@ export default function BoatGallery() {
     setPriceSlider(DEF_PRICE);   setPriceCommit(DEF_PRICE);
   };
 
+  const paginationLinks = [];
+  if (page > 0)               paginationLinks.push({ rel: 'prev', href: `https://rigoomarine.com/boats${page > 1 ? `?page=${page}` : ''}` });
+  if (page < totalPages - 1)  paginationLinks.push({ rel: 'next', href: `https://rigoomarine.com/boats?page=${page + 2}` });
+
   return (
     <Box>
       <PageSEO
         titleKey="boats.title"
         descriptionKey="boats.description"
         jsonLd={buildBoatListSchema()}
+        paginationLinks={paginationLinks}
       />
       <Fade in timeout={600}>
         <Box sx={{ background: 'linear-gradient(135deg, #0d47a1 0%, #1976d2 100%)', color: 'white', py: { xs: 5, md: 8 }, textAlign: 'center' }}>
           <Container maxWidth="md">
-            <Typography variant="h3" gutterBottom fontWeight={700}>{t('title')}</Typography>
+            <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>{t('title')}</Typography>
             <Typography variant="h6" sx={{ opacity: 0.9, mb: 4 }}>{t('tagline')}</Typography>
             <ToggleButtonGroup value={mode} exclusive onChange={(_, val) => val && setMode(val)}
               sx={{ bgcolor: 'rgba(255,255,255,0.1)', '& .MuiToggleButton-root': { color: 'white', borderColor: 'rgba(255,255,255,0.3)', px: 4, '&.Mui-selected': { bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'white' } } } }}
