@@ -1,6 +1,7 @@
 services:
   # Netflix Eureka - Service Discovery
   discovery-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/discovery-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: discovery-service/Dockerfile
@@ -24,6 +25,7 @@ services:
 
   # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
   api-gateway:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/api-gateway:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: gateway-module/Dockerfile
@@ -56,6 +58,7 @@ services:
 
   # Client Service (internal, no exposed port)
   client-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/client-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: client-module/Dockerfile
@@ -91,6 +94,7 @@ services:
 
   # Vessel Service (internal, no exposed port)
   vessel-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/vessel-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: vessel-module/Dockerfile
@@ -112,6 +116,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -124,6 +129,7 @@ services:
 
   # Service Service (internal, no exposed port)
   service-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/service-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: service-module/Dockerfile
@@ -157,6 +163,7 @@ services:
 
   # Work Order Service (internal, no exposed port)
   work-order-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/work-order-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: work-order-module/Dockerfile
@@ -181,6 +188,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
       interval: 30s
@@ -193,6 +201,7 @@ services:
 
   # Technician Service (internal, no exposed port)
   technician-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/technician-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: technician-module/Dockerfile
@@ -225,6 +234,7 @@ services:
     restart: unless-stopped
 
   delivery-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/delivery-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: delivery-module/Dockerfile
@@ -261,6 +271,7 @@ services:
 
   # Invoice Service (internal, no exposed port)
   invoice-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/invoice-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: invoice-module/Dockerfile
@@ -297,6 +308,7 @@ services:
 
   # Marketplace Service (internal, no exposed port)
   marketplace-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/marketplace-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: marketplace-module/Dockerfile
@@ -330,6 +342,7 @@ services:
 
   # Shop Service — Parts & Tools catalog + cart + orders
   shop-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/shop-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: shop-module/Dockerfile
@@ -367,6 +380,7 @@ services:
 
   # Notification Service (internal, no exposed port)
   notification-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/notification-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: notification-module/Dockerfile
@@ -417,6 +431,7 @@ services:
 
   # Maintenance Service — service history, scheduling, vessel inspections
   maintenance-service:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/maintenance-service:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-backend
       dockerfile: maintenance-module/Dockerfile
@@ -436,6 +451,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
       interval: 30s
@@ -605,6 +621,7 @@ services:
 
   # Frontend (React) — served by Nginx on host, this container is optional when using Vercel
   frontend:
+    image: ${DOCKERHUB_USERNAME:-rigoomarine}/marine-frontend:${DOCKER_TAG:-latest}
     build:
       context: ./rigoo-marine-frontend
     container_name: marine-frontend

@@ -51,6 +51,10 @@ jobs:
             docker pull ${HUB}/invoice-service:${DOCKER_TAG}
             docker pull ${HUB}/notification-service:${DOCKER_TAG}
             docker pull ${HUB}/discovery-service:${DOCKER_TAG}
+            docker pull ${HUB}/delivery-service:${DOCKER_TAG}
+            docker pull ${HUB}/marketplace-service:${DOCKER_TAG}
+            docker pull ${HUB}/shop-service:${DOCKER_TAG}
+            docker pull ${HUB}/maintenance-service:${DOCKER_TAG}
 
             export DOCKER_TAG=${DOCKER_TAG}
             docker compose up -d --remove-orphans

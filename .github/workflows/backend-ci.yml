@@ -151,3 +151,43 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:latest
+
+      - name: Build and push Delivery Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rigoo-marine-backend/delivery-module/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:latest
+
+      - name: Build and push Marketplace Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rigoo-marine-backend/marketplace-module/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:latest
+
+      - name: Build and push Shop Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rigoo-marine-backend/shop-module/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:latest
+
+      - name: Build and push Maintenance Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rigoo-marine-backend/maintenance-module/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:latest
