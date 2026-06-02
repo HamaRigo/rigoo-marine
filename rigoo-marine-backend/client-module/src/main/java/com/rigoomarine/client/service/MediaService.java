@@ -141,7 +141,7 @@ public class MediaService {
 
         // Create media record
         Media media = Media.builder()
-                .title(title != null ? title : originalFilename)
+                .title(title != null ? title : file.getOriginalFilename())
                 .url("/uploads/" + filename)
                 .type(mediaType)
                 .description(category)
