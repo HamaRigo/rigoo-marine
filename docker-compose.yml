@@ -84,6 +84,10 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+      # Public base URL used to build /uploads/* links in API responses.
+      # Must be the externally reachable API root (the URL Nginx exposes to the internet),
+      # NOT the internal gateway port. Example: https://api.rigoomarine.qa
+      - SERVER_BASE_URL=${PUBLIC_API_URL}
     mem_limit: 900m
     mem_reservation: 700m
     healthcheck:
