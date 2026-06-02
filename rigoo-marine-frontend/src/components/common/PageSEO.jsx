@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -64,9 +65,9 @@ export default function PageSEO({
       <meta name="twitter:image"       content={resolvedOgImage} />
 
       {/* Hreflang — same URL serves both languages via JS i18n */}
-      <link rel="alternate" hreflang="en"      href={resolvedCanonical} />
-      <link rel="alternate" hreflang="ar"      href={resolvedCanonical} />
-      <link rel="alternate" hreflang="x-default" href={`${SITE_URL}${pathname}`} />
+      <link rel="alternate" hrefLang="en"      href={resolvedCanonical} />
+      <link rel="alternate" hrefLang="ar"      href={resolvedCanonical} />
+      <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${pathname}`} />
 
       {/* Geo targeting — Qatar market */}
       <meta name="geo.region"   content="QA" />
@@ -81,6 +82,18 @@ export default function PageSEO({
     </Helmet>
   );
 }
+
+PageSEO.propTypes = {
+  titleKey:       PropTypes.string,
+  title:          PropTypes.string,
+  descriptionKey: PropTypes.string,
+  description:    PropTypes.string,
+  canonical:      PropTypes.string,
+  ogImage:        PropTypes.string,
+  ogType:         PropTypes.string,
+  noIndex:        PropTypes.bool,
+  jsonLd:         PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+};
 
 /* ── Pre-built JSON-LD helpers ─────────────────────────────────────────────── */
 
