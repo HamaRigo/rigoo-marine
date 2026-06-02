@@ -68,14 +68,22 @@ jobs:
           path: rigoo-marine-frontend/dist
 
   docker-build:
-    name: Build & Push Docker Image
+    name: Build & Push Docker Image (multi-arch)
     runs-on: ubuntu-latest
     needs: [lint, build]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+    if: |
+      (github.event_name == 'push' &&
+        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')) ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up QEMU (arm64 emulation)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -91,7 +99,10 @@ jobs:
         with:
           context: ./rigoo-marine-frontend
           file: ./rigoo-marine-frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/marine-frontend:buildcache,mode=max
