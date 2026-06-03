@@ -2,6 +2,12 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
 
 COPY pom.xml .
+# Install the root POM into the local repo non-recursively so all child
+# modules can resolve `com.rigoomarine:rigoo-marine-parent` as a parent.
+# Must run before any module-level install/package step — without it Maven
+# caches a "not found in central" failure and refuses to re-resolve.
+RUN mvn -B install -N -q
+
 COPY common-exceptions/pom.xml   common-exceptions/pom.xml
 COPY common-security/pom.xml     common-security/pom.xml
 COPY config-server/pom.xml       config-server/pom.xml

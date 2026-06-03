@@ -2,6 +2,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
 
 COPY pom.xml .
+RUN mvn -B install -N -q
 COPY common-exceptions/pom.xml   common-exceptions/pom.xml
 COPY common-security/pom.xml     common-security/pom.xml
 COPY config-server/pom.xml       config-server/pom.xml
