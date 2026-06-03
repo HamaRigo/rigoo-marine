@@ -168,15 +168,19 @@ class AdminControllerIntegrationTest {
 
     @Test
     void getAllOrders_ShouldReturnError_WhenEndpointRemoved() throws Exception {
+        // Spring MVC 6 / Boot 3 throws NoResourceFoundException → 404 (not 500)
+        // when no handler is registered for a path.
         mockMvc.perform(get("/admin/orders")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void getAllServices_ShouldReturnError_WhenEndpointRemoved() throws Exception {
+        // Spring MVC 6 / Boot 3 throws NoResourceFoundException → 404 (not 500)
+        // when no handler is registered for a path.
         mockMvc.perform(get("/admin/services")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isNotFound());
     }
 }
