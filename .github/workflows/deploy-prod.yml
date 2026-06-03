@@ -36,16 +36,13 @@ jobs:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           HUB: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          # Step 1: write compose file to home dir (always writable — never fails).
+          # Sync compose file: write to home dir first (always writable), then
+          # install to the canonical path. The canonical file is now owned by
+          # the deploy user (fixed by the fix-canonical-path workflow), so
+          # plain cp works — no sudo needed.
           base64 -w 0 docker-compose.yml | \
             ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
-            'base64 -d > ~/docker-compose.yml'
-          # Step 2: best-effort install to canonical path so manual
-          # `docker compose up` from /opt/rigoo-marine-prod/ stays current.
-          # Requires passwordless sudo for cp; silently skipped if unavailable.
-          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
-            'sudo cp ~/docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml 2>/dev/null \
-             || echo "INFO: canonical path not updated (no NOPASSWD sudo) — deploy continues from ~/docker-compose.yml"'
+            'base64 -d > ~/docker-compose.yml && cp ~/docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml'
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << EOF
             set -e
 
