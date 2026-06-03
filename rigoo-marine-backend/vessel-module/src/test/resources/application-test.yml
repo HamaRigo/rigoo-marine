@@ -15,6 +15,8 @@ spring:
     show-sql: false
   flyway:
     enabled: false
+  cache:
+    type: none
 
 eureka:
   client:
@@ -22,7 +24,12 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-and-validation-must-be-long-enough
+  expiration: 3600000
+
 logging:
   level:
     root: WARN
     com.rigoomarine.vessel: DEBUG
+    org.springframework.security: DEBUG
