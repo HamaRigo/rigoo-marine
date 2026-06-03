@@ -31,6 +31,10 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Sync docker-compose.yml to server
+        run: |
+          scp docker-compose.yml ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }}:/opt/rigoo-marine-prod/docker-compose.yml
+
       - name: Pull images and deploy
         env:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
