@@ -14,6 +14,7 @@ public class MediaDTO {
     private String type;
     private String description;
     private String category;
+    private Boolean active;
     private Long uploadedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
