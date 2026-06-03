@@ -1,0 +1,29 @@
+name: Check maintenance-service logs (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: maintenance-service restart logs
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Fetch logs
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} '
+            echo "=== inspect ==="
+            docker inspect maintenance-service \
+              --format "Status={{.State.Status}}  ExitCode={{.State.ExitCode}}  OOMKilled={{.State.OOMKilled}}  Restarts={{.RestartCount}}  StartedAt={{.State.StartedAt}}  FinishedAt={{.State.FinishedAt}}"
+            echo ""
+            echo "=== last 150 log lines ==="
+            docker logs maintenance-service --tail=150 2>&1
+          '
