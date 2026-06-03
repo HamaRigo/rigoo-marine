@@ -25,6 +25,13 @@ import java.util.stream.Collectors;
 @Transactional
 public class MediaService {
 
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+        "image/jpeg", "image/png", "image/webp", "image/gif",
+        "video/mp4", "video/quicktime", "video/webm",
+        "application/pdf"
+    );
+    private static final long MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
+
     private final MediaRepository mediaRepository;
 
     @Value("${file.upload-dir:./uploads}")
@@ -96,13 +103,6 @@ public class MediaService {
         log.info("Deleted media: {}", id);
     }
 
-    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
-        "image/jpeg", "image/png", "image/webp", "image/gif",
-        "video/mp4", "video/quicktime", "video/webm",
-        "application/pdf"
-    );
-    private static final long MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
-
     public MediaDTO uploadFile(MultipartFile file, String title, String category, Long uploadedBy) throws IOException {
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
@@ -141,7 +141,7 @@ public class MediaService {
 
         // Create media record
         Media media = Media.builder()
-                .title(title != null ? title : file.getOriginalFilename())
+                .title(title != null ? title : (file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload"))
                 .url("/uploads/" + filename)
                 .type(mediaType)
                 .description(category)
@@ -171,6 +171,7 @@ public class MediaService {
                 .type(media.getType().name())
                 .description(media.getDescription())
                 .category(media.getCategory())
+                .active(media.getActive())
                 .uploadedBy(media.getUploadedBy())
                 .createdAt(media.getCreatedAt())
                 .updatedAt(media.getUpdatedAt())
