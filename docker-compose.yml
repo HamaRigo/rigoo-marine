@@ -25,8 +25,8 @@ services:
 
   # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
   # container_name removed so `docker compose up --scale api-gateway=2` works.
-  # To scale: uncomment `deploy:` below. Each instance needs ~1 GiB so two
-  # instances require 2 GiB — verify host has headroom before enabling.
+  # To scale: uncomment `deploy:` below. Each instance needs ~1.5 GiB so two
+  # instances require 3 GiB — verify host has headroom before enabling.
   # deploy:
   #   replicas: 2
   api-gateway:
@@ -43,13 +43,14 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      # Gateway uses 50% (not 60%) so Netty off-heap buffers fit in the remaining 750m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=25
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-    mem_limit: 1g
-    mem_reservation: 768m
+    mem_limit: 1536m
+    mem_reservation: 1200m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
