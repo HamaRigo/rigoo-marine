@@ -53,6 +53,7 @@ jobs:
             echo "=== Verifying compose file memory limits ==="
             grep -E "mem_limit|MaxRAMPercentage" ~/docker-compose.yml
 
+            docker pull ${HUB}/discovery-service:${DOCKER_TAG}
             docker pull ${HUB}/api-gateway:${DOCKER_TAG}
             docker pull ${HUB}/client-service:${DOCKER_TAG}
             docker pull ${HUB}/vessel-service:${DOCKER_TAG}
@@ -61,11 +62,11 @@ jobs:
             docker pull ${HUB}/technician-service:${DOCKER_TAG}
             docker pull ${HUB}/invoice-service:${DOCKER_TAG}
             docker pull ${HUB}/notification-service:${DOCKER_TAG}
-            docker pull ${HUB}/discovery-service:${DOCKER_TAG}
             docker pull ${HUB}/delivery-service:${DOCKER_TAG}
             docker pull ${HUB}/marketplace-service:${DOCKER_TAG}
             docker pull ${HUB}/shop-service:${DOCKER_TAG}
             docker pull ${HUB}/maintenance-service:${DOCKER_TAG}
+            docker pull ${HUB}/marine-frontend:${DOCKER_TAG}
 
             export DOCKER_TAG=${DOCKER_TAG}
             docker compose -f ~/docker-compose.yml \

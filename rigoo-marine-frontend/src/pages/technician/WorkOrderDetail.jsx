@@ -506,7 +506,7 @@ export default function WorkOrderDetail() {
                     secondaryAction={
                       <Button
                         size="small"
-                        href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${a.downloadUrl}`}
+                        href={`${import.meta.env.VITE_API_BASE_URL}${a.downloadUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
