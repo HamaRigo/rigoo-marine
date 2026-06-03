@@ -31,15 +31,15 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Sync docker-compose.yml to server
+        run: |
+          scp docker-compose.yml ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }}:/opt/rigoo-marine-prod/docker-compose.yml
+
       - name: Pull images and deploy
         env:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           HUB: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          # Push compose file via stdin to avoid a separate SCP permission step
-          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
-            "sudo tee /opt/rigoo-marine-prod/docker-compose.yml > /dev/null" \
-            < docker-compose.yml
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << EOF
             set -e
             cd /opt/rigoo-marine-prod
