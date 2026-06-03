@@ -74,11 +74,9 @@ eureka:
     instance-info-replication-interval-seconds: 30
     registry-fetch-interval-seconds: 30
   instance:
-    prefer-ip-address: true
-    ip-address: 127.0.0.1
     instance-id: ${spring.application.name}:${random.uuid}
-    health-check-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/health
-    status-page-url: http://${eureka.instance.ip-address}:${management.server.port}/actuator/info
+    health-check-url: http://${spring.application.name}:${management.server.port}/actuator/health
+    status-page-url: http://${spring.application.name}:${management.server.port}/actuator/info
     # Heartbeat + lease settings keep stale registrations from lingering
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
