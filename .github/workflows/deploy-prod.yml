@@ -82,6 +82,19 @@ jobs:
           curl -f https://${{ secrets.PROD_DOMAIN }}/actuator/health || echo "API health check failed"
           curl -f https://${{ secrets.PROD_DOMAIN }}/ || echo "Frontend health check failed"
 
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << 'DIAG'
+            echo "=== docker compose ps ==="
+            docker compose -f ~/docker-compose.yml --project-directory /opt/rigoo-marine-prod ps
+            echo "=== api-gateway inspect ==="
+            docker inspect rigoo-marine-prod-api-gateway-1 \
+              --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}} Status={{.State.Status}} RestartCount={{.RestartCount}}' 2>/dev/null || true
+            echo "=== api-gateway last 40 log lines ==="
+            docker logs rigoo-marine-prod-api-gateway-1 --tail=40 2>&1 || true
+          DIAG
+
       - name: Notify on failure
         if: failure()
         run: echo "Production deployment failed! Check GitHub Actions for details."
