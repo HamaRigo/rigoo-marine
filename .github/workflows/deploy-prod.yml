@@ -65,7 +65,7 @@ jobs:
             docker compose -f ~/docker-compose.yml down --remove-orphans 2>/dev/null || true
             docker compose -f ~/docker-compose.yml \
               --project-directory /opt/rigoo-marine-prod \
-              up -d --remove-orphans
+              up -d --force-recreate --remove-orphans
 
             echo "Waiting for services to be healthy..."
             sleep 60
