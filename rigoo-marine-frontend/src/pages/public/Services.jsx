@@ -68,7 +68,7 @@ export default function Services() {
       <PageSEO
         titleKey="services.title"
         descriptionKey="services.description"
-        jsonLd={buildServiceListSchema(rawData)}
+        jsonLd={buildServiceListSchema(services)}
       />
       {/* ── Header banner ── */}
       <Box sx={{
