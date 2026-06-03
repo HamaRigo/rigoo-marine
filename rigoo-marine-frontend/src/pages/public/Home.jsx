@@ -164,6 +164,8 @@ function StatCard({ value, suffix, label, delay, inView }) {
   );
 }
 
+const GALLERY_PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="800" height="450" fill="%23004263"/><text x="50%25" y="50%25" fill="%23ffffff40" font-size="48" font-family="sans-serif" text-anchor="middle" dominant-baseline="middle">⚓</text></svg>';
+
 function BeforeAfterSlider({ beforeSrc, afterSrc, beforeLabel, afterLabel, height = 240 }) {
   const [position, setPosition] = useState(50);
   const containerRef = useRef(null);
@@ -214,11 +216,13 @@ function BeforeAfterSlider({ beforeSrc, afterSrc, beforeLabel, afterLabel, heigh
         cursor: 'ew-resize', userSelect: 'none', touchAction: 'none',
       }}
     >
-      <Box component="img" src={beforeSrc} alt={beforeLabel} loading="lazy"
+      <Box component="img" src={beforeSrc || GALLERY_PLACEHOLDER} alt={beforeLabel} loading="lazy"
+        onError={(e) => { e.currentTarget.src = GALLERY_PLACEHOLDER; }}
         sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
       />
       <Box sx={{ position: 'absolute', inset: 0, clipPath: `inset(0 0 0 ${position}%)` }}>
-        <Box component="img" src={afterSrc} alt={afterLabel} loading="lazy"
+        <Box component="img" src={afterSrc || GALLERY_PLACEHOLDER} alt={afterLabel} loading="lazy"
+          onError={(e) => { e.currentTarget.src = GALLERY_PLACEHOLDER; }}
           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </Box>
