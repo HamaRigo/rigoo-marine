@@ -1,0 +1,20 @@
+name: Check CORS env (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+      - name: Show ALLOWED_ORIGINS
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            'grep -i "ALLOWED_ORIGINS\|PUBLIC_API_URL\|FRONTEND_BASE_URL" /opt/rigoo-marine-prod/.env 2>/dev/null || echo ".env not found or vars missing"'
