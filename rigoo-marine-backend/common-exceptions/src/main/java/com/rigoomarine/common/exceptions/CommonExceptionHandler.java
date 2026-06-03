@@ -8,6 +8,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -78,6 +79,17 @@ public class CommonExceptionHandler {
             .timestamp(Instant.now())
             .fieldErrors(fields)
             .build());
+    }
+
+    /**
+     * Spring MVC 6 throws this (not 404 status-exception) when no handler
+     * matches. Without an explicit handler, the catch-all below turns it into
+     * 500 — which is wrong and triggers downstream retries. Map it to 404.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(error("NOT_FOUND", "Resource not found"));
     }
 
     /**
