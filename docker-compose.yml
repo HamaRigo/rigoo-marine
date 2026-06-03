@@ -48,6 +48,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     mem_limit: 1536m
     mem_reservation: 1200m
@@ -84,6 +85,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       # Public base URL used to build /uploads/* links in API responses.
       # Must be the externally reachable API root (the URL Nginx exposes to the internet),
@@ -124,6 +126,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     mem_limit: 768m
@@ -161,6 +164,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
     mem_limit: 768m
     mem_reservation: 600m
@@ -199,6 +203,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
@@ -237,6 +242,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
     mem_limit: 768m
     mem_reservation: 600m
@@ -274,6 +280,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
     mem_limit: 768m
@@ -311,6 +318,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
@@ -350,6 +358,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
     mem_limit: 768m
     mem_reservation: 600m
@@ -390,6 +399,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
@@ -432,6 +442,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - MAIL_ENABLED=${MAIL_ENABLED:-false}
