@@ -61,12 +61,18 @@ jobs:
             docker pull ${HUB}/maintenance-service:${DOCKER_TAG}
 
             export DOCKER_TAG=${DOCKER_TAG}
-            docker compose -f ~/docker-compose.yml up -d --remove-orphans
+            # Stop any containers started under the wrong project (home-dir run)
+            docker compose -f ~/docker-compose.yml down --remove-orphans 2>/dev/null || true
+            docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod \
+              up -d --remove-orphans
 
             echo "Waiting for services to be healthy..."
             sleep 60
 
-            docker compose -f ~/docker-compose.yml ps
+            docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod \
+              ps
             docker image prune -f
           EOF
 
