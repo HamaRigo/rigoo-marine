@@ -36,20 +36,22 @@ jobs:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           HUB: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          # Write to home dir first (always writable), then install to canonical path.
-          # This ensures /opt/rigoo-marine-prod/docker-compose.yml is ALWAYS the
-          # production-branch version — manual `docker compose up` on the server
-          # can never run a stale config.
+          # 1. Write compose file to home dir (always writable).
+          # 2. Also install it to the canonical path via sudo tee so that any
+          #    manual `docker compose up` from /opt/rigoo-marine-prod/ uses the
+          #    current production config, not a stale copy.
+          # 3. Run all compose commands with -f ~/docker-compose.yml
+          #    --project-directory /opt/rigoo-marine-prod so .env and named
+          #    volumes resolve from the correct root regardless of sudo outcome.
           base64 -w 0 docker-compose.yml | \
             ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
-            'base64 -d > ~/docker-compose.yml && cp ~/docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml'
+            'base64 -d | tee ~/docker-compose.yml | sudo tee /opt/rigoo-marine-prod/docker-compose.yml > /dev/null'
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << EOF
             set -e
-            cd /opt/rigoo-marine-prod
 
             echo "Deploying tag: ${DOCKER_TAG}"
             echo "=== Verifying compose file memory limits ==="
-            grep -E "mem_limit|MaxRAMPercentage" docker-compose.yml
+            grep -E "mem_limit|MaxRAMPercentage" ~/docker-compose.yml
 
             docker pull ${HUB}/api-gateway:${DOCKER_TAG}
             docker pull ${HUB}/client-service:${DOCKER_TAG}
@@ -66,13 +68,19 @@ jobs:
             docker pull ${HUB}/maintenance-service:${DOCKER_TAG}
 
             export DOCKER_TAG=${DOCKER_TAG}
-            docker compose down --remove-orphans 2>/dev/null || true
-            docker compose up -d --force-recreate --remove-orphans
+            docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod \
+              down --remove-orphans 2>/dev/null || true
+            docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod \
+              up -d --force-recreate --remove-orphans
 
             echo "Waiting for services to be healthy..."
             sleep 60
 
-            docker compose ps
+            docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod \
+              ps
             docker image prune -f
           EOF
 
@@ -86,19 +94,18 @@ jobs:
         if: failure()
         run: |
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << 'DIAG'
-            cd /opt/rigoo-marine-prod
             echo "=== compose file memory limits ==="
-            grep -E "mem_limit|MaxRAMPercentage" docker-compose.yml
+            grep -E "mem_limit|MaxRAMPercentage" ~/docker-compose.yml
             echo "=== docker compose ps ==="
-            docker compose ps
-            echo "=== discovery-service inspect ==="
+            docker compose -f ~/docker-compose.yml --project-directory /opt/rigoo-marine-prod ps
+            echo "=== discovery-service OOM check ==="
             docker inspect discovery-service \
-              --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}} Status={{.State.Status}} RestartCount={{.RestartCount}}' 2>/dev/null || true
+              --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}} Status={{.State.Status}} RestartCount={{.RestartCount}} Memory={{.HostConfig.Memory}}' 2>/dev/null || true
             echo "=== discovery-service last 40 log lines ==="
             docker logs discovery-service --tail=40 2>&1 || true
             echo "=== api-gateway inspect ==="
             docker inspect rigoo-marine-prod-api-gateway-1 \
-              --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}} Status={{.State.Status}} RestartCount={{.RestartCount}}' 2>/dev/null || true
+              --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}} Status={{.State.Status}} RestartCount={{.RestartCount}} Memory={{.HostConfig.Memory}}' 2>/dev/null || true
             echo "=== api-gateway last 40 log lines ==="
             docker logs rigoo-marine-prod-api-gateway-1 --tail=40 2>&1 || true
           DIAG
