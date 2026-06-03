@@ -10,23 +10,23 @@ services:
     environment:
       # Was unset — the JVM sized its heap off the whole VM, making Eureka the
       # fattest OOM target. Cap it and bound the container.
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
-    mem_limit: 420m
-    mem_reservation: 320m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+    mem_limit: 1g
+    mem_reservation: 768m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 90s
     networks:
       - marine-network
     restart: unless-stopped
 
   # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
   # container_name removed so `docker compose up --scale api-gateway=2` works.
-  # To scale: uncomment `deploy:` below. Each instance needs ~560 MiB so two
-  # instances require 1.1 GiB — verify host has headroom before enabling.
+  # To scale: uncomment `deploy:` below. Each instance needs ~1 GiB so two
+  # instances require 2 GiB — verify host has headroom before enabling.
   # deploy:
   #   replicas: 2
   api-gateway:
@@ -43,13 +43,13 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-    mem_limit: 560m
-    mem_reservation: 420m
+    mem_limit: 1g
+    mem_reservation: 768m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -76,7 +76,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=40
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -88,8 +88,8 @@ services:
       # Must be the externally reachable API root (the URL Nginx exposes to the internet),
       # NOT the internal gateway port. Example: https://api.rigoomarine.qa
       - SERVER_BASE_URL=${PUBLIC_API_URL}
-    mem_limit: 900m
-    mem_reservation: 700m
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -116,7 +116,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -125,6 +125,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -151,7 +153,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -159,6 +161,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -187,7 +191,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -197,6 +201,8 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
       interval: 30s
@@ -223,7 +229,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -231,6 +237,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
       interval: 30s
@@ -258,7 +266,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -267,6 +275,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8092/actuator/health"]
       interval: 30s
@@ -293,7 +303,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -304,6 +314,8 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 30s
@@ -330,7 +342,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -338,6 +350,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
       interval: 30s
@@ -350,8 +364,8 @@ services:
 
   # Shop Service — Parts & Tools catalog + cart + orders
   # container_name removed so `docker compose up --scale shop-service=2` works.
-  # To scale: uncomment `deploy:` below. Each instance needs ~384 MiB so two
-  # instances require 768 MiB — verify host has headroom before enabling.
+  # To scale: uncomment `deploy:` below. Each instance needs ~768 MiB so two
+  # instances require 1.5 GiB — verify host has headroom before enabling.
   # deploy:
   #   replicas: 2
   shop-service:
@@ -368,7 +382,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx384m -Xms192m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -380,6 +394,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
       interval: 30s
@@ -408,7 +424,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx384m -Xms192m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -431,6 +447,8 @@ services:
       - WHATSAPP_META_PHONE_NUMBER_ID=${WHATSAPP_META_PHONE_NUMBER_ID:-}
       - WHATSAPP_META_ACCESS_TOKEN=${WHATSAPP_META_ACCESS_TOKEN:-}
       - WHATSAPP_META_VERIFY_TOKEN=${WHATSAPP_META_VERIFY_TOKEN}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
       interval: 30s
@@ -457,13 +475,15 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+    mem_limit: 768m
+    mem_reservation: 600m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
       interval: 30s
@@ -481,15 +501,18 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_HEAP_OPTS: "-Xmx256m -Xms128m"
+    mem_limit: 512m
+    mem_reservation: 384m
     volumes:
       - zookeeper-data:/var/lib/zookeeper/data
       - zookeeper-logs:/var/lib/zookeeper/log
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc -w 1 localhost 2181 | grep imok"]
+      test: ["CMD-SHELL", "echo ruok | nc -q 2 localhost 2181 | grep -q imok"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - marine-network
 
@@ -509,6 +532,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+    mem_limit: 1g
+    mem_reservation: 768m
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
