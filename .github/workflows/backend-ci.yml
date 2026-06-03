@@ -76,7 +76,7 @@ jobs:
       - name: Build and push API Gateway
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/gateway-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -89,7 +89,7 @@ jobs:
       - name: Build and push Client Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/client-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -100,7 +100,7 @@ jobs:
       - name: Build and push Vessel Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/vessel-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -111,7 +111,7 @@ jobs:
       - name: Build and push Service Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/service-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -122,7 +122,7 @@ jobs:
       - name: Build and push Work Order Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/work-order-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -133,7 +133,7 @@ jobs:
       - name: Build and push Technician Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/technician-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -144,7 +144,7 @@ jobs:
       - name: Build and push Invoice Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/invoice-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -155,7 +155,7 @@ jobs:
       - name: Build and push Notification Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/notification-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -166,7 +166,7 @@ jobs:
       - name: Build and push Discovery Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/discovery-service/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -177,7 +177,7 @@ jobs:
       - name: Build and push Delivery Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/delivery-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -188,7 +188,7 @@ jobs:
       - name: Build and push Marketplace Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/marketplace-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -199,7 +199,7 @@ jobs:
       - name: Build and push Shop Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/shop-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
@@ -210,7 +210,7 @@ jobs:
       - name: Build and push Maintenance Service
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/maintenance-module/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
