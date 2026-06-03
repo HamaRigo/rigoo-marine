@@ -1,0 +1,39 @@
+name: Final health check (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Container health + OOM + public API
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} '
+            echo "=== docker compose ps ==="
+            docker compose -f ~/docker-compose.yml --project-directory /opt/rigoo-marine-prod ps
+
+            echo ""
+            echo "=== OOM / restart check ==="
+            docker inspect $(docker compose -f ~/docker-compose.yml \
+              --project-directory /opt/rigoo-marine-prod ps -q) \
+              --format "{{.Name}}  OOM={{.State.OOMKilled}}  Restarts={{.RestartCount}}  Status={{.State.Status}}" \
+              2>/dev/null | sort
+
+            echo ""
+            echo "=== public API through gateway (20s timeout) ==="
+            curl -s --max-time 20 -w "contact-info: HTTP %{http_code}\n" \
+              http://localhost:8080/api/public/contact-info -o /tmp/ci.json && cat /tmp/ci.json
+            curl -s --max-time 20 -w "\nteam: HTTP %{http_code}\n" \
+              http://localhost:8080/api/public/team -o /dev/null
+            curl -s --max-time 20 -w "gallery: HTTP %{http_code}\n" \
+              http://localhost:8080/api/public/gallery -o /dev/null
+          '
