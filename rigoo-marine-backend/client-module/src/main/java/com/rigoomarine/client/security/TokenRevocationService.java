@@ -2,6 +2,7 @@ package com.rigoomarine.client.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -51,8 +52,16 @@ public class TokenRevocationService {
         }
         String key = KEY_PREFIX + jti;
         String value = (actorEmail == null ? "?" : actorEmail) + ":" + Instant.now().toEpochMilli();
-        redisTemplate.opsForValue().set(key, value, ttl);
-        log.info("logout.revoked actor={} jti={} ttlSec={}", actorEmail, jti, ttl.getSeconds());
-        return true;
+        try {
+            redisTemplate.opsForValue().set(key, value, ttl);
+            log.info("logout.revoked actor={} jti={} ttlSec={}", actorEmail, jti, ttl.getSeconds());
+            return true;
+        } catch (DataAccessException ex) {
+            // Redis unavailable — token not blacklisted but logout still succeeds
+            // (same fail-open trade-off as RegisterRateLimiter and OtpRateLimiter)
+            log.warn("logout.revocation_skipped: Redis unreachable, token not blacklisted — actor={} jti={}: {}",
+                     actorEmail, jti, ex.toString());
+            return false;
+        }
     }
 }

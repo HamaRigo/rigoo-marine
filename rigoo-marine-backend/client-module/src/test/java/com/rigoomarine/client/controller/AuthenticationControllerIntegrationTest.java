@@ -54,10 +54,16 @@ class AuthenticationControllerIntegrationTest {
     void setUp() {
         clientRepository.deleteAll();
         // Clear rate limiter Redis keys so registration tests are idempotent across runs.
+        // Wrapped in try/catch: Redis is not available in CI and may not be running locally
+        // either. The cleanup is best-effort — if Redis is down there are no live keys anyway.
         if (redisTemplate != null) {
-            Set<String> keys = redisTemplate.keys("register:rate:*");
-            if (keys != null && !keys.isEmpty()) {
-                redisTemplate.delete(keys);
+            try {
+                Set<String> keys = redisTemplate.keys("register:rate:*");
+                if (keys != null && !keys.isEmpty()) {
+                    redisTemplate.delete(keys);
+                }
+            } catch (org.springframework.dao.DataAccessException ignored) {
+                // Redis unreachable — no rate-limit keys exist to clear
             }
         }
     }

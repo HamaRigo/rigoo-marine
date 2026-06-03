@@ -244,7 +244,7 @@ public class AuthenticationController {
      */
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(
-            @AuthenticationPrincipal String email
+            @AuthenticationPrincipal(expression = "email") String email
     ) {
         if (email != null) {
             ClientDTO client = clientService.getClientByEmail(email);
@@ -260,7 +260,7 @@ public class AuthenticationController {
      */
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(
-            @AuthenticationPrincipal String email,
+            @AuthenticationPrincipal(expression = "email") String email,
             @RequestBody Map<String, String> updates
     ) {
         if (email == null) {
@@ -295,7 +295,7 @@ public class AuthenticationController {
      */
     @PutMapping("/password")
     public ResponseEntity<Map<String, String>> updatePassword(
-            @AuthenticationPrincipal String email,
+            @AuthenticationPrincipal(expression = "email") String email,
             @RequestBody Map<String, String> passwordData
     ) {
         if (email == null) {
@@ -434,7 +434,7 @@ public class AuthenticationController {
      */
     @PostMapping("/resend-verification")
     public ResponseEntity<Map<String, String>> resendVerification(
-            @AuthenticationPrincipal String email,
+            @AuthenticationPrincipal(expression = "email") String email,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         if (email == null) return ResponseEntity.status(401).build();
