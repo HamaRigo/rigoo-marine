@@ -23,8 +23,11 @@ RUN mvn -B dependency:resolve -pl common-security,common-exceptions,work-order-m
 
 COPY common-security/src     common-security/src
 COPY common-exceptions/src   common-exceptions/src
-COPY work-order-module/src   work-order-module/src
-RUN mvn -B package -pl work-order-module -am -DskipTests -q
+# Install common modules into the local repo first.
+RUN mvn -B install -pl common-security,common-exceptions -DskipTests -q
+
+COPY work-order-module/src      work-order-module/src
+RUN mvn -B package -pl work-order-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app

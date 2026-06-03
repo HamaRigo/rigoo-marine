@@ -23,8 +23,14 @@ RUN mvn -B dependency:resolve -pl common-security,common-exceptions,client-modul
 
 COPY common-security/src    common-security/src
 COPY common-exceptions/src  common-exceptions/src
+# Install common modules into the local repo first. --fail-never in the
+# dependency:resolve step above downloads external jars but does NOT
+# install internal reactor artifacts (not on Maven Central). Without this
+# explicit install, `mvn package -am` fails to resolve them on QEMU arm64.
+RUN mvn -B install -pl common-security,common-exceptions -DskipTests -q
+
 COPY client-module/src      client-module/src
-RUN mvn -B package -pl client-module -am -DskipTests -q
+RUN mvn -B package -pl client-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app

@@ -22,8 +22,11 @@ COPY delivery-module/pom.xml     delivery-module/pom.xml
 RUN mvn -B dependency:resolve -pl common-security,delivery-module --fail-never -q
 
 COPY common-security/src    common-security/src
-COPY delivery-module/src    delivery-module/src
-RUN mvn -B package -pl delivery-module -am -DskipTests -q
+# Install common modules into the local repo first.
+RUN mvn -B install -pl common-security -DskipTests -q
+
+COPY delivery-module/src      delivery-module/src
+RUN mvn -B package -pl delivery-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app

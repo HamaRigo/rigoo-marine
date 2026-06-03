@@ -22,8 +22,11 @@ COPY delivery-module/pom.xml    delivery-module/pom.xml
 RUN mvn -B dependency:resolve -pl common-security,marketplace-module --fail-never -q
 
 COPY common-security/src     common-security/src
-COPY marketplace-module/src  marketplace-module/src
-RUN mvn -B package -pl marketplace-module -am -DskipTests -q
+# Install common modules into the local repo first.
+RUN mvn -B install -pl common-security -DskipTests -q
+
+COPY marketplace-module/src      marketplace-module/src
+RUN mvn -B package -pl marketplace-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app

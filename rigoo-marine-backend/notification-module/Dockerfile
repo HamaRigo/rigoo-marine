@@ -23,8 +23,11 @@ RUN mvn -B dependency:resolve -pl common-security,common-exceptions,notification
 
 COPY common-security/src      common-security/src
 COPY common-exceptions/src    common-exceptions/src
-COPY notification-module/src  notification-module/src
-RUN mvn -B package -pl notification-module -am -DskipTests -q
+# Install common modules into the local repo first.
+RUN mvn -B install -pl common-security,common-exceptions -DskipTests -q
+
+COPY notification-module/src      notification-module/src
+RUN mvn -B package -pl notification-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
