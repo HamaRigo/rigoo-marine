@@ -408,24 +408,13 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
     loadbalancer:
-      configurations: health-check
-      health-check:
-        initial-delay: 0
-        interval: 25s
-        path:
-          default: /actuator/health
-        port:
-          client-service: 8081
-          vessel-service: 8082
-          service-service: 8083
-          work-order-service: 8084
-          invoice-service: 8085
-          technician-service: 8086
-          notification-service: 8087
-          marketplace-service: 8088
-          shop-service: 8089
-          maintenance-service: 8091
-          delivery-service: 8092
+      # Default round-robin using Eureka health state.
+      # health-check mode was removed: it probed 127.0.0.1:<management-port>
+      # from inside the gateway container, which is the gateway's own loopback
+      # (not the target service). Every service was marked DOWN, the reactive
+      # stream blocked, and all routed requests hung indefinitely.
+      # Eureka already tracks UP/DOWN via service lease renewals — no separate
+      # gateway probe is needed.
 
 eureka:
   client:
