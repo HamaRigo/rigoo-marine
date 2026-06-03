@@ -36,11 +36,10 @@ jobs:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           HUB: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          # Sync compose file: pipe base64-encoded content through SSH so no
-          # separate scp connection or elevated permissions are needed.
+          # Sync compose file to home dir (always writable) then deploy from there.
           base64 -w 0 docker-compose.yml | \
             ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
-            'base64 -d > /opt/rigoo-marine-prod/docker-compose.yml'
+            'base64 -d > ~/docker-compose.yml'
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << EOF
             set -e
             cd /opt/rigoo-marine-prod
@@ -62,12 +61,12 @@ jobs:
             docker pull ${HUB}/maintenance-service:${DOCKER_TAG}
 
             export DOCKER_TAG=${DOCKER_TAG}
-            docker compose up -d --remove-orphans
+            docker compose -f ~/docker-compose.yml up -d --remove-orphans
 
             echo "Waiting for services to be healthy..."
             sleep 60
 
-            docker compose ps
+            docker compose -f ~/docker-compose.yml ps
             docker image prune -f
           EOF
 
