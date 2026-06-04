@@ -3,6 +3,7 @@ package com.rigoomarine.client.exception;
 import com.rigoomarine.common.exceptions.CommonExceptionHandler;
 import com.rigoomarine.common.exceptions.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -68,5 +69,39 @@ public class GlobalExceptionHandler extends CommonExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Illegal argument: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(error("INVALID_REQUEST", ex.getMessage()));
+    }
+
+    /**
+     * Catches DB unique-constraint violations that slip past the application-level
+     * existsByEmail / existsByPhone checks (race condition: two concurrent requests
+     * with identical data, both pass the guard, one fails at INSERT).
+     *
+     * Returns 400 so the frontend's existing "already exists" dialog fires;
+     * the constraint name from the PG error message is parsed to pick the right copy.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String cause = ex.getMostSpecificCause().getMessage();
+        log.warn("Data integrity violation: {}", cause);
+
+        if (cause != null) {
+            // PostgreSQL unique-violation messages contain the constraint name, e.g.:
+            //   ERROR: duplicate key value violates unique constraint "clients_email_key"
+            if (cause.contains("email")) {
+                return ResponseEntity.badRequest()
+                    .body(error("INVALID_REQUEST", "Email already exists"));
+            }
+            if (cause.contains("phone")) {
+                return ResponseEntity.badRequest()
+                    .body(error("INVALID_REQUEST", "Phone number already exists"));
+            }
+            if (cause.contains("unsubscribe_token")) {
+                // UUID collision — astronomically unlikely; retry is safe.
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(error("INTERNAL_ERROR", "An unexpected error occurred"));
+            }
+        }
+        return ResponseEntity.badRequest()
+            .body(error("INVALID_REQUEST", "A record with this data already exists"));
     }
 }

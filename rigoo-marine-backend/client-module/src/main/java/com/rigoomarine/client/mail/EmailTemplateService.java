@@ -6,11 +6,17 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailTemplateService {
+
+    // Single compiled pattern reused across all template renders.
+    // Matches {{word}} placeholders; capturing group 1 is the key.
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
 
     private final EmailTemplateRepository repository;
     private final MailSender mailSender;
@@ -41,12 +47,8 @@ public class EmailTemplateService {
         String subject = ar ? tpl.getSubjectAr() : tpl.getSubject();
         String body = ar ? tpl.getBodyAr() : tpl.getBody();
 
-        for (Map.Entry<String, String> e : vars.entrySet()) {
-            String placeholder = "{{" + e.getKey() + "}}";
-            String value = e.getValue() == null ? "" : e.getValue();
-            subject = subject.replace(placeholder, value);
-            body = body.replace(placeholder, value);
-        }
+        subject = render(subject, vars);
+        body    = render(body, vars);
 
         try {
             mailSender.send(to, subject, body);
@@ -58,5 +60,21 @@ public class EmailTemplateService {
             metrics.recordFailure(name);
             throw ex;
         }
+    }
+
+    /**
+     * Single-pass O(template_length) substitution.
+     * Serial String.replace calls are O(vars × length); a regex Matcher scans once.
+     */
+    private static String render(String template, Map<String, String> vars) {
+        if (template == null || vars.isEmpty()) return template;
+        Matcher m = PLACEHOLDER.matcher(template);
+        StringBuilder sb = new StringBuilder(template.length());
+        while (m.find()) {
+            String val = vars.getOrDefault(m.group(1), "");
+            m.appendReplacement(sb, Matcher.quoteReplacement(val));
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 }

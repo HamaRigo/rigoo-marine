@@ -7,6 +7,8 @@ import com.rigoomarine.client.dto.ClientDTO;
 import com.rigoomarine.client.dto.CreateClientRequest;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -27,8 +29,10 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.rigoomarine.client.auth.PhoneNumberService phoneNumberService;
+    private final CacheManager cacheManager;
 
-    @CacheEvict(value = "clients", allEntries = true)
+    // Evict only the 'all' list — individual-client entries don't exist yet.
+    @CacheEvict(value = "clients", key = "'all'")
     public ClientDTO createClient(CreateClientRequest request) {
         return createClient(request, false);
     }
@@ -126,10 +130,10 @@ public class ClientService {
         return clientRepository.findByPhone(normalizedPhone).map(Client::getEmail);
     }
 
-    @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClient(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
             .orElseThrow(() -> new ClientNotFoundException(id));
+        String oldEmail = client.getEmail(); // capture before mutation
 
         client.setName(request.getName());
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
@@ -159,6 +163,7 @@ public class ClientService {
         }
 
         Client updated = clientRepository.save(client);
+        evictClientCaches(id, oldEmail);
         return toDTO(updated);
     }
 
@@ -173,10 +178,10 @@ public class ClientService {
         return "ar".equals(lower) ? "ar" : "en";
     }
 
-    @CacheEvict(value = "clients", key = "#id")
     public ClientDTO updateClientWithPassword(Long id, CreateClientRequest request) {
         Client client = clientRepository.findById(id)
             .orElseThrow(() -> new ClientNotFoundException(id));
+        String oldEmail = client.getEmail();
 
         client.setName(request.getName());
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
@@ -200,12 +205,25 @@ public class ClientService {
         }
 
         Client updated = clientRepository.save(client);
+        evictClientCaches(id, oldEmail);
         return toDTO(updated);
     }
 
-    @CacheEvict(value = "clients", allEntries = true)
     public void deleteClient(Long id) {
+        String email = clientRepository.findById(id).map(Client::getEmail).orElse(null);
         clientRepository.deleteById(id);
+        evictClientCaches(id, email);
+        // "all" is the evaluated SpEL string from @Cacheable(key = "'all'").
+        Cache cache = cacheManager.getCache("clients");
+        if (cache != null) cache.evict("all");
+    }
+
+    /** Evict both the id-keyed and email-keyed cache entries for a single client. */
+    private void evictClientCaches(Long id, String email) {
+        Cache cache = cacheManager.getCache("clients");
+        if (cache == null) return;
+        cache.evict(id);
+        if (email != null) cache.evict(email);
     }
 
     private ClientDTO toDTO(Client client) {

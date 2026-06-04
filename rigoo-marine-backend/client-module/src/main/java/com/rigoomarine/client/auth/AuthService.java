@@ -6,6 +6,8 @@ import com.rigoomarine.client.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final EmailTemplateService emailTemplateService;
     private final PasswordEncoder passwordEncoder;
+    private final CacheManager cacheManager;
 
     @Value("${app.public-base-url:http://localhost:5173}")
     private String publicBaseUrl;
@@ -46,7 +49,8 @@ public class AuthService {
      * Issue a verification token for the given client and email it.
      * Called from registration; can be re-called via /resend-verification.
      */
-    @CacheEvict(value = "clients", allEntries = true)
+    // Evict only the one client whose verification state changed.
+    @CacheEvict(value = "clients", key = "#email")
     public void issueVerificationToken(String email, String locale) {
         clientRepository.findByEmail(email).ifPresent(client -> {
             if (Boolean.TRUE.equals(client.getEmailVerified())) return;
@@ -61,13 +65,11 @@ public class AuthService {
         });
     }
 
-    @CacheEvict(value = "clients", allEntries = true)
     public boolean verifyEmail(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) return false;
         String hash = tokenService.hash(rawToken);
         return clientRepository.findByEmailVerificationTokenHash(hash)
                 .map(c -> {
-                    // Already verified (token cleared on first use) — idempotent success.
                     if (Boolean.TRUE.equals(c.getEmailVerified())) return true;
                     if (c.getEmailVerificationExpiresAt() == null
                             || c.getEmailVerificationExpiresAt().isBefore(LocalDateTime.now())) {
@@ -77,6 +79,7 @@ public class AuthService {
                     c.setEmailVerificationTokenHash(null);
                     c.setEmailVerificationExpiresAt(null);
                     clientRepository.save(c);
+                    evictClient(c.getEmail(), c.getId());
                     return true;
                 })
                 .orElse(false);
@@ -106,7 +109,6 @@ public class AuthService {
         });
     }
 
-    @CacheEvict(value = "clients", allEntries = true)
     public boolean resetPassword(String rawToken, String newPassword) {
         if (rawToken == null || rawToken.isBlank() || newPassword == null || newPassword.length() < 8) return false;
         String hash = tokenService.hash(rawToken);
@@ -120,8 +122,16 @@ public class AuthService {
                     clientRepository.save(client);
                     t.setUsedAt(now);
                     resetTokenRepository.save(t);
+                    evictClient(client.getEmail(), client.getId());
                     return true;
                 })
                 .orElse(false);
+    }
+
+    private void evictClient(String email, Long id) {
+        Cache cache = cacheManager.getCache("clients");
+        if (cache == null) return;
+        if (email != null) cache.evict(email);
+        if (id != null) cache.evict(id);
     }
 }

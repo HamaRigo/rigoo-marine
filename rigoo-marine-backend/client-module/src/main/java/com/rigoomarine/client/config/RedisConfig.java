@@ -5,12 +5,16 @@ import io.lettuce.core.SocketOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.lang.NonNull;
 
 import java.time.Duration;
 
@@ -24,7 +28,7 @@ import java.time.Duration;
  */
 @Slf4j
 @Configuration
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
@@ -68,5 +72,33 @@ public class RedisConfig {
                 .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues()
         );
+    }
+
+    /**
+     * Swallow Redis failures so a cache outage degrades gracefully (cache miss →
+     * DB read) rather than returning 500 to the caller. The default
+     * SimpleCacheErrorHandler rethrows, which turns a Redis timeout during
+     * @CacheEvict on register/createClient into an HTTP 500.
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(@NonNull RuntimeException ex, @NonNull Cache cache, @NonNull Object key) {
+                log.warn("cache.get_error cache={} key={} cause={}", cache.getName(), key, ex.toString());
+            }
+            @Override
+            public void handleCachePutError(@NonNull RuntimeException ex, @NonNull Cache cache, @NonNull Object key, Object value) {
+                log.warn("cache.put_error cache={} key={} cause={}", cache.getName(), key, ex.toString());
+            }
+            @Override
+            public void handleCacheEvictError(@NonNull RuntimeException ex, @NonNull Cache cache, @NonNull Object key) {
+                log.warn("cache.evict_error cache={} key={} cause={}", cache.getName(), key, ex.toString());
+            }
+            @Override
+            public void handleCacheClearError(@NonNull RuntimeException ex, @NonNull Cache cache) {
+                log.warn("cache.clear_error cache={} cause={}", cache.getName(), ex.toString());
+            }
+        };
     }
 }

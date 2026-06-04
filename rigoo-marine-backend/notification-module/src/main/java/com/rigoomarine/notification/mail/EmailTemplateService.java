@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Looks up an email template by name, picks AR or EN columns based on locale,
@@ -30,6 +32,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class EmailTemplateService {
+
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
 
     private final EmailTemplateRepository repository;
     private final MailSender mailSender;
@@ -93,19 +97,25 @@ public class EmailTemplateService {
         String subject = ar ? tpl.getSubjectAr() : tpl.getSubject();
         String body = ar ? tpl.getBodyAr() : tpl.getBody();
 
-        for (Map.Entry<String, String> e : vars.entrySet()) {
-            String placeholder = "{{" + e.getKey() + "}}";
-            String value = e.getValue() == null ? "" : e.getValue();
-            subject = subject.replace(placeholder, value);
-            body = body.replace(placeholder, value);
-        }
-        return new Composed(subject, body);
+        return new Composed(render(subject, vars), render(body, vars));
     }
 
     /**
      * Per-locale unsubscribe footer. Intentionally short — most operators
      * expect a single sentence + a clickable URL.
      */
+    private static String render(String template, Map<String, String> vars) {
+        if (template == null || vars.isEmpty()) return template;
+        Matcher m = PLACEHOLDER.matcher(template);
+        StringBuilder sb = new StringBuilder(template.length());
+        while (m.find()) {
+            String val = vars.getOrDefault(m.group(1), "");
+            m.appendReplacement(sb, Matcher.quoteReplacement(val));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
     private static String unsubscribeFooter(String locale, String url) {
         if ("ar".equalsIgnoreCase(locale)) {
             return "—\nلإلغاء الاشتراك من هذا النوع من الرسائل اضغط هنا: " + url;

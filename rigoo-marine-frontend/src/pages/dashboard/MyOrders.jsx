@@ -1,13 +1,11 @@
 /* eslint-disable react/prop-types */
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, Chip, Stack, Skeleton,
-  Alert, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses,
-  Divider, IconButton, Tabs, Tab, Grid,
+  Alert, Divider, IconButton, Tabs, Tab, Grid,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import BuildIcon from '@mui/icons-material/Build';
@@ -38,32 +36,17 @@ const CATEGORY_EMOJIS = {
   NAVIGATION: '🧭', PLUMBING: '💧', SAFETY: '🆘', MAINTENANCE: '🔄', OTHER: '❓',
 };
 
+// Ordered flow steps for the lightweight progress tracker.
 const FLOW_STEPS = ['PENDING_APPROVAL', 'PENDING', 'IN_PROGRESS', 'COMPLETED'];
+const FLOW_LABELS = { PENDING_APPROVAL: 'Approval', PENDING: 'Pending', IN_PROGRESS: 'In Progress', COMPLETED: 'Done' };
 
-// ── Custom stepper connector ───────────────────────────────────────────────
+// ── Lightweight status tracker (replaces MUI Stepper) ─────────────────────
+//
+// MUI Stepper renders ~20 DOM nodes per step (connector, icon wrapper, label
+// container, etc.).  With 4 steps × 50 orders that's 4 000 extra nodes.
+// This replacement uses 4 dots + 3 connector lines — ~14 nodes total per card.
 
-const RmConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 11 },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 2, border: 0, borderRadius: 1,
-    backgroundColor: theme.palette.divider,
-    transition: 'background-color 300ms',
-  },
-  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line},
-    &.${stepConnectorClasses.active}   .${stepConnectorClasses.line}`]: {
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
-
-function StatusStepIcon({ active, completed, isCancelled, isWaiting }) {
-  if (isCancelled) return <CancelIcon sx={{ fontSize: 22, color: 'error.main' }} />;
-  if (isWaiting)   return <HourglassBottomRoundedIcon sx={{ fontSize: 22, color: 'secondary.main' }} />;
-  if (completed)   return <CheckCircleIcon sx={{ fontSize: 22, color: 'success.main' }} />;
-  if (active)      return <CheckCircleIcon sx={{ fontSize: 22, color: 'primary.main' }} />;
-  return <RadioButtonUncheckedIcon sx={{ fontSize: 22, color: 'text.disabled' }} />;
-}
-
-function OrderStepper({ status }) {
+function StatusTracker({ status }) {
   if (status === 'CANCELLED') {
     return (
       <Stack direction="row" spacing={1} alignItems="center" py={0.75}>
@@ -80,40 +63,55 @@ function OrderStepper({ status }) {
       </Stack>
     );
   }
-  const activeStep = FLOW_STEPS.indexOf(status);
+  const activeIdx = FLOW_STEPS.indexOf(status);
   return (
-    <Stepper
-      activeStep={activeStep}
-      alternativeLabel
-      connector={<RmConnector />}
-      sx={{ pt: 0.5, pb: 0.5 }}
-    >
-      {FLOW_STEPS.map((step, i) => (
-        <Step key={step} completed={i < activeStep}>
-          <StepLabel
-            StepIconComponent={({ active, completed }) => (
-              <StatusStepIcon active={active} completed={completed} />
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0, py: 0.75 }}>
+      {FLOW_STEPS.map((step, i) => {
+        const done    = i < activeIdx;
+        const current = i === activeIdx;
+        return (
+          <Box key={step} sx={{ display: 'flex', alignItems: 'center', flex: i < FLOW_STEPS.length - 1 ? 1 : 'unset' }}>
+            {/* Dot */}
+            <Stack alignItems="center" spacing={0.25} sx={{ minWidth: 40 }}>
+              {done ? (
+                <CheckCircleIcon sx={{ fontSize: 20, color: 'success.main' }} />
+              ) : current ? (
+                <CheckCircleIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+              ) : (
+                <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+              )}
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: '0.62rem',
+                  fontWeight: current ? 700 : 400,
+                  color: i <= activeIdx ? 'text.primary' : 'text.disabled',
+                  textAlign: 'center', lineHeight: 1.2,
+                }}
+              >
+                {FLOW_LABELS[step]}
+              </Typography>
+            </Stack>
+            {/* Connector line */}
+            {i < FLOW_STEPS.length - 1 && (
+              <Box sx={{
+                flex: 1, height: 2, borderRadius: 1, mx: 0.5, mb: 1.5,
+                bgcolor: done ? 'primary.main' : 'divider',
+                transition: 'background-color 300ms',
+              }} />
             )}
-            sx={{
-              '& .MuiStepLabel-label': {
-                fontSize: '0.68rem',
-                fontWeight: i === activeStep ? 700 : 400,
-                color: i <= activeStep ? 'text.primary' : 'text.disabled',
-                mt: 0.5,
-              },
-            }}
-          >
-            {step.replace(/_/g, ' ')}
-          </StepLabel>
-        </Step>
-      ))}
-    </Stepper>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
+// memo() with structural equality on id + status so a tab-filter change that
+// doesn't touch an order's data doesn't re-render its card.
 
-function OrderCard({ order }) {
+const OrderCard = memo(function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false);
   const meta    = STATUS_META[order.status] ?? STATUS_META.PENDING;
   const emoji   = CATEGORY_EMOJIS[order.issueCategory] ?? '🔧';
@@ -124,23 +122,13 @@ function OrderCard({ order }) {
 
   return (
     <HoverLift lift={4}>
-      <Card
-        variant="outlined"
-        sx={{
-          borderRadius: 3,
-          overflow: 'hidden',
-          borderColor: 'divider',
-        }}
-      >
+      <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', borderColor: 'divider' }}>
         {/* ── Hero band ── */}
-        <Box
-          sx={{
-            background: 'linear-gradient(135deg, #006994 0%, #004263 100%)',
-            px: 2.5, pt: 2, pb: 2.75,
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
+        <Box sx={{
+          background: 'linear-gradient(135deg, #006994 0%, #004263 100%)',
+          px: 2.5, pt: 2, pb: 2.75,
+          position: 'relative', overflow: 'hidden',
+        }}>
           <Box sx={{
             position: 'absolute', bottom: -1, left: 0, right: 0, height: 20,
             bgcolor: 'background.paper',
@@ -174,15 +162,13 @@ function OrderCard({ order }) {
         </Box>
 
         <CardContent sx={{ pt: 1.5 }}>
-          {/* Stepper */}
-          <OrderStepper status={order.status} />
+          <StatusTracker status={order.status} />
 
           <Divider sx={{ my: 1.5 }} />
 
-          {/* Meta grid */}
           <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
             {order.vesselId && (
-              <Grid size={{ xs: 12, sm: 6 }} >
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <DirectionsBoatIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -192,7 +178,7 @@ function OrderCard({ order }) {
               </Grid>
             )}
             {order.preferredDate && (
-              <Grid size={{ xs: 12, sm: 6 }} >
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <CalendarTodayIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   <Typography variant="caption" color="text.secondary">
@@ -202,7 +188,7 @@ function OrderCard({ order }) {
               </Grid>
             )}
             {order.locationText && (
-              <Grid size={12} >
+              <Grid size={12}>
                 <Stack direction="row" spacing={0.75} alignItems="flex-start">
                   <LocationOnIcon sx={{ fontSize: 15, color: 'text.disabled', mt: 0.15 }} />
                   <Typography variant="caption" color="text.secondary">
@@ -213,7 +199,6 @@ function OrderCard({ order }) {
             )}
           </Grid>
 
-          {/* Description */}
           <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.65 }}>
             {desc}
           </Typography>
@@ -230,22 +215,15 @@ function OrderCard({ order }) {
             </IconButton>
           )}
 
-          {/* Services chips */}
           {order.services?.length > 0 && (
             <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mt: 1.25 }}>
               {order.services.map((s, i) => (
-                <Chip
-                  key={i}
-                  label={s}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: '0.68rem', height: 22 }}
-                />
+                <Chip key={i} label={s} size="small" variant="outlined"
+                  sx={{ fontSize: '0.68rem', height: 22 }} />
               ))}
             </Stack>
           )}
 
-          {/* Admin notes / rejection reason */}
           {order.rejectionReason && (
             <Box sx={{ mt: 1.5, p: 1.25, borderRadius: 2, bgcolor: '#ffebee', border: '1px solid', borderColor: 'error.light' }}>
               <Typography variant="caption" fontWeight={700} color="error.main" display="block">
@@ -255,7 +233,6 @@ function OrderCard({ order }) {
             </Box>
           )}
 
-          {/* Footer */}
           <Divider sx={{ mt: 1.5, mb: 1.25 }} />
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="caption" color="text.disabled">
@@ -277,7 +254,11 @@ function OrderCard({ order }) {
       </Card>
     </HoverLift>
   );
-}
+}, (prev, next) =>
+  prev.order.id === next.order.id &&
+  prev.order.status === next.order.status &&
+  prev.order.description === next.order.description
+);
 
 // ── Skeleton ───────────────────────────────────────────────────────────────
 
@@ -300,13 +281,11 @@ function OrderSkeleton() {
 function EmptyState() {
   return (
     <Reveal variant="fade">
-      <Box
-        sx={{
-          textAlign: 'center', py: 10,
-          background: 'radial-gradient(ellipse at center, rgba(0,105,148,0.05) 0%, transparent 70%)',
-          borderRadius: 4,
-        }}
-      >
+      <Box sx={{
+        textAlign: 'center', py: 10,
+        background: 'radial-gradient(ellipse at center, rgba(0,105,148,0.05) 0%, transparent 70%)',
+        borderRadius: 4,
+      }}>
         <Box sx={{
           width: 96, height: 96, borderRadius: '50%', mx: 'auto', mb: 3,
           background: 'linear-gradient(135deg, #006994 0%, #004263 100%)',
@@ -316,20 +295,12 @@ function EmptyState() {
         }}>
           <BuildIcon sx={{ fontSize: 44, color: 'white' }} />
         </Box>
-        <Typography variant="h5" fontWeight={700} gutterBottom>
-          No service orders yet
-        </Typography>
+        <Typography variant="h5" fontWeight={700} gutterBottom>No service orders yet</Typography>
         <Typography color="text.secondary" sx={{ mb: 3, maxWidth: 360, mx: 'auto' }}>
           Submit a service request and track its progress from approval to completion.
         </Typography>
-        <Button
-          component={Link}
-          to="/service-request"
-          variant="contained"
-          size="large"
-          startIcon={<AddIcon />}
-          sx={{ px: 4 }}
-        >
+        <Button component={Link} to="/service-request" variant="contained" size="large"
+          startIcon={<AddIcon />} sx={{ px: 4 }}>
           Submit a Request
         </Button>
       </Box>
@@ -348,20 +319,28 @@ export default function MyOrders() {
     staleTime: 30_000,
   });
 
-  const filtered = statusFilter === 'ALL'
-    ? orders
-    : orders.filter(o => o.status === statusFilter);
+  // Compute status counts once per orders change, not on every render.
+  const counts = useMemo(() => {
+    const map = { ALL: orders.length };
+    for (const o of orders) {
+      map[o.status] = (map[o.status] ?? 0) + 1;
+    }
+    return map;
+  }, [orders]);
 
-  const countFor = (s) => s === 'ALL' ? orders.length : orders.filter(o => o.status === s).length;
+  const TAB_OPTIONS = useMemo(() => [
+    { value: 'ALL',              label: 'All' },
+    { value: 'PENDING_APPROVAL', label: 'Awaiting Approval' },
+    { value: 'PENDING',          label: 'Pending' },
+    { value: 'IN_PROGRESS',      label: 'In Progress' },
+    { value: 'COMPLETED',        label: 'Completed' },
+    { value: 'CANCELLED',        label: 'Cancelled' },
+  ].filter(t => t.value === 'ALL' || (counts[t.value] ?? 0) > 0), [counts]);
 
-  const TAB_OPTIONS = [
-    { value: 'ALL',             label: 'All' },
-    { value: 'PENDING_APPROVAL',label: 'Awaiting Approval' },
-    { value: 'PENDING',         label: 'Pending' },
-    { value: 'IN_PROGRESS',     label: 'In Progress' },
-    { value: 'COMPLETED',       label: 'Completed' },
-    { value: 'CANCELLED',       label: 'Cancelled' },
-  ].filter(t => t.value === 'ALL' || countFor(t.value) > 0);
+  const filtered = useMemo(
+    () => statusFilter === 'ALL' ? orders : orders.filter(o => o.status === statusFilter),
+    [orders, statusFilter]
+  );
 
   if (isError) {
     return <Alert severity="error" sx={{ mt: 2 }}>Failed to load service orders.</Alert>;
@@ -380,13 +359,8 @@ export default function MyOrders() {
               </Typography>
             )}
           </Box>
-          <Button
-            component={Link}
-            to="/service-request"
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button component={Link} to="/service-request" variant="contained"
+            startIcon={<AddIcon />} sx={{ fontWeight: 600 }}>
             New Request
           </Button>
         </Stack>
@@ -408,11 +382,12 @@ export default function MyOrders() {
               label={
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <span>{t.label}</span>
-                  {countFor(t.value) > 0 && (
+                  {(counts[t.value] ?? 0) > 0 && (
                     <Chip
-                      label={countFor(t.value)}
+                      label={counts[t.value]}
                       size="small"
-                      sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700,
+                      sx={{
+                        height: 18, fontSize: '0.65rem', fontWeight: 700,
                         bgcolor: statusFilter === t.value ? 'primary.main' : 'action.selected',
                         color: statusFilter === t.value ? 'white' : 'text.secondary',
                       }}
@@ -425,24 +400,20 @@ export default function MyOrders() {
         </Tabs>
       )}
 
-      {/* ── Skeletons ── */}
       {isLoading && (
         <Stack spacing={2.5}>
           {[1, 2, 3].map(i => <OrderSkeleton key={i} />)}
         </Stack>
       )}
 
-      {/* ── Empty ── */}
       {!isLoading && orders.length === 0 && <EmptyState />}
 
-      {/* ── Filtered empty ── */}
       {!isLoading && orders.length > 0 && filtered.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <Typography color="text.secondary">No orders with this status.</Typography>
         </Box>
       )}
 
-      {/* ── Cards ── */}
       {!isLoading && filtered.length > 0 && (
         <Stagger step={60}>
           <Stack spacing={2.5}>

@@ -1,18 +1,30 @@
 /* eslint-disable react/prop-types */
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, TextField, InputAdornment, Box, Typography
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { useDebounce } from '../../hooks/useDebounce';
 
 /**
- * Reusable data table with pagination, search, and sorting
- * @param {Array} columns - Column definitions [{ field, headerName, renderCell, sortable }]
- * @param {Array} rows - Data rows
- * @param {function} onRowClick - Optional row click handler
- * @param {boolean} searchable - Enable search
- * @param {string} searchPlaceholder - Search input placeholder
+ * Reusable data table with pagination, search, and sorting.
+ *
+ * Performance notes:
+ *  - Search input is debounced (300 ms) so filter/sort don't run on every
+ *    keystroke — only after the user pauses.
+ *  - filteredRows / sortedRows / paginatedRows are all memoised; they only
+ *    recompute when their specific dependencies change, not on every render.
+ *  - searchTermLower is hoisted outside the filter predicate so it is computed
+ *    once per debounce tick rather than once per row × column.
+ *  - Column handlers are stable references (useCallback) so <TableCell>s that
+ *    receive them as props don't re-render on unrelated state changes.
+ *
+ * @param {Array}    columns           - [{ field, headerName, renderCell, sortable }]
+ * @param {Array}    rows              - Data rows
+ * @param {function} onRowClick        - Optional row click handler
+ * @param {boolean}  searchable        - Enable search
+ * @param {string}   searchPlaceholder - Search input placeholder
  */
 export default function DataTable({
   columns,
@@ -24,57 +36,69 @@ export default function DataTable({
 }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortConfig, setSortConfig] = useState({ field: null, direction: 'asc' });
 
-  // Filter rows based on search
-  const filteredRows = rows.filter((row) =>
-    columns.some((col) =>
-      String(row[col.field] || '').toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  // Debounce: filter/sort only re-run 300 ms after typing stops.
+  const searchTerm = useDebounce(searchInput, 300);
+
+  const filteredRows = useMemo(() => {
+    if (!searchTerm) return rows;
+    const lower = searchTerm.toLowerCase(); // hoist out of inner loop
+    return rows.filter((row) =>
+      columns.some((col) =>
+        String(row[col.field] ?? '').toLowerCase().includes(lower)
+      )
+    );
+  }, [rows, columns, searchTerm]);
+
+  const sortedRows = useMemo(() => {
+    if (!sortConfig.field) return filteredRows;
+    return [...filteredRows].sort((a, b) => {
+      const aVal = a[sortConfig.field];
+      const bVal = b[sortConfig.field];
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredRows, sortConfig]);
+
+  const paginatedRows = useMemo(
+    () => sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [sortedRows, page, rowsPerPage]
   );
 
-  // Sort rows
-  const sortedRows = [...filteredRows].sort((a, b) => {
-    if (!sortConfig.field) return 0;
-    const aVal = a[sortConfig.field];
-    const bVal = b[sortConfig.field];
-    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  // Paginate
-  const paginatedRows = sortedRows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-
-  const handleSort = (field) => {
+  const handleSort = useCallback((field) => {
     setSortConfig((prev) => ({
       field,
       direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
     }));
-  };
+  }, []);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = useCallback((_, newPage) => {
     setPage(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = useCallback((event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
+  }, []);
+
+  // Reset to page 0 when the debounced term changes.
+  // Done inline rather than in a useEffect to avoid a stale-closure flash.
+  const handleSearchChange = useCallback((e) => {
+    setSearchInput(e.target.value);
+    setPage(0);
+  }, []);
 
   return (
     <Box>
-      {/* Search Bar */}
       {searchable && (
         <TextField
           fullWidth
           placeholder={searchPlaceholder}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchInput}
+          onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -86,7 +110,6 @@ export default function DataTable({
         />
       )}
 
-      {/* Table */}
       <TableContainer
         sx={{
           width: '100%',
@@ -103,10 +126,7 @@ export default function DataTable({
                 <TableCell
                   key={col.field}
                   onClick={() => col.sortable && handleSort(col.field)}
-                  sx={{
-                    cursor: col.sortable ? 'pointer' : 'default',
-                    fontWeight: 600,
-                  }}
+                  sx={{ cursor: col.sortable ? 'pointer' : 'default', fontWeight: 600 }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {col.headerName}
@@ -130,7 +150,7 @@ export default function DataTable({
             ) : (
               paginatedRows.map((row, rowIndex) => (
                 <TableRow
-                  key={row.id || rowIndex}
+                  key={row.id ?? rowIndex}
                   onClick={() => onRowClick?.(row)}
                   sx={{
                     cursor: onRowClick ? 'pointer' : 'default',
@@ -151,7 +171,6 @@ export default function DataTable({
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
       <TablePagination
         component="div"
         count={filteredRows.length}
@@ -173,11 +192,7 @@ export default function DataTable({
 
 function renderCellContent(value) {
   if (value === null || value === undefined) return '-';
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }

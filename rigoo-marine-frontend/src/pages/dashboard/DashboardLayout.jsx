@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, AppBar, Toolbar, Button, IconButton, Avatar, Tabs, Tab,
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
@@ -186,6 +186,10 @@ export default function DashboardLayout() {
   const tabValue  = pathToTab(location.pathname);
   const initials  = (user?.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const LANG_LABEL = { en: 'English', ar: 'العربية' };
+
+  // Close the mobile drawer whenever the route changes so users don't have to
+  // manually dismiss it after tapping a nav item.
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
   const handleLogout = () => { logout(); navigate('/'); };
   const handleTab    = (_, idx) => navigate(NAV_KEYS[idx].path);

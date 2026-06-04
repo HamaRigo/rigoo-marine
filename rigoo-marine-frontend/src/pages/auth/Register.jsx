@@ -65,8 +65,12 @@ export default function Register() {
       const target = location.state?.from?.pathname || defaultPathForRole(newUser?.role);
       navigate(target, { replace: true });
     } catch (err) {
-      const backendMessage = err.response?.data?.message;
-      if (err.response?.status === 400 && /already exists/i.test(backendMessage || '')) {
+      const backendMessage = err.response?.data?.message || '';
+      const isDuplicate = (err.response?.status === 400 || err.response?.status === 409)
+        && /already exists/i.test(backendMessage);
+      if (isDuplicate && /phone/i.test(backendMessage)) {
+        setError(t('register.errors.phoneTaken'));
+      } else if (isDuplicate) {
         setDuplicateEmailOpen(true);
       } else {
         setError(getApiError(err));
