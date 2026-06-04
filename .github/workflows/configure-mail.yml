@@ -95,7 +95,7 @@ jobs:
             curl -sf --max-time 15 \
               -X POST https://api.rigoomarine.com/auth/forgot-password \
               -H "Content-Type: application/json" \
-              -d '{"email":"rigoomarine@gmail.com"}' && echo "" \
+              -d '{"email":"mohamed.bouallagui001@gmail.com"}' && echo "" \
               || echo "(curl returned non-zero — check logs below)"
 
             sleep 15
