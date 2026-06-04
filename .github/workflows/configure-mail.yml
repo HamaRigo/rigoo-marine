@@ -80,8 +80,14 @@ jobs:
             cd /opt/rigoo-marine-prod
             export $(grep -v '^#' .env | xargs)
             docker compose up -d --force-recreate --no-deps client-service notification-service
-            echo "Waiting 60s for health checks..."
-            sleep 60
+            echo "Polling until client-service actuator is healthy (up to 3 min)..."
+            for i in $(seq 1 36); do
+              if curl -sf --max-time 4 http://localhost:8081/actuator/health > /dev/null 2>&1; then
+                echo "client-service healthy after ${i}x5s"
+                break
+              fi
+              sleep 5
+            done
             docker compose ps client-service notification-service
           ENDSSH
 
