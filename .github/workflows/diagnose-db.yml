@@ -1,0 +1,50 @@
+name: Diagnose DB seed state (one-time)
+
+# Checks which DB client-service reads at runtime, row counts for the three
+# public tables, and Flyway history entries for V18-V22.
+# DELETE after reading the output.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Inspect runtime datasource URL
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            "docker exec client-service env | grep -E 'SPRING_DATASOURCE_URL|DB_NAME|DB_USERNAME' || true"
+
+      - name: Count rows in public tables + Flyway history
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} << 'ENDSSH'
+            DB=$(docker exec client-service env | grep SPRING_DATASOURCE_URL \
+              | sed 's|.*://[^/]*/||' | sed 's|?.*||')
+            USER=$(docker exec client-service env | grep SPRING_DATASOURCE_USERNAME | cut -d= -f2)
+            echo "=== DB=$DB USER=$USER ==="
+
+            run() { docker exec postgres psql -U "$USER" -d "$DB" -t -c "$1"; }
+
+            echo "--- contact_info ---"
+            run "SELECT COUNT(*) FROM contact_info;"
+
+            echo "--- gallery_items (total / published) ---"
+            run "SELECT COUNT(*), COUNT(*) FILTER (WHERE published=true) FROM gallery_items;"
+
+            echo "--- team_members (total / active) ---"
+            run "SELECT COUNT(*), COUNT(*) FILTER (WHERE active=true) FROM team_members;"
+
+            echo "--- Flyway history V18-V25 ---"
+            run "SELECT version, description, success FROM flyway_schema_history_client
+                 WHERE CAST(version AS FLOAT) BETWEEN 18 AND 25
+                 ORDER BY installed_rank;"
+          ENDSSH
