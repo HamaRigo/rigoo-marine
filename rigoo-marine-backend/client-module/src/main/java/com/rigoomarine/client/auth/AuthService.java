@@ -128,10 +128,15 @@ public class AuthService {
                 .orElse(false);
     }
 
+    // Silent: a Redis failure must never roll back an already-committed DB write.
     private void evictClient(String email, Long id) {
-        Cache cache = cacheManager.getCache("clients");
-        if (cache == null) return;
-        if (email != null) cache.evict(email);
-        if (id != null) cache.evict(id);
+        try {
+            Cache cache = cacheManager.getCache("clients");
+            if (cache == null) return;
+            if (email != null) cache.evict(email);
+            if (id != null)    cache.evict(id);
+        } catch (RuntimeException ex) {
+            log.warn("cache.evict_error context=auth email={} cause={}", email, ex.toString());
+        }
     }
 }

@@ -213,17 +213,24 @@ public class ClientService {
         String email = clientRepository.findById(id).map(Client::getEmail).orElse(null);
         clientRepository.deleteById(id);
         evictClientCaches(id, email);
-        // "all" is the evaluated SpEL string from @Cacheable(key = "'all'").
-        Cache cache = cacheManager.getCache("clients");
-        if (cache != null) cache.evict("all");
+        try {
+            Cache cache = cacheManager.getCache("clients");
+            if (cache != null) cache.evict("all");
+        } catch (RuntimeException ex) {
+            log.warn("cache.evict_error context=deleteClient id={} cause={}", id, ex.toString());
+        }
     }
 
-    /** Evict both the id-keyed and email-keyed cache entries for a single client. */
+    // Silent: a Redis failure must never surface as a 500 to the caller.
     private void evictClientCaches(Long id, String email) {
-        Cache cache = cacheManager.getCache("clients");
-        if (cache == null) return;
-        cache.evict(id);
-        if (email != null) cache.evict(email);
+        try {
+            Cache cache = cacheManager.getCache("clients");
+            if (cache == null) return;
+            cache.evict(id);
+            if (email != null) cache.evict(email);
+        } catch (RuntimeException ex) {
+            log.warn("cache.evict_error context=client id={} cause={}", id, ex.toString());
+        }
     }
 
     private ClientDTO toDTO(Client client) {
