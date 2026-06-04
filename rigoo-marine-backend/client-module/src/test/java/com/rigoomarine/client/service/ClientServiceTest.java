@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -31,6 +32,9 @@ class ClientServiceTest {
 
     @Mock
     private PhoneNumberService phoneNumberService;
+
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private ClientService clientService;
@@ -124,6 +128,7 @@ class ClientServiceTest {
 
     @Test
     void deleteClient_ShouldCallRepositoryDelete() {
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         clientService.deleteClient(1L);
         verify(clientRepository).deleteById(1L);
     }
