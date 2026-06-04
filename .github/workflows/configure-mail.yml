@@ -92,10 +92,11 @@ jobs:
             cd /opt/rigoo-marine-prod
 
             echo "=== Triggering password-reset ==="
-            curl -sf -X POST https://rigoomarine.com/auth/forgot-password \
+            curl -sf --max-time 15 \
+              -X POST https://api.rigoomarine.com/auth/forgot-password \
               -H "Content-Type: application/json" \
               -d '{"email":"rigoomarine@gmail.com"}' && echo "" \
-              || echo "(non-zero from curl — endpoint may still have returned 200)"
+              || echo "(curl returned non-zero — check logs below)"
 
             sleep 15
 

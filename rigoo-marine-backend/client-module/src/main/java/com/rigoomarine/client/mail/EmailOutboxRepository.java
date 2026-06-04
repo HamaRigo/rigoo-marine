@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutboxEntry, L
      * fetch the claimed rows. (A {@code RETURNING *} would be cleaner but
      * Spring Data JPA's {@code @Modifying} can't carry the result.)
      */
+    @Transactional
     @Modifying
     @Query(value = """
         UPDATE email_outbox
@@ -44,6 +46,7 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutboxEntry, L
      * (worker presumably crashed) back to FAILED so the next cycle picks them up.
      * Idempotent — safe to run every cycle.
      */
+    @Transactional
     @Modifying
     @Query(value = """
         UPDATE email_outbox
@@ -62,6 +65,7 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutboxEntry, L
      *
      * @return the number of SENT rows deleted in this batch.
      */
+    @Transactional
     @Modifying
     @Query(value = """
         DELETE FROM email_outbox
@@ -81,6 +85,7 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutboxEntry, L
      *
      * @return the number of DEAD rows deleted in this batch.
      */
+    @Transactional
     @Modifying
     @Query(value = """
         DELETE FROM email_outbox
