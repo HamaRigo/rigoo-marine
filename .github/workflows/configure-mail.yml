@@ -1,0 +1,111 @@
+name: Configure SMTP Mail (one-time)
+
+# Triggered manually. Updates .env on the production server with Gmail SMTP
+# credentials, syncs docker-compose.yml, restarts the two mail-sending services,
+# then runs an end-to-end test by triggering a password-reset and tailing logs.
+#
+# DELETE THIS WORKFLOW after the mail configuration is confirmed working.
+# It is intentionally scoped to production only and requires the MAIL_PASSWORD
+# secret to be set in the repository.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configure-mail:
+    name: Configure SMTP + verify
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync docker-compose.yml to server
+        run: |
+          base64 -w 0 docker-compose.yml | \
+            ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            'base64 -d > ~/docker-compose.yml && cp ~/docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml'
+
+      - name: Update .env with mail settings
+        env:
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << 'ENDSSH'
+            set -e
+            ENV_FILE=/opt/rigoo-marine-prod/.env
+
+            update_env() {
+              local key=$1
+              local val=$2
+              if grep -q "^${key}=" "$ENV_FILE"; then
+                sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+              else
+                echo "${key}=${val}" >> "$ENV_FILE"
+              fi
+            }
+
+            update_env "MAIL_ENABLED"          "true"
+            update_env "MAIL_FROM"             "rigoomarine@gmail.com"
+            update_env "SPRING_MAIL_HOST"      "smtp.gmail.com"
+            update_env "SPRING_MAIL_PORT"      "587"
+            update_env "SPRING_MAIL_USERNAME"  "rigoomarine@gmail.com"
+            update_env "SPRING_MAIL_PASSWORD"  "${MAIL_PASSWORD}"
+            update_env "FRONTEND_BASE_URL"     "https://rigoomarine.com"
+
+            chmod 600 "$ENV_FILE"
+            echo "env updated OK"
+ENDSSH
+          # Pass the secret via env injection — MAIL_PASSWORD never touches shell history
+        env:
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+
+      - name: Restart mail-sending services
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << 'ENDSSH'
+            set -e
+            cd /opt/rigoo-marine-prod
+
+            # Export all vars from .env so docker compose picks them up
+            export $(grep -v '^#' .env | xargs)
+
+            docker compose up -d --force-recreate --no-deps client-service notification-service
+
+            echo "Waiting 60 s for services to pass health checks..."
+            sleep 60
+
+            docker compose ps client-service notification-service
+ENDSSH
+
+      - name: End-to-end mail test
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} bash << 'ENDSSH'
+            set -e
+            cd /opt/rigoo-marine-prod
+
+            echo "=== Triggering password-reset for rigoomarine@gmail.com ==="
+            curl -sf -X POST https://rigoomarine.com/auth/forgot-password \
+              -H "Content-Type: application/json" \
+              -d '{"email":"rigoomarine@gmail.com"}' && echo "" || echo "curl returned non-zero (may be OK — endpoint returns generic 200)"
+
+            echo "=== Waiting 10 s for async mail dispatch ==="
+            sleep 10
+
+            echo "=== client-service mail logs (last 60 lines) ==="
+            docker compose logs client-service --tail=60 2>&1 | grep -iE "mail|smtp|send|ERROR|Exception" || true
+
+            echo "=== notification-service mail logs (last 60 lines) ==="
+            docker compose logs notification-service --tail=60 2>&1 | grep -iE "mail|smtp|send|ERROR|Exception" || true
+ENDSSH
+
+      - name: Confirm reset-link domain
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            "docker compose -f /opt/rigoo-marine-prod/docker-compose.yml logs client-service --tail=20 2>&1 | grep -i 'reset-password\|verify-email\|rigoomarine.com\|localhost' || true"

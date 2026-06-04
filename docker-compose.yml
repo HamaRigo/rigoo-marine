@@ -91,6 +91,17 @@ services:
       # Must be the externally reachable API root (the URL Nginx exposes to the internet),
       # NOT the internal gateway port. Example: https://api.rigoomarine.qa
       - SERVER_BASE_URL=${PUBLIC_API_URL}
+      # Frontend origin used in outbound email links (password-reset, verification).
+      # Must match the live site domain so links resolve correctly for the user.
+      - PUBLIC_BASE_URL=${FRONTEND_BASE_URL}
+      # Outbound mail — mirrors notification-service so both services share one
+      # SMTP credential set from .env.
+      - MAIL_ENABLED=${MAIL_ENABLED:-false}
+      - SPRING_MAIL_HOST=${SPRING_MAIL_HOST:-smtp.gmail.com}
+      - SPRING_MAIL_PORT=${SPRING_MAIL_PORT:-587}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME:-}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD:-}
+      - MAIL_FROM=${MAIL_FROM:-no-reply@rigoomarine.qa}
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
