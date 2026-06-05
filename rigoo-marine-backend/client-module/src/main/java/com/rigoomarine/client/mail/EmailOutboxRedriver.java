@@ -9,7 +9,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,7 +48,6 @@ public class EmailOutboxRedriver {
      * 60 s fixed delay, 30 s initial delay so the scheduler doesn't fire during
      * application bootstrapping (Flyway migrations, bean wiring).
      */
-    @Transactional
     @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
     public void run() {
         try {
@@ -92,9 +90,10 @@ public class EmailOutboxRedriver {
     private enum Outcome { SENT, FAILED, DEAD }
 
     /**
-     * Sends one row's email and updates its status. The SMTP call is outside
-     * any DB transaction (per the architecture — long SMTP latencies must not
-     * hold row locks). The status update is its own short transaction.
+     * Sends one row's email and updates its status. The SMTP call and the
+     * settler each run in their own short transactions — no long-lived lock
+     * holder. Cross-bean call ensures @Transactional(REQUIRES_NEW) on the
+     * settler is honoured by Spring's proxy.
      */
     private Outcome attempt(EmailOutboxEntry row) {
         SimpleMailMessage msg = new SimpleMailMessage();
@@ -105,24 +104,34 @@ public class EmailOutboxRedriver {
 
         try {
             javaMailSender.send(msg);
-            // Cross-bean call → proxy applies → @Transactional(REQUIRES_NEW)
-            // on the settler actually takes effect. Each settle commits
-            // independently of the batch.
-            settler.settleSent(row);
+            safeSettle(row.getId(), () -> settler.settleSent(row));
             mailMetrics.recordRedriveSuccess(row.getTemplateName());
             return Outcome.SENT;
         } catch (MailException ex) {
             int newAttempts = row.getRedriveAttempts() + 1;
             if (newAttempts >= MAX_REDRIVE_ATTEMPTS) {
-                settler.settleDead(row, ex);
+                safeSettle(row.getId(), () -> settler.settleDead(row, ex));
                 mailMetrics.recordDead(row.getTemplateName());
                 log.warn("outbox.redrive.dead id={} attempts={} cause={}",
                     row.getId(), newAttempts, ex.getClass().getSimpleName());
                 return Outcome.DEAD;
             }
-            settler.settleFailed(row, ex, newAttempts);
+            safeSettle(row.getId(), () -> settler.settleFailed(row, ex, newAttempts));
             mailMetrics.recordRedriveFailure(row.getTemplateName());
             return Outcome.FAILED;
+        }
+    }
+
+    /**
+     * Runs a settler action without letting a DB exception abort the whole batch.
+     * A settle failure leaves the row in RETRYING; reclaimStale() will recover it
+     * on the next cycle. Logged at ERROR so ops can diagnose persistent failures.
+     */
+    private void safeSettle(Long id, Runnable settle) {
+        try {
+            settle.run();
+        } catch (RuntimeException ex) {
+            log.error("outbox.redrive.settle_failed id={} cause={}", id, ex.toString());
         }
     }
 
