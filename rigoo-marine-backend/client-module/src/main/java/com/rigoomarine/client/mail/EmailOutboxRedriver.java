@@ -9,6 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +49,7 @@ public class EmailOutboxRedriver {
      * 60 s fixed delay, 30 s initial delay so the scheduler doesn't fire during
      * application bootstrapping (Flyway migrations, bean wiring).
      */
+    @Transactional
     @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
     public void run() {
         try {
