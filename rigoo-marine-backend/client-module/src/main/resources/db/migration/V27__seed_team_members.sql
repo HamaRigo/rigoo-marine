@@ -8,8 +8,7 @@
 -- WHERE NOT EXISTS to avoid duplicate seeds on re-runs.
 
 INSERT INTO team_members (name, name_ar, role, role_ar, bio, bio_ar,
-                          photo_url, department, display_order, active,
-                          created_at, updated_at)
+                          photo_url, department, display_order, active)
 SELECT * FROM (VALUES
   (
     'Mohamed Bouallagui',

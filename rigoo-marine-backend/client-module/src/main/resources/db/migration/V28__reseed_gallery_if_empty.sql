@@ -7,8 +7,7 @@
 -- migration is safe on databases where V21/V22 ran correctly.
 
 INSERT INTO gallery_items (title, title_ar, description, description_ar, category,
-                           before_url, after_url, display_order, published,
-                           created_at, updated_at)
+                           before_url, after_url, display_order, published)
 SELECT * FROM (VALUES
   (
     'Engine Rebuild',
