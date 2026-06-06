@@ -79,11 +79,16 @@ public class DatabaseConfig {
         dataSource.setConnectionTimeout(connectionTimeout);
         dataSource.setMaxLifetime(maxLifetime);
 
-        // Security & leak detection
-        dataSource.addDataSourceProperty("ssl", "true");
-        dataSource.addDataSourceProperty("sslmode", "verify-full");
-        if (sslRootCert != null && !sslRootCert.isEmpty()) {
-            dataSource.addDataSourceProperty("sslrootcert", sslRootCert);
+        // SSL — honour the db.ssl.enabled flag; default false for internal Docker Postgres
+        if (sslEnabled) {
+            dataSource.addDataSourceProperty("ssl", "true");
+            dataSource.addDataSourceProperty("sslmode", "verify-full");
+            if (sslRootCert != null && !sslRootCert.isEmpty()) {
+                dataSource.addDataSourceProperty("sslrootcert", sslRootCert);
+            }
+        } else {
+            dataSource.addDataSourceProperty("ssl", "false");
+            dataSource.addDataSourceProperty("sslmode", "disable");
         }
 
         // Query timeout
@@ -139,9 +144,11 @@ public class DatabaseConfig {
      */
     private String buildSecureJdbcUrl(String url) {
         if (url.contains("sslmode")) {
-            return url; // Already has SSL params
+            return url; // Already has SSL params — caller controls SSL
         }
-        // Append SSL parameters for PostgreSQL
+        if (!sslEnabled) {
+            return url; // Internal Postgres (Docker) — no SSL
+        }
         String separator = url.contains("?") ? "&" : "?";
         return url + separator + "ssl=true&sslmode=verify-full" +
                 (sslRootCert != null && !sslRootCert.isEmpty()

@@ -29,6 +29,13 @@
     </springProfile>
 
     <springProfile name="prod">
+        <!-- Always log to stdout so `docker logs` shows startup errors even when Logstash is offline -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36}: %msg%n</pattern>
+            </encoder>
+        </appender>
+
         <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
             <destination>logstash:5044</destination>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -50,6 +57,7 @@
         </appender>
 
         <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOGSTASH"/>
             <appender-ref ref="FILE"/>
         </root>
