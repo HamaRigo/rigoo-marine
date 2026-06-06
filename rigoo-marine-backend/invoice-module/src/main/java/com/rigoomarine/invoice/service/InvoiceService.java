@@ -16,8 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
@@ -167,14 +169,14 @@ public class InvoiceService {
     public InvoiceDTO getInvoiceById(Long id) {
         return invoiceRepository.findById(id)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
     }
 
     @Transactional(readOnly = true)
     public InvoiceDTO getInvoiceByNumber(String invoiceNumber) {
         return invoiceRepository.findByInvoiceNumber(invoiceNumber)
             .map(this::toDTO)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -184,7 +186,7 @@ public class InvoiceService {
 
     public InvoiceDTO updateInvoice(Long id, CreateInvoiceRequest request) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
 
         invoice.setWorkOrderId(request.getWorkOrderId());
         invoice.setClientId(request.getClientId());
@@ -238,7 +240,7 @@ public class InvoiceService {
 
     public InvoiceDTO updateInvoiceStatus(Long id, String status) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
 
         Invoice.InvoiceStatus newStatus = Invoice.InvoiceStatus.valueOf(status);
         invoice.setStatus(newStatus);
@@ -325,7 +327,7 @@ public class InvoiceService {
     @Transactional(readOnly = true)
     public byte[] generateInvoicePdfArabic(Long id) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document document = new Document(PageSize.A4, 40, 40, 40, 82);
@@ -557,7 +559,7 @@ public class InvoiceService {
     @Transactional(readOnly = true)
     public byte[] generateInvoicePdf(Long id) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Invoice not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             Document document = new Document(PageSize.A4, 40, 40, 40, 82);

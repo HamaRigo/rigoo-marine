@@ -11,6 +11,7 @@ services:
       # Was unset — the JVM sized its heap off the whole VM, making Eureka the
       # fattest OOM target. Cap it and bound the container.
       - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - SPRING_PROFILES_ACTIVE=prod
     mem_limit: 1g
     mem_reservation: 768m
     healthcheck:
@@ -50,6 +51,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - SPRING_PROFILES_ACTIVE=prod
     mem_limit: 1536m
     mem_reservation: 1200m
     healthcheck:
@@ -102,8 +104,13 @@ services:
       - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME:-}
       - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD:-}
       - MAIL_FROM=${MAIL_FROM:-no-reply@rigoomarine.qa}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9081
+      - FILE_UPLOAD_DIR=/app/uploads
     mem_limit: 768m
     mem_reservation: 600m
+    volumes:
+      - uploads-data:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -140,6 +147,8 @@ services:
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9082
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -177,6 +186,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9083
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -218,6 +229,8 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9084
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -255,6 +268,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9086
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -294,8 +309,12 @@ services:
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9092
     mem_limit: 768m
     mem_reservation: 600m
+    volumes:
+      - uploads-data:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8092/actuator/health"]
       interval: 30s
@@ -322,7 +341,9 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      # -Djava.awt.headless=true: OpenPDF uses AWT for image operations; without
+      # headless mode the JVM tries to connect to an X display and fails on Linux.
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30 -Djava.awt.headless=true
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -334,6 +355,8 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9085
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -371,6 +394,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9088
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -416,6 +441,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9089
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -470,6 +497,8 @@ services:
       - WHATSAPP_META_PHONE_NUMBER_ID=${WHATSAPP_META_PHONE_NUMBER_ID:-}
       - WHATSAPP_META_ACCESS_TOKEN=${WHATSAPP_META_ACCESS_TOKEN:-}
       - WHATSAPP_META_VERIFY_TOKEN=${WHATSAPP_META_VERIFY_TOKEN:-}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9087
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -505,6 +534,8 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=9091
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -706,3 +737,4 @@ volumes:
   kafka-data:
   redis-data:
   elasticsearch-data:
+  uploads-data:

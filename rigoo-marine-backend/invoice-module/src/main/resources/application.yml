@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: invoice-service
+  # invoice-service uses JWT auth from common-security; there is no form-login
+  # UserDetailsService. Excluding this auto-config suppresses the Spring Boot
+  # "Using generated security password" warning that appears in production logs.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   data:
     redis:
       host: ${REDIS_HOST:localhost}

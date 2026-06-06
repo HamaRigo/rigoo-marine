@@ -43,6 +43,8 @@ spring:
             series: SERVER_ERROR
             exceptions:
               - org.springframework.cloud.gateway.support.NotFoundException
+              - java.net.ConnectException
+              - java.io.IOException
             backoff:
               firstBackoff: 50ms
               maxBackoff: 500ms
@@ -408,6 +410,10 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
     loadbalancer:
+      # Shorten LB instance-cache TTL so a restarted service (new Eureka
+      # registration) is picked up quickly without a gateway restart.
+      cache:
+        ttl: 15s
       # Default round-robin using Eureka health state.
       # health-check mode was removed: it probed 127.0.0.1:<management-port>
       # from inside the gateway container, which is the gateway's own loopback

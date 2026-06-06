@@ -30,6 +30,12 @@ COPY invoice-module/src      invoice-module/src
 RUN mvn -B package -pl invoice-module -DskipTests -q
 
 FROM eclipse-temurin:17-jre
+# fontconfig + fonts-dejavu-core: Java AWT requires fontconfig to initialise
+# even in headless mode; without it ImageIO / OpenPDF throw on Linux containers.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fontconfig \
+    fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /build/invoice-module/target/*.jar app.jar
 EXPOSE 8085
