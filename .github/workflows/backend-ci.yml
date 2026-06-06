@@ -42,30 +42,76 @@ jobs:
           name: test-results
           path: rigoo-marine-backend/**/target/surefire-reports/
 
-  docker-build:
-    name: Build & Push Docker Images (multi-arch)
+  detect-changes:
+    name: Detect changed services
     runs-on: ubuntu-latest
     needs: build
     if: |
       (github.event_name == 'push' &&
         (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')) ||
       github.event_name == 'workflow_dispatch'
+    outputs:
+      common: ${{ steps.changes.outputs.common }}
+      gateway: ${{ steps.changes.outputs.gateway }}
+      client: ${{ steps.changes.outputs.client }}
+      vessel: ${{ steps.changes.outputs.vessel }}
+      service: ${{ steps.changes.outputs.service }}
+      work-order: ${{ steps.changes.outputs.work-order }}
+      technician: ${{ steps.changes.outputs.technician }}
+      invoice: ${{ steps.changes.outputs.invoice }}
+      notification: ${{ steps.changes.outputs.notification }}
+      discovery: ${{ steps.changes.outputs.discovery }}
+      delivery: ${{ steps.changes.outputs.delivery }}
+      marketplace: ${{ steps.changes.outputs.marketplace }}
+      shop: ${{ steps.changes.outputs.shop }}
+      maintenance: ${{ steps.changes.outputs.maintenance }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changes
+        id: changes
+        run: |
+          # On workflow_dispatch rebuild everything
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            for svc in common gateway client vessel service work-order technician invoice notification discovery delivery marketplace shop maintenance; do
+              echo "${svc}=true" >> $GITHUB_OUTPUT
+            done
+            exit 0
+          fi
+
+          changed=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files: $changed"
+
+          check() { echo "$changed" | grep -q "^$1" && echo "true" || echo "false"; }
+
+          COMMON=$(  { check "rigoo-marine-backend/common-security" || check "rigoo-marine-backend/common-exceptions"; } && echo "true" || echo "false")
+          echo "common=$COMMON"         >> $GITHUB_OUTPUT
+          echo "gateway=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/gateway-module"      )" >> $GITHUB_OUTPUT
+          echo "client=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/client-module"       )" >> $GITHUB_OUTPUT
+          echo "vessel=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/vessel-module"       )" >> $GITHUB_OUTPUT
+          echo "service=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/service-module"      )" >> $GITHUB_OUTPUT
+          echo "work-order=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/work-order-module"  )" >> $GITHUB_OUTPUT
+          echo "technician=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/technician-module"  )" >> $GITHUB_OUTPUT
+          echo "invoice=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/invoice-module"      )" >> $GITHUB_OUTPUT
+          echo "notification=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/notification-module")" >> $GITHUB_OUTPUT
+          echo "discovery=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/discovery-service"   )" >> $GITHUB_OUTPUT
+          echo "delivery=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/delivery-module"    )" >> $GITHUB_OUTPUT
+          echo "marketplace=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/marketplace-module")" >> $GITHUB_OUTPUT
+          echo "shop=$(      [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/shop-module"        )" >> $GITHUB_OUTPUT
+          echo "maintenance=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/maintenance-module")" >> $GITHUB_OUTPUT
+
+  docker-build:
+    name: Build & Push Docker Images
+    # Native arm64 — no QEMU, no emulation overhead
+    runs-on: self-hosted
+    needs: detect-changes
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # QEMU lets the amd64 runner emulate arm64 so we can build
-      # linux/arm64 images. Without this every rigoomarine/* image
-      # is amd64-only and fails with "exec format error" on the
-      # Oracle Ampere A1 (ARM64) production server.
-      - name: Set up QEMU (arm64 emulation)
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -73,147 +119,220 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Build and push Discovery Service
+        if: needs.detect-changes.outputs.discovery == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./rigoo-marine-backend
+          file: ./rigoo-marine-backend/discovery-service/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:latest
+
       - name: Build and push API Gateway
+        if: needs.detect-changes.outputs.gateway == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/gateway-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:buildcache,mode=max
 
       - name: Build and push Client Service
+        if: needs.detect-changes.outputs.client == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/client-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/client-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/client-service:latest
 
       - name: Build and push Vessel Service
+        if: needs.detect-changes.outputs.vessel == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/vessel-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:latest
 
       - name: Build and push Service Service
+        if: needs.detect-changes.outputs.service == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/service-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/service-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/service-service:latest
 
       - name: Build and push Work Order Service
+        if: needs.detect-changes.outputs.work-order == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/work-order-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:latest
 
       - name: Build and push Technician Service
+        if: needs.detect-changes.outputs.technician == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/technician-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:latest
 
       - name: Build and push Invoice Service
+        if: needs.detect-changes.outputs.invoice == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/invoice-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:latest
 
       - name: Build and push Notification Service
+        if: needs.detect-changes.outputs.notification == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/notification-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:latest
 
-      - name: Build and push Discovery Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./rigoo-marine-backend
-          file: ./rigoo-marine-backend/discovery-service/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:latest
-
       - name: Build and push Delivery Service
+        if: needs.detect-changes.outputs.delivery == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/delivery-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:latest
 
       - name: Build and push Marketplace Service
+        if: needs.detect-changes.outputs.marketplace == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/marketplace-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:latest
 
       - name: Build and push Shop Service
+        if: needs.detect-changes.outputs.shop == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/shop-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:latest
 
       - name: Build and push Maintenance Service
+        if: needs.detect-changes.outputs.maintenance == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./rigoo-marine-backend
           file: ./rigoo-marine-backend/maintenance-module/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:latest
+
+  deploy:
+    name: Deploy changed services
+    runs-on: self-hosted
+    needs: docker-build
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/production') ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync docker-compose.yml
+        run: cp docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml
+
+      - name: Pull and restart updated services
+        env:
+          HUB: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "${DOCKERHUB_TOKEN}" | docker login -u "${HUB}" --password-stdin
+
+          CHANGED_SERVICES=""
+          add() { CHANGED_SERVICES="$CHANGED_SERVICES $1"; }
+
+          [ "${{ needs.detect-changes.outputs.discovery }}"   = "true" ] && add discovery-service   || true
+          [ "${{ needs.detect-changes.outputs.gateway }}"     = "true" ] && add api-gateway          || true
+          [ "${{ needs.detect-changes.outputs.client }}"      = "true" ] && add client-service       || true
+          [ "${{ needs.detect-changes.outputs.vessel }}"      = "true" ] && add vessel-service       || true
+          [ "${{ needs.detect-changes.outputs.service }}"     = "true" ] && add service-service      || true
+          [ "${{ needs.detect-changes.outputs.work-order }}"  = "true" ] && add work-order-service   || true
+          [ "${{ needs.detect-changes.outputs.technician }}"  = "true" ] && add technician-service   || true
+          [ "${{ needs.detect-changes.outputs.invoice }}"     = "true" ] && add invoice-service      || true
+          [ "${{ needs.detect-changes.outputs.notification }}" = "true" ] && add notification-service || true
+          [ "${{ needs.detect-changes.outputs.delivery }}"    = "true" ] && add delivery-service     || true
+          [ "${{ needs.detect-changes.outputs.marketplace }}" = "true" ] && add marketplace-service  || true
+          [ "${{ needs.detect-changes.outputs.shop }}"        = "true" ] && add shop-service         || true
+          [ "${{ needs.detect-changes.outputs.maintenance }}" = "true" ] && add maintenance-service  || true
+
+          if [ -z "$CHANGED_SERVICES" ]; then
+            echo "No services changed — nothing to restart."
+            exit 0
+          fi
+
+          echo "Restarting:$CHANGED_SERVICES"
+          for svc in $CHANGED_SERVICES; do
+            docker pull ${HUB}/${svc}:latest
+          done
+
+          docker compose \
+            -f /opt/rigoo-marine-prod/docker-compose.yml \
+            --env-file /opt/rigoo-marine-prod/.env \
+            up -d --force-recreate --no-deps \
+            $CHANGED_SERVICES
+
+          echo "Done. Waiting 30s then checking health..."
+          sleep 30
+          docker compose \
+            -f /opt/rigoo-marine-prod/docker-compose.yml \
+            --env-file /opt/rigoo-marine-prod/.env \
+            ps
