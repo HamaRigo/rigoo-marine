@@ -176,7 +176,7 @@ public class InvoiceService {
     public InvoiceDTO getInvoiceByNumber(String invoiceNumber) {
         return invoiceRepository.findByInvoiceNumber(invoiceNumber)
             .map(this::toDTO)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + invoiceNumber));
     }
 
     @Transactional(readOnly = true)
