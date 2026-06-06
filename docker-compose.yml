@@ -569,6 +569,7 @@ services:
       start_period: 30s
     networks:
       - marine-network
+    restart: unless-stopped
 
   # Kafka Message Broker — internal only, no external port
   kafka:
