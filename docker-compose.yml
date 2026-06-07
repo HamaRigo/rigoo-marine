@@ -107,6 +107,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9081
       - FILE_UPLOAD_DIR=/app/uploads
+      - APP_LOG_SENDER_ALLOW_IN_PROD=${APP_LOG_SENDER_ALLOW_IN_PROD:-true}
     mem_limit: 768m
     mem_reservation: 600m
     volumes:
