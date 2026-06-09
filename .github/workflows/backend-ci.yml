@@ -85,27 +85,37 @@ jobs:
           changed=$(git diff --name-only HEAD~1 HEAD)
           echo "Changed files: $changed"
 
-          check() { echo "$changed" | grep -q "^$1" && echo "true" || echo "false"; }
+          # Avoid $() subshells — use explicit if/else per service so set -e
+          # never swallows a grep exit-1 and leaves an output key empty.
+          svc() {
+            local key="$1" path="$2"
+            if [ "$COMMON" = "true" ] || echo "$changed" | grep -q "^${path}"; then
+              echo "${key}=true"  >> "$GITHUB_OUTPUT"
+            else
+              echo "${key}=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
 
           if echo "$changed" | grep -qE "^rigoo-marine-backend/(common-security|common-exceptions)"; then
             COMMON="true"
           else
             COMMON="false"
           fi
-          echo "common=$COMMON" >> $GITHUB_OUTPUT
-          echo "gateway=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/gateway-module"      )" >> $GITHUB_OUTPUT
-          echo "client=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/client-module"       )" >> $GITHUB_OUTPUT
-          echo "vessel=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/vessel-module"       )" >> $GITHUB_OUTPUT
-          echo "service=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/service-module"      )" >> $GITHUB_OUTPUT
-          echo "work-order=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/work-order-module"  )" >> $GITHUB_OUTPUT
-          echo "technician=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/technician-module"  )" >> $GITHUB_OUTPUT
-          echo "invoice=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/invoice-module"      )" >> $GITHUB_OUTPUT
-          echo "notification=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/notification-module")" >> $GITHUB_OUTPUT
-          echo "discovery=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/discovery-service"   )" >> $GITHUB_OUTPUT
-          echo "delivery=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/delivery-module"    )" >> $GITHUB_OUTPUT
-          echo "marketplace=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/marketplace-module")" >> $GITHUB_OUTPUT
-          echo "shop=$(      [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/shop-module"        )" >> $GITHUB_OUTPUT
-          echo "maintenance=$([ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/maintenance-module")" >> $GITHUB_OUTPUT
+          echo "common=$COMMON" >> "$GITHUB_OUTPUT"
+
+          svc gateway      rigoo-marine-backend/gateway-module
+          svc client       rigoo-marine-backend/client-module
+          svc vessel       rigoo-marine-backend/vessel-module
+          svc service      rigoo-marine-backend/service-module
+          svc work-order   rigoo-marine-backend/work-order-module
+          svc technician   rigoo-marine-backend/technician-module
+          svc invoice      rigoo-marine-backend/invoice-module
+          svc notification rigoo-marine-backend/notification-module
+          svc discovery    rigoo-marine-backend/discovery-service
+          svc delivery     rigoo-marine-backend/delivery-module
+          svc marketplace  rigoo-marine-backend/marketplace-module
+          svc shop         rigoo-marine-backend/shop-module
+          svc maintenance  rigoo-marine-backend/maintenance-module
 
   docker-build:
     name: Build & Push Docker Images

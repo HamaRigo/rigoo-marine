@@ -1,5 +1,4 @@
 package com.rigoomarine.client.service;
-
 import com.rigoomarine.client.entity.Client;
 import com.rigoomarine.client.exception.ClientNotFoundException;
 import com.rigoomarine.client.repository.ClientRepository;
