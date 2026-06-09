@@ -68,54 +68,92 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - name: Detect changes
+      - name: Path filter (push only)
+        uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          filters: |
+            common:
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            gateway:
+              - 'rigoo-marine-backend/gateway-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            client:
+              - 'rigoo-marine-backend/client-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            vessel:
+              - 'rigoo-marine-backend/vessel-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            service:
+              - 'rigoo-marine-backend/service-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            work-order:
+              - 'rigoo-marine-backend/work-order-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            technician:
+              - 'rigoo-marine-backend/technician-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            invoice:
+              - 'rigoo-marine-backend/invoice-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            notification:
+              - 'rigoo-marine-backend/notification-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            discovery:
+              - 'rigoo-marine-backend/discovery-service/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            delivery:
+              - 'rigoo-marine-backend/delivery-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            marketplace:
+              - 'rigoo-marine-backend/marketplace-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            shop:
+              - 'rigoo-marine-backend/shop-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+            maintenance:
+              - 'rigoo-marine-backend/maintenance-module/**'
+              - 'rigoo-marine-backend/common-security/**'
+              - 'rigoo-marine-backend/common-exceptions/**'
+
+      - name: Set outputs
         id: changes
         run: |
-          # On workflow_dispatch rebuild everything
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             for svc in common gateway client vessel service work-order technician invoice notification discovery delivery marketplace shop maintenance; do
-              echo "${svc}=true" >> $GITHUB_OUTPUT
+              echo "${svc}=true" >> "$GITHUB_OUTPUT"
             done
-            exit 0
-          fi
-
-          changed=$(git diff --name-only HEAD~1 HEAD)
-          echo "Changed files: $changed"
-
-          # Avoid $() subshells — use explicit if/else per service so set -e
-          # never swallows a grep exit-1 and leaves an output key empty.
-          svc() {
-            local key="$1" path="$2"
-            if [ "$COMMON" = "true" ] || echo "$changed" | grep -q "^${path}"; then
-              echo "${key}=true"  >> "$GITHUB_OUTPUT"
-            else
-              echo "${key}=false" >> "$GITHUB_OUTPUT"
-            fi
-          }
-
-          if echo "$changed" | grep -qE "^rigoo-marine-backend/(common-security|common-exceptions)"; then
-            COMMON="true"
           else
-            COMMON="false"
+            echo "common=${{ steps.filter.outputs.common }}"           >> "$GITHUB_OUTPUT"
+            echo "gateway=${{ steps.filter.outputs.gateway }}"         >> "$GITHUB_OUTPUT"
+            echo "client=${{ steps.filter.outputs.client }}"           >> "$GITHUB_OUTPUT"
+            echo "vessel=${{ steps.filter.outputs.vessel }}"           >> "$GITHUB_OUTPUT"
+            echo "service=${{ steps.filter.outputs.service }}"         >> "$GITHUB_OUTPUT"
+            echo "work-order=${{ steps.filter.outputs.work-order }}"   >> "$GITHUB_OUTPUT"
+            echo "technician=${{ steps.filter.outputs.technician }}"   >> "$GITHUB_OUTPUT"
+            echo "invoice=${{ steps.filter.outputs.invoice }}"         >> "$GITHUB_OUTPUT"
+            echo "notification=${{ steps.filter.outputs.notification }}" >> "$GITHUB_OUTPUT"
+            echo "discovery=${{ steps.filter.outputs.discovery }}"     >> "$GITHUB_OUTPUT"
+            echo "delivery=${{ steps.filter.outputs.delivery }}"       >> "$GITHUB_OUTPUT"
+            echo "marketplace=${{ steps.filter.outputs.marketplace }}" >> "$GITHUB_OUTPUT"
+            echo "shop=${{ steps.filter.outputs.shop }}"               >> "$GITHUB_OUTPUT"
+            echo "maintenance=${{ steps.filter.outputs.maintenance }}" >> "$GITHUB_OUTPUT"
           fi
-          echo "common=$COMMON" >> "$GITHUB_OUTPUT"
-
-          svc gateway      rigoo-marine-backend/gateway-module
-          svc client       rigoo-marine-backend/client-module
-          svc vessel       rigoo-marine-backend/vessel-module
-          svc service      rigoo-marine-backend/service-module
-          svc work-order   rigoo-marine-backend/work-order-module
-          svc technician   rigoo-marine-backend/technician-module
-          svc invoice      rigoo-marine-backend/invoice-module
-          svc notification rigoo-marine-backend/notification-module
-          svc discovery    rigoo-marine-backend/discovery-service
-          svc delivery     rigoo-marine-backend/delivery-module
-          svc marketplace  rigoo-marine-backend/marketplace-module
-          svc shop         rigoo-marine-backend/shop-module
-          svc maintenance  rigoo-marine-backend/maintenance-module
 
   docker-build:
     name: Build & Push Docker Images
