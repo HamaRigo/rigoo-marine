@@ -87,8 +87,12 @@ jobs:
 
           check() { echo "$changed" | grep -q "^$1" && echo "true" || echo "false"; }
 
-          COMMON=$(  { check "rigoo-marine-backend/common-security" || check "rigoo-marine-backend/common-exceptions"; } && echo "true" || echo "false")
-          echo "common=$COMMON"         >> $GITHUB_OUTPUT
+          if echo "$changed" | grep -qE "^rigoo-marine-backend/(common-security|common-exceptions)"; then
+            COMMON="true"
+          else
+            COMMON="false"
+          fi
+          echo "common=$COMMON" >> $GITHUB_OUTPUT
           echo "gateway=$(  [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/gateway-module"      )" >> $GITHUB_OUTPUT
           echo "client=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/client-module"       )" >> $GITHUB_OUTPUT
           echo "vessel=$(   [ "$COMMON" = "true" ] && echo true || check "rigoo-marine-backend/vessel-module"       )" >> $GITHUB_OUTPUT
