@@ -291,6 +291,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fix deploy dir ownership
+        run: sudo chown -R "$(whoami):" /opt/rigoo-marine-prod
+
       - name: Sync docker-compose.yml
         run: cp docker-compose.yml /opt/rigoo-marine-prod/docker-compose.yml
 

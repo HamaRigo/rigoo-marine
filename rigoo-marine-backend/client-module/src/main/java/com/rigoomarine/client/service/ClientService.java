@@ -1,6 +1,5 @@
 package com.rigoomarine.client.service;
 
-// ci-retrigger
 import com.rigoomarine.client.entity.Client;
 import com.rigoomarine.client.exception.ClientNotFoundException;
 import com.rigoomarine.client.repository.ClientRepository;
