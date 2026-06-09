@@ -57,6 +57,7 @@ public class ClientService {
             .address(request.getAddress())
             .company(request.getCompany())
             .emailVerified(autoVerifyEmail)
+            .preferredLanguage(normaliseLanguage(request.getPreferredLanguage()))
             .build();
 
         Client saved = clientRepository.save(client);

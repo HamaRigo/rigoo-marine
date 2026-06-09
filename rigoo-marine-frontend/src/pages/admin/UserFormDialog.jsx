@@ -78,10 +78,7 @@ export default function UserFormDialog({ open, user, onClose, onSuccess }) {
       onClose();
     },
     onError: (err) => {
-      const status = err.response?.status;
-      if (status === 409) setError(t('users.form.errors.conflict'));
-      else if (status === 400) setError(t('users.form.errors.invalid'));
-      else setError(getApiError(err));
+      setError(getApiError(err));
     },
   });
 
