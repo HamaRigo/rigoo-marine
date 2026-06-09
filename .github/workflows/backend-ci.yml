@@ -330,7 +330,7 @@ jobs:
   deploy:
     name: Deploy changed services
     runs-on: self-hosted
-    needs: docker-build
+    needs: [docker-build, detect-changes]
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/production') ||
       github.event_name == 'workflow_dispatch'

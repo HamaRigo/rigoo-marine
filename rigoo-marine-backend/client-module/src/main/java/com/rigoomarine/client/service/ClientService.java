@@ -252,4 +252,5 @@ public class ClientService {
             .whatsappOptIn(Boolean.TRUE.equals(client.getWhatsappOptIn()))
             .build();
     }
+
 }
