@@ -2,20 +2,27 @@
 import { useEffect, useRef, useState, Children, cloneElement, isValidElement } from 'react';
 import { Box, Fade, Grow, Slide, Zoom, useTheme } from '@mui/material';
 
-function useInView({ threshold = 0.15, rootMargin = '0px 0px -10% 0px', once = true } = {}) {
+function useInView({ threshold = 0.12, rootMargin = '0px 0px -5% 0px', once = true } = {}) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
+  const fallbackRef = useRef(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node || (once && inView)) return undefined;
+
+    // Guarantee visibility even if IntersectionObserver doesn't fire on mobile
+    fallbackRef.current = setTimeout(() => setInView(true), 750);
+
     if (typeof IntersectionObserver === 'undefined') {
       setInView(true);
+      clearTimeout(fallbackRef.current);
       return undefined;
     }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          clearTimeout(fallbackRef.current);
           setInView(true);
           if (once) observer.disconnect();
         } else if (!once) {
@@ -25,7 +32,10 @@ function useInView({ threshold = 0.15, rootMargin = '0px 0px -10% 0px', once = t
       { threshold, rootMargin },
     );
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackRef.current);
+    };
   }, [threshold, rootMargin, once, inView]);
 
   return [ref, inView];
@@ -59,8 +69,11 @@ export function Reveal({
     transitionProps.unmountOnExit = false;
   }
 
+  // Clip escaped slide content so translated-out elements don't bleed into adjacent sections
+  const clipOverflow = variant === 'slide' ? 'hidden' : 'visible';
+
   return (
-    <Box ref={ref} sx={{ minHeight: 1, ...sx }} {...rest}>
+    <Box ref={ref} sx={{ minHeight: 1, overflow: clipOverflow, ...sx }} {...rest}>
       <TransitionComp {...transitionProps}>
         <Box sx={{ width: '100%' }}>{children}</Box>
       </TransitionComp>

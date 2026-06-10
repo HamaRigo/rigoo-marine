@@ -263,14 +263,14 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
         </Typography>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent sx={{ p: { xs: 1.5, sm: 3 } }}>
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
             <CircularProgress />
           </Box>
         )}
         {/* Invoice Paper */}
-        <Paper elevation={3} sx={{ p: 4, bgcolor: 'white', borderRadius: 2, display: loading ? 'none' : undefined }}>
+        <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, bgcolor: 'white', borderRadius: 2, display: loading ? 'none' : undefined }}>
 
           {/* ── Header ── */}
           <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
@@ -405,7 +405,7 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
 
           {isInvoice && (
             <TextField size="small" label="Work Order ID (optional)" type="number"
-              value={form.workOrderId} onChange={set('workOrderId')} sx={{ mb: 2, width: 200 }} />
+              value={form.workOrderId} onChange={set('workOrderId')} sx={{ mb: 2, width: { xs: '100%', sm: 200 } }} />
           )}
 
           <Divider sx={{ my: 2 }} />
@@ -415,43 +415,47 @@ export default function CreateInvoiceDialog({ open, onClose, clients = [], type 
             LINE ITEMS
           </Typography>
 
-          {/* Table header */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 90px 110px 40px', gap: 1, mb: 1, px: 1 }}>
-            {['Description', 'Qty', 'Unit Price', 'Tax %', 'Amount', ''].map((h) => (
-              <Typography key={h} variant="caption" fontWeight="bold" color="text.secondary" sx={{ textTransform: 'uppercase' }}>
-                {h}
-              </Typography>
-            ))}
-          </Box>
-
-          <Box sx={{ mb: 1 }}>
-            {items.map((item, i) => (
-              <Box key={i} sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 80px 120px 90px 110px 40px',
-                gap: 1, mb: 1, alignItems: 'center',
-                p: 1, bgcolor: i % 2 === 0 ? 'grey.50' : 'white', borderRadius: 1,
-              }}>
-                <TextField size="small" placeholder="Description" value={item.description}
-                  onChange={(e) => updateItem(i, 'description', e.target.value)} />
-                <TextField size="small" type="number" placeholder="1" value={item.quantity}
-                  onChange={(e) => updateItem(i, 'quantity', e.target.value)}
-                  inputProps={{ min: 1 }} />
-                <TextField size="small" type="number" placeholder="0.00" value={item.unitPrice}
-                  onChange={(e) => updateItem(i, 'unitPrice', e.target.value)}
-                  InputProps={{ startAdornment: <InputAdornment position="start">QAR</InputAdornment> }} />
-                <TextField size="small" type="number" placeholder="0" value={item.taxRate}
-                  onChange={(e) => updateItem(i, 'taxRate', e.target.value)}
-                  InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-                <Typography variant="body2" fontWeight="bold" sx={{ textAlign: 'right', pr: 1 }}>
-                  QAR {fmt(lineAmounts[i])}
-                </Typography>
-                <IconButton size="small" onClick={() => removeItem(i)} disabled={items.length === 1}
-                  color="error">
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+          {/* Table header + rows — scrolls horizontally on narrow screens */}
+          <Box sx={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Box sx={{ minWidth: 540 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 90px 110px 40px', gap: 1, mb: 1, px: 1 }}>
+                {['Description', 'Qty', 'Unit Price', 'Tax %', 'Amount', ''].map((h) => (
+                  <Typography key={h} variant="caption" fontWeight="bold" color="text.secondary" sx={{ textTransform: 'uppercase' }}>
+                    {h}
+                  </Typography>
+                ))}
               </Box>
-            ))}
+
+              <Box sx={{ mb: 1 }}>
+                {items.map((item, i) => (
+                  <Box key={i} sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 80px 120px 90px 110px 40px',
+                    gap: 1, mb: 1, alignItems: 'center',
+                    p: 1, bgcolor: i % 2 === 0 ? 'grey.50' : 'white', borderRadius: 1,
+                  }}>
+                    <TextField size="small" placeholder="Description" value={item.description}
+                      onChange={(e) => updateItem(i, 'description', e.target.value)} />
+                    <TextField size="small" type="number" placeholder="1" value={item.quantity}
+                      onChange={(e) => updateItem(i, 'quantity', e.target.value)}
+                      inputProps={{ min: 1 }} />
+                    <TextField size="small" type="number" placeholder="0.00" value={item.unitPrice}
+                      onChange={(e) => updateItem(i, 'unitPrice', e.target.value)}
+                      InputProps={{ startAdornment: <InputAdornment position="start">QAR</InputAdornment> }} />
+                    <TextField size="small" type="number" placeholder="0" value={item.taxRate}
+                      onChange={(e) => updateItem(i, 'taxRate', e.target.value)}
+                      InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+                    <Typography variant="body2" fontWeight="bold" sx={{ textAlign: 'right', pr: 1 }}>
+                      QAR {fmt(lineAmounts[i])}
+                    </Typography>
+                    <IconButton size="small" onClick={() => removeItem(i)} disabled={items.length === 1}
+                      color="error">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           </Box>
 
           <Button size="small" startIcon={<AddIcon />} onClick={addItem} sx={{ mb: 2 }}>

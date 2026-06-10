@@ -257,7 +257,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: 'warning.main', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: 'success.main', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: 'secondary.main', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: 'info.main', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} >
+        <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} >
           <Card sx={{ bgcolor: '#1b5e20', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {managementModules.map((module) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={module.title} >
+          <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} key={module.title} >
             <Card
               sx={{
                 height: '100%',
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                     {module.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'block' } }}>
                     {module.description}
                   </Typography>
                 </Box>
