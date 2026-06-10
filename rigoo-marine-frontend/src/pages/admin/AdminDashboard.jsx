@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -150,10 +151,6 @@ export default function AdminDashboard() {
   const [quickDocType, setQuickDocType]     = useState('invoice');
   const [quickDocPrefill, setQuickDocPrefill] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -202,6 +199,10 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleOpenCreateDocument = () => setCreateDocumentOpen(true);
 
