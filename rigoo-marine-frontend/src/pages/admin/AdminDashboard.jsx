@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, CardActionArea, Chip, Table, TableBody,
@@ -28,6 +28,45 @@ import { formatPrice } from '../../utils/format';
 import CreateInvoiceDialog from '../../components/admin/CreateInvoiceDialog';
 import PendingApprovalsBanner from '../../components/admin/PendingApprovalsBanner';
 import QuickDocumentMenu from '../../components/admin/QuickDocumentMenu';
+
+const STATUS_COLORS = {
+  PENDING: 'warning',
+  IN_PROGRESS: 'info',
+  COMPLETED: 'success',
+  CANCELLED: 'error',
+  PAID: 'success',
+  DRAFT: 'default',
+  OVERDUE: 'error',
+  ACCEPTED: 'success',
+  REJECTED: 'error',
+  EXPIRED: 'default',
+};
+
+const ModuleCard = memo(function ModuleCard({ module, onClick }) {
+  return (
+    <Card
+      sx={{
+        height: '100%',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
+      }}
+    >
+      <CardActionArea onClick={onClick} sx={{ height: '100%', p: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <Avatar sx={{ width: 56, height: 56, mb: 2, bgcolor: module.color }}>
+            <module.icon sx={{ fontSize: 28 }} />
+          </Avatar>
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            {module.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'block' } }}>
+            {module.description}
+          </Typography>
+        </Box>
+      </CardActionArea>
+    </Card>
+  );
+});
 
 const managementModules = [
   {
@@ -115,7 +154,7 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       // Fetch stats from API
@@ -162,7 +201,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleOpenCreateDocument = () => setCreateDocumentOpen(true);
 
@@ -182,21 +221,7 @@ export default function AdminDashboard() {
     if (newType) setDocumentType(newType);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      PENDING: 'warning',
-      IN_PROGRESS: 'info',
-      COMPLETED: 'success',
-      CANCELLED: 'error',
-      PAID: 'success',
-      DRAFT: 'default',
-      OVERDUE: 'error',
-      ACCEPTED: 'success',
-      REJECTED: 'error',
-      EXPIRED: 'default',
-    };
-    return colors[status] || 'default';
-  };
+  const getStatusColor = useCallback((status) => STATUS_COLORS[status] || 'default', []);
 
   if (loading) {
     return (
@@ -336,41 +361,8 @@ export default function AdminDashboard() {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {managementModules.map((module) => (
-          <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} key={module.title} >
-            <Card
-              sx={{
-                height: '100%',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 6,
-                },
-              }}
-            >
-              <CardActionArea
-                onClick={() => navigate(module.path)}
-                sx={{ height: '100%', p: 2 }}
-              >
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                  <Avatar
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      mb: 2,
-                      bgcolor: module.color,
-                    }}
-                  >
-                    <module.icon sx={{ fontSize: 28 }} />
-                  </Avatar>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    {module.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'block' } }}>
-                    {module.description}
-                  </Typography>
-                </Box>
-              </CardActionArea>
-            </Card>
+          <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} key={module.title}>
+            <ModuleCard module={module} onClick={() => navigate(module.path)} />
           </Grid>
         ))}
       </Grid>

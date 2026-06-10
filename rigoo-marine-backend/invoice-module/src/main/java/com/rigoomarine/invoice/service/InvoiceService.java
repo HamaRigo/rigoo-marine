@@ -14,7 +14,9 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -116,7 +118,9 @@ public class InvoiceService {
 
     @Transactional(readOnly = true)
     public List<InvoiceDTO> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
+        // Hard cap: prevents OOM on large tables. Callers should use searchPaged() instead.
+        return invoiceRepository.findAll(PageRequest.of(0, 500, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
     }

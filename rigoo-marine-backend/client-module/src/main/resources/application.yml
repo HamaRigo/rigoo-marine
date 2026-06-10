@@ -103,7 +103,7 @@ eureka:
 
 logging:
   level:
-    com.rigoomarine.client: DEBUG
+    com.rigoomarine.client: WARN
 
 jwt:
   secret: ${JWT_SECRET}

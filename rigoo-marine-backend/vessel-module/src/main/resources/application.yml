@@ -70,7 +70,7 @@ eureka:
 
 logging:
   level:
-    com.rigoomarine.vessel: DEBUG
+    com.rigoomarine.vessel: WARN
 
 jwt:
   secret: ${JWT_SECRET}

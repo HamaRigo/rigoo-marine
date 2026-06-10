@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import {
   Card, CardContent, Stack, TextField, MenuItem, Table, TableHead,
   TableRow, TableCell, TableBody, TableContainer, TablePagination, Typography,
@@ -22,7 +22,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
  *  - renderActions?(row): optional cell on the right
  *  - defaultSort: 'createdAt,desc'
  */
-export default function FilterableTable({
+const FilterableTable = memo(function FilterableTable({
   queryKey,
   fetchPage,
   columns,
@@ -208,4 +208,6 @@ export default function FilterableTable({
       </CardContent>
     </Card>
   );
-}
+});
+
+export default FilterableTable;

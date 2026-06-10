@@ -83,7 +83,7 @@ eureka:
 
 logging:
   level:
-    com.rigoomarine.workorder: DEBUG
+    com.rigoomarine.workorder: WARN
 
 jwt:
   secret: ${JWT_SECRET}

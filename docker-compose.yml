@@ -8,12 +8,10 @@ services:
     container_name: discovery-service
     # Port not exposed externally — only gateway and services need Eureka
     environment:
-      # Was unset — the JVM sized its heap off the whole VM, making Eureka the
-      # fattest OOM target. Cap it and bound the container.
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_PROFILES_ACTIVE=prod
-    mem_limit: 1g
-    mem_reservation: 768m
+    mem_limit: 768m
+    mem_reservation: 512m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 30s
@@ -44,8 +42,8 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      # Gateway uses 50% (not 60%) so Netty off-heap buffers fit in the remaining 750m
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=25
+      # Gateway uses 50% (not 60%) so Netty off-heap buffers fit in the remaining headroom
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
@@ -80,7 +78,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -108,6 +106,8 @@ services:
       - SERVER_PORT=9081
       - FILE_UPLOAD_DIR=/app/uploads
       - APP_LOG_SENDER_ALLOW_IN_PROD=${APP_LOG_SENDER_ALLOW_IN_PROD:-true}
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     volumes:
@@ -138,7 +138,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -150,6 +150,8 @@ services:
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9082
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -178,7 +180,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -189,6 +191,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9083
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -219,7 +223,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -232,6 +236,8 @@ services:
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9084
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -260,7 +266,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -271,6 +277,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9086
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -300,7 +308,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -312,6 +320,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9092
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     volumes:
@@ -344,7 +354,7 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       # -Djava.awt.headless=true: OpenPDF uses AWT for image operations; without
       # headless mode the JVM tries to connect to an X display and fails on Linux.
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30 -Djava.awt.headless=true
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -Djava.awt.headless=true
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -358,6 +368,8 @@ services:
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9085
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -386,7 +398,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -397,6 +409,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9088
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -429,7 +443,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -444,6 +458,8 @@ services:
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9089
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -474,7 +490,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -500,6 +516,8 @@ services:
       - WHATSAPP_META_VERIFY_TOKEN=${WHATSAPP_META_VERIFY_TOKEN:-}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9087
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -528,7 +546,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rigoomarine
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
@@ -537,6 +555,8 @@ services:
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=9091
+      - DB_POOL_MAX_SIZE=5
+      - DB_POOL_MIN_IDLE=1
     mem_limit: 768m
     mem_reservation: 600m
     healthcheck:
@@ -607,6 +627,24 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: postgres
+    command:
+      - postgres
+      - -c
+      - max_connections=150
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - log_min_duration_statement=500
     environment:
       - POSTGRES_DB=rigoomarine
       - POSTGRES_USER=${DB_USERNAME:-postgres}
@@ -616,6 +654,8 @@ services:
       # Flyway handles migrations - no init script needed
     # ports:  # REMOVED for security - DB not exposed externally
     #   - "5432:5432"
+    mem_limit: 768m
+    mem_reservation: 512m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d rigoomarine"]
       interval: 10s
@@ -634,6 +674,11 @@ services:
       --appendonly yes
       --requirepass ${REDIS_PASSWORD:-}
       --bind 0.0.0.0
+      --maxmemory 220mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+    mem_limit: 256m
+    mem_reservation: 196m
     volumes:
       - redis-data:/data
     healthcheck:
@@ -724,6 +769,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
+    mem_limit: 128m
+    mem_reservation: 64m
     networks:
       - marine-network
     restart: unless-stopped

@@ -71,7 +71,7 @@ eureka:
 
 logging:
   level:
-    com.rigoomarine.marketplace: DEBUG
+    com.rigoomarine.marketplace: WARN
 
 jwt:
   secret: ${JWT_SECRET}

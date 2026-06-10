@@ -14,7 +14,9 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,7 +108,9 @@ public class QuotationService {
 
     @Transactional(readOnly = true)
     public List<QuotationDTO> getAllQuotations() {
-        return quotationRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+        // Hard cap: prevents OOM on large tables. Callers should use searchPaged() instead.
+        return quotationRepository.findAll(PageRequest.of(0, 500, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
