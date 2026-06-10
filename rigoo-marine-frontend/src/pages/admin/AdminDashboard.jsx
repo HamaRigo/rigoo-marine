@@ -214,14 +214,14 @@ export default function AdminDashboard() {
       <PendingApprovalsBanner />
 
       {/* Header with Quick Actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
         <Box>
           <Typography variant="h4" gutterBottom>Admin Dashboard</Typography>
           <Typography variant="body2" color="text.secondary">
             Complete platform management and oversight
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}

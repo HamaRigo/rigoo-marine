@@ -233,12 +233,26 @@ const baseOptions = {
         },
       },
     },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        },
+      },
+    },
     MuiDialog: {
       defaultProps: { keepMounted: false },
       styleOverrides: {
         paper: {
           borderRadius: 16,
           boxShadow: '0 24px 60px rgba(15,23,42,0.25)',
+          '@media (max-width: 599.95px)': {
+            margin: 8,
+            maxHeight: 'calc(100% - 16px)',
+            width: 'calc(100% - 16px)',
+            borderRadius: 12,
+          },
         },
       },
     },

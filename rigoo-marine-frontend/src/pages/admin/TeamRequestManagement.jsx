@@ -74,9 +74,9 @@ export default function TeamRequestManagement() {
   return (
     <Box>
       <Reveal variant="fade">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Typography variant="h5" fontWeight={700}>Team Requests</Typography>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
             <InputLabel>Status filter</InputLabel>
             <Select value={statusFilter} label="Status filter" onChange={e => { setStatusFilter(e.target.value); setPage(0); }}>
               <MenuItem value="">All</MenuItem>

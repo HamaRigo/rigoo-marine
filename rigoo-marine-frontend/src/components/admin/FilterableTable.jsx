@@ -90,7 +90,7 @@ export default function FilterableTable({
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('filters.searchPlaceholder')}
             size="small"
-            sx={{ minWidth: 240 }}
+            sx={{ minWidth: { sm: 240 }, width: { xs: '100%', sm: 'auto' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -111,7 +111,7 @@ export default function FilterableTable({
                   value={filterValues[f.id]}
                   onChange={onChange}
                   InputLabelProps={{ shrink: true }}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: { sm: 150 }, width: { xs: '100%', sm: 'auto' } }}
                 />
               );
             }
@@ -123,7 +123,7 @@ export default function FilterableTable({
                   label={f.label}
                   value={filterValues[f.id]}
                   onChange={onChange}
-                  sx={{ minWidth: 160 }}
+                  sx={{ minWidth: { sm: 160 }, width: { xs: '100%', sm: 'auto' } }}
                 />
               );
             }
@@ -149,8 +149,8 @@ export default function FilterableTable({
         {isError ? (
           <Alert severity="error">{t('pagination.error')}</Alert>
         ) : (
-          <TableContainer>
-            <Table size="small">
+          <TableContainer sx={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Table size="small" sx={{ minWidth: 480 }}>
               <TableHead>
                 <TableRow>
                   {columns.map((c) => (
@@ -199,6 +199,11 @@ export default function FilterableTable({
           rowsPerPageOptions={[10, 20, 50, 100]}
           labelRowsPerPage={t('pagination.rowsPerPage')}
           labelDisplayedRows={({ from, to, count }) => `${from}–${to} ${t('pagination.of')} ${count}`}
+          sx={{
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-input': {
+              display: { xs: 'none', sm: 'flex' },
+            },
+          }}
         />
       </CardContent>
     </Card>

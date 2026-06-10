@@ -160,7 +160,7 @@ export default function MediaManagement() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h4">Media Management</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button

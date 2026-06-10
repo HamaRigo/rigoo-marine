@@ -52,7 +52,7 @@ export default function AuditLog() {
       </Typography>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 220 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 220 } }}>
           <InputLabel>{t('audit.filterAction')}</InputLabel>
           <Select
             value={actionFilter}
