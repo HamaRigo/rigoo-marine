@@ -16,7 +16,8 @@
       "emailLabel": "Email",
       "phoneLabel": "Phone"
     },
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "credit": "Created by Mohamed Bouallagui"
   },
   "services": {
     "header": {

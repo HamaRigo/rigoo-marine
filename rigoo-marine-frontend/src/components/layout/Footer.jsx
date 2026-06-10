@@ -172,6 +172,12 @@ export default function Footer() {
           <Typography variant="body2" sx={{ opacity: 0.75 }}>
             &copy; {new Date().getFullYear()} {t('navbar:brand')}. {t('public:footer.rights')}
           </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 0.75 }}>
+            {/* logo: add <Box component="img" src="..." sx={{ height: 18, borderRadius: 0.5 }} /> here */}
+            <Typography variant="caption" sx={{ opacity: 0.45, letterSpacing: '0.03em' }}>
+              {t('public:footer.credit')}
+            </Typography>
+          </Box>
         </Box>
       </Container>
     </Box>
