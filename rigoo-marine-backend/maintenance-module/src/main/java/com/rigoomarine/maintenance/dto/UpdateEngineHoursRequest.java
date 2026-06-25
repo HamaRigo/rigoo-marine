@@ -13,7 +13,7 @@ public class UpdateEngineHoursRequest {
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = true)
-    @Digits(integer = 9, fraction = 1)
+    @Digits(integer = 9, fraction = 2)
     private BigDecimal hours;
 
     /**

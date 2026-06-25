@@ -120,9 +120,28 @@ public class ServiceHistoryService {
     @Transactional(readOnly = true)
     public Page<ServiceHistoryDTO> search(Long vesselId, ServiceType type,
                                           LocalDate from, LocalDate to, Pageable pageable) {
-        Page<ServiceHistoryRecord> page = type == null
-            ? historyRepo.searchAll(vesselId, from, to, pageable)
-            : historyRepo.search(vesselId, type, from, to, pageable);
+        boolean hasType = type != null;
+        boolean hasFrom = from != null;
+        boolean hasTo   = to   != null;
+
+        Page<ServiceHistoryRecord> page;
+        if (!hasType && !hasFrom && !hasTo) {
+            page = historyRepo.findByVesselIdOrderByPerformedOnDescIdDesc(vesselId, pageable);
+        } else if (!hasType && hasFrom && hasTo) {
+            page = historyRepo.searchAllBetween(vesselId, from, to, pageable);
+        } else if (!hasType && hasFrom) {
+            page = historyRepo.searchAllFrom(vesselId, from, pageable);
+        } else if (!hasType) {
+            page = historyRepo.searchAllTo(vesselId, to, pageable);
+        } else if (!hasFrom && !hasTo) {
+            page = historyRepo.findByVesselIdAndServiceTypeOrderByPerformedOnDescIdDesc(vesselId, type, pageable);
+        } else if (hasFrom && hasTo) {
+            page = historyRepo.searchBetween(vesselId, type, from, to, pageable);
+        } else if (hasFrom) {
+            page = historyRepo.searchFrom(vesselId, type, from, pageable);
+        } else {
+            page = historyRepo.searchTo(vesselId, type, to, pageable);
+        }
         return page.map(this::toDTO);
     }
 

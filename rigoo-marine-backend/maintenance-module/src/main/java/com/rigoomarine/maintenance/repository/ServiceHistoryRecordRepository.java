@@ -13,44 +13,78 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Hibernate 6 cannot bind null to JPQL parameters when the SQL type cannot be
+ * inferred — this applies to both enum params and LocalDate params used with
+ * the (:param IS NULL OR col >= :param) pattern.  The fix: never pass null to
+ * a JPQL parameter.  Each method below accepts only non-null params, and the
+ * service layer dispatches to the right method based on which filters are present.
+ */
 @Repository
 public interface ServiceHistoryRecordRepository extends JpaRepository<ServiceHistoryRecord, Long> {
 
     List<ServiceHistoryRecord> findByVesselIdOrderByPerformedOnDesc(Long vesselId);
 
-    // Hibernate 6 cannot infer the SQL type for a null enum parameter in JPQL
-    // (:type IS NULL OR col = :type) — split into two methods to avoid
-    // IllegalArgumentException → 400 when type is null (e.g. dossier load).
+    // ── No-filter queries (Spring Data derives — no JPQL, no null params) ─────
 
-    @Query("""
-        SELECT h FROM ServiceHistoryRecord h
-        WHERE h.vesselId = :vesselId
-          AND (:from IS NULL OR h.performedOn >= :from)
-          AND (:to   IS NULL OR h.performedOn <= :to)
-        ORDER BY h.performedOn DESC, h.id DESC
-    """)
-    Page<ServiceHistoryRecord> searchAll(
+    Page<ServiceHistoryRecord> findByVesselIdOrderByPerformedOnDescIdDesc(
+        Long vesselId, Pageable pageable);
+
+    Page<ServiceHistoryRecord> findByVesselIdAndServiceTypeOrderByPerformedOnDescIdDesc(
+        Long vesselId, ServiceType serviceType, Pageable pageable);
+
+    // ── Date-range queries (no type filter) ───────────────────────────────────
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.performedOn >= :from ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchAllFrom(
+        @Param("vesselId") Long vesselId,
+        @Param("from") LocalDate from,
+        Pageable pageable
+    );
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.performedOn <= :to ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchAllTo(
+        @Param("vesselId") Long vesselId,
+        @Param("to") LocalDate to,
+        Pageable pageable
+    );
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.performedOn >= :from AND h.performedOn <= :to ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchAllBetween(
         @Param("vesselId") Long vesselId,
         @Param("from") LocalDate from,
         @Param("to") LocalDate to,
         Pageable pageable
     );
 
-    @Query("""
-        SELECT h FROM ServiceHistoryRecord h
-        WHERE h.vesselId = :vesselId
-          AND h.serviceType = :type
-          AND (:from IS NULL OR h.performedOn >= :from)
-          AND (:to   IS NULL OR h.performedOn <= :to)
-        ORDER BY h.performedOn DESC, h.id DESC
-    """)
-    Page<ServiceHistoryRecord> search(
+    // ── Type + date-range queries ──────────────────────────────────────────────
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.serviceType = :type AND h.performedOn >= :from ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchFrom(
+        @Param("vesselId") Long vesselId,
+        @Param("type") ServiceType type,
+        @Param("from") LocalDate from,
+        Pageable pageable
+    );
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.serviceType = :type AND h.performedOn <= :to ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchTo(
+        @Param("vesselId") Long vesselId,
+        @Param("type") ServiceType type,
+        @Param("to") LocalDate to,
+        Pageable pageable
+    );
+
+    @Query("SELECT h FROM ServiceHistoryRecord h WHERE h.vesselId = :vesselId AND h.serviceType = :type AND h.performedOn >= :from AND h.performedOn <= :to ORDER BY h.performedOn DESC, h.id DESC")
+    Page<ServiceHistoryRecord> searchBetween(
         @Param("vesselId") Long vesselId,
         @Param("type") ServiceType type,
         @Param("from") LocalDate from,
         @Param("to") LocalDate to,
         Pageable pageable
     );
+
+    // ── Misc ──────────────────────────────────────────────────────────────────
 
     Optional<ServiceHistoryRecord> findFirstByVesselIdAndServiceTypeOrderByPerformedOnDescIdDesc(
         Long vesselId, ServiceType serviceType);

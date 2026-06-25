@@ -41,7 +41,7 @@ public class VesselMaintenanceService {
         EngineHoursReading reading = fetchEngineHours(vesselId);
 
         List<ServiceHistoryDTO> history = historyRepo
-            .searchAll(vesselId, null, null, PageRequest.of(0, RECENT_HISTORY_LIMIT))
+            .findByVesselIdOrderByPerformedOnDescIdDesc(vesselId, PageRequest.of(0, RECENT_HISTORY_LIMIT))
             .map(historyService::toDTO)
             .getContent();
 
