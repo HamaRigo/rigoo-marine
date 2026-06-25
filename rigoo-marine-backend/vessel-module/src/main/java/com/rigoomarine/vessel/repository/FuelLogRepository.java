@@ -14,11 +14,11 @@ public interface FuelLogRepository extends JpaRepository<FuelLog, Long> {
     /** Paged log for the vessel detail page (all years). */
     Page<FuelLog> findByVesselIdOrderByLogDateDescIdDesc(Long vesselId, Pageable pageable);
 
-    /** Year-scoped log for analytics query. */
+    /** Year-scoped log for analytics query. EXTRACT is standard JPA/JPQL and works on PostgreSQL. */
     @Query("""
         SELECT f FROM FuelLog f
         WHERE f.vesselId = :vesselId
-          AND FUNCTION('YEAR', f.logDate) = :year
+          AND EXTRACT(YEAR FROM f.logDate) = :year
         ORDER BY f.logDate DESC
         """)
     List<FuelLog> findByVesselIdAndYear(

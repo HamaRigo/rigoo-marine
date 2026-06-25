@@ -73,6 +73,7 @@ public class CommonExceptionHandler {
         Map<String, String> fields = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
             .forEach(fe -> fields.put(fe.getField(), fe.getDefaultMessage()));
+        log.warn("validation.failed path={} fields={}", ex.getObjectName(), fields);
         return ResponseEntity.badRequest().body(ErrorResponse.builder()
             .errorCode("VALIDATION_FAILED")
             .message("Request validation failed")

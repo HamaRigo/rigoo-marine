@@ -120,7 +120,10 @@ public class ServiceHistoryService {
     @Transactional(readOnly = true)
     public Page<ServiceHistoryDTO> search(Long vesselId, ServiceType type,
                                           LocalDate from, LocalDate to, Pageable pageable) {
-        return historyRepo.search(vesselId, type, from, to, pageable).map(this::toDTO);
+        Page<ServiceHistoryRecord> page = type == null
+            ? historyRepo.searchAll(vesselId, from, to, pageable)
+            : historyRepo.search(vesselId, type, from, to, pageable);
+        return page.map(this::toDTO);
     }
 
     public void delete(Long id, Long callerClientId, boolean isAdminOrTechnician) {

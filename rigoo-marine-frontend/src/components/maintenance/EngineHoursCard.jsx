@@ -83,8 +83,11 @@ export default function EngineHoursCard({ vesselId, currentEngineHours, engineHo
             />
             <Button
               variant="contained"
-              disabled={mutation.isPending || value === ''}
-              onClick={() => mutation.mutate(Number(value))}
+              disabled={mutation.isPending || value === '' || Number.isNaN(Number(value))}
+              onClick={() => {
+                const hrs = Number(value);
+                if (!Number.isNaN(hrs)) mutation.mutate(hrs);
+              }}
             >{t('engineHours.save')}</Button>
             <Button onClick={() => { setEditing(false); setValue(currentEngineHours ?? ''); }}>{t('dialog.cancel')}</Button>
           </Stack>

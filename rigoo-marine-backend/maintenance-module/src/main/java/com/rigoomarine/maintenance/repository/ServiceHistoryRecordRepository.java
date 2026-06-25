@@ -18,10 +18,28 @@ public interface ServiceHistoryRecordRepository extends JpaRepository<ServiceHis
 
     List<ServiceHistoryRecord> findByVesselIdOrderByPerformedOnDesc(Long vesselId);
 
+    // Hibernate 6 cannot infer the SQL type for a null enum parameter in JPQL
+    // (:type IS NULL OR col = :type) — split into two methods to avoid
+    // IllegalArgumentException → 400 when type is null (e.g. dossier load).
+
     @Query("""
         SELECT h FROM ServiceHistoryRecord h
         WHERE h.vesselId = :vesselId
-          AND (:type IS NULL OR h.serviceType = :type)
+          AND (:from IS NULL OR h.performedOn >= :from)
+          AND (:to   IS NULL OR h.performedOn <= :to)
+        ORDER BY h.performedOn DESC, h.id DESC
+    """)
+    Page<ServiceHistoryRecord> searchAll(
+        @Param("vesselId") Long vesselId,
+        @Param("from") LocalDate from,
+        @Param("to") LocalDate to,
+        Pageable pageable
+    );
+
+    @Query("""
+        SELECT h FROM ServiceHistoryRecord h
+        WHERE h.vesselId = :vesselId
+          AND h.serviceType = :type
           AND (:from IS NULL OR h.performedOn >= :from)
           AND (:to   IS NULL OR h.performedOn <= :to)
         ORDER BY h.performedOn DESC, h.id DESC
