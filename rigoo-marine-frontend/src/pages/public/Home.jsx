@@ -89,8 +89,6 @@ const VALUE_ITEMS = [
   { key: 'trust',        Icon: VerifiedIcon,           color: '#006994' },
 ];
 
-const TEAM_KEYS = ['founder', 'manager', 'senior'];
-
 /* ─── Hooks ─────────────────────────────────────────────────────────────── */
 
 function useInView(threshold = 0.18) {
