@@ -1,0 +1,43 @@
+{
+  "name": "Rigoo Marine",
+  "short_name": "Rigoo Marine",
+  "description": "Professional marine services, boat marketplace, and parts shop in Qatar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#003d7a",
+  "theme_color": "#003d7a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "shopping", "marine"],
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Marine Services",
+      "url": "/services",
+      "description": "Browse all marine services"
+    },
+    {
+      "name": "Boats for Sale",
+      "url": "/boats",
+      "description": "Browse boats and yachts in Qatar"
+    },
+    {
+      "name": "Marine Shop",
+      "url": "/shop",
+      "description": "Shop marine parts and tools"
+    }
+  ]
+}

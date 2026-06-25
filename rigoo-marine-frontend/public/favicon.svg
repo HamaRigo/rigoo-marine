@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded square navy background -->
+  <rect width="512" height="512" rx="88" fill="#003d7a"/>
+
+  <!-- ── Ship silhouette ── -->
+
+  <!-- Hull (trapezoid, widening toward bottom) -->
+  <path d="M72 332 L440 332 L402 390 L110 390 Z" fill="#FFFFFF"/>
+
+  <!-- Main superstructure body -->
+  <path d="M128 210 L128 332 L384 332 L384 210 Q370 190 356 186 L156 186 Q142 190 128 210 Z" fill="#90CAF9"/>
+
+  <!-- Mid-deck (lighter highlight strip) -->
+  <rect x="155" y="224" width="202" height="6" rx="3" fill="#FFFFFF" opacity="0.6"/>
+
+  <!-- Upper cabin block -->
+  <rect x="162" y="120" width="188" height="68" rx="10" fill="#FFFFFF"/>
+
+  <!-- Bridge top -->
+  <rect x="196" y="68" width="120" height="54" rx="10" fill="#BBDEFB"/>
+
+  <!-- Funnel -->
+  <rect x="243" y="28" width="38" height="52" rx="8" fill="#1565C0"/>
+  <!-- Funnel top band -->
+  <rect x="243" y="28" width="38" height="14" rx="8" fill="#003d7a"/>
+
+  <!-- Bow ramp / prow (front slant on left) -->
+  <path d="M128 186 L110 390 L128 390 L128 186 Z" fill="#5BA4CF" opacity="0.5"/>
+
+  <!-- 5 round portholes -->
+  <circle cx="170" cy="272" r="20" fill="#1565C0"/>
+  <circle cx="218" cy="272" r="20" fill="#1565C0"/>
+  <circle cx="266" cy="272" r="20" fill="#1565C0"/>
+  <circle cx="314" cy="272" r="20" fill="#1565C0"/>
+  <circle cx="362" cy="272" r="20" fill="#1565C0"/>
+  <!-- Porthole inner highlight -->
+  <circle cx="170" cy="268" r="8" fill="#4FC3F7" opacity="0.6"/>
+  <circle cx="218" cy="268" r="8" fill="#4FC3F7" opacity="0.6"/>
+  <circle cx="266" cy="268" r="8" fill="#4FC3F7" opacity="0.6"/>
+  <circle cx="314" cy="268" r="8" fill="#4FC3F7" opacity="0.6"/>
+  <circle cx="362" cy="268" r="8" fill="#4FC3F7" opacity="0.6"/>
+
+  <!-- Water / wave band -->
+  <path d="M72 362 Q140 346 210 362 Q280 378 350 362 Q402 350 440 362 L402 390 L110 390 Z"
+        fill="#1565C0" opacity="0.55"/>
+  <!-- Wave crest highlights -->
+  <path d="M90 357 Q120 349 152 357" stroke="#90CAF9" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M200 365 Q240 355 280 365" stroke="#90CAF9" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M340 358 Q370 350 400 358" stroke="#90CAF9" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>
