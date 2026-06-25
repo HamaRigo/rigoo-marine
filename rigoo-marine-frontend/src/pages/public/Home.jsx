@@ -764,63 +764,44 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* ── Team ─────────────────────────────────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ py: { xs: 7, md: 11 }, px: { xs: 2, sm: 3 } }}>
-        <Reveal variant="fade">
-          <Typography variant="h3" textAlign="center" gutterBottom>{t('team.title')}</Typography>
-        </Reveal>
-        <Stagger variant="grow" step={120} timeout={520}
-          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3, mt: 3 }}
-        >
-          {apiTeam.length > 0
-            ? apiTeam.map((member) => (
-                <Card key={member.id} sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Avatar
-                      src={member.photoUrl || undefined}
-                      alt={member.name}
-                      sx={{
-                        width: 64, height: 64, mb: 2,
-                        background: 'linear-gradient(135deg, #004263, #006994)',
-                        fontSize: '1.4rem', fontWeight: 700,
-                      }}
-                    >
-                      {!member.photoUrl && member.name?.charAt(0)?.toUpperCase()}
-                    </Avatar>
-                    <Typography variant="h6" gutterBottom>
-                      {i18n.language === 'ar' && member.nameAr ? member.nameAr : member.name}
-                    </Typography>
-                    <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
-                      {i18n.language === 'ar' && member.roleAr ? member.roleAr : member.role}
-                    </Typography>
-                    <Typography color="text.secondary" variant="body2">
-                      {i18n.language === 'ar' && member.bioAr ? member.bioAr : member.bio}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
-            : TEAM_KEYS.map((key) => (
-                <Card key={key} sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{
-                      width: 52, height: 52, borderRadius: '50%', mb: 2,
+      {/* ── Team — hidden until real members are added via admin ─────────── */}
+      {apiTeam.length > 0 && (
+        <Container maxWidth="lg" sx={{ py: { xs: 7, md: 11 }, px: { xs: 2, sm: 3 } }}>
+          <Reveal variant="fade">
+            <Typography variant="h3" textAlign="center" gutterBottom>{t('team.title')}</Typography>
+          </Reveal>
+          <Stagger variant="grow" step={120} timeout={520}
+            sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3, mt: 3 }}
+          >
+            {apiTeam.map((member) => (
+              <Card key={member.id} sx={{ height: '100%' }}>
+                <CardContent>
+                  <Avatar
+                    src={member.photoUrl || undefined}
+                    alt={member.name}
+                    sx={{
+                      width: 64, height: 64, mb: 2,
                       background: 'linear-gradient(135deg, #004263, #006994)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
                       fontSize: '1.4rem', fontWeight: 700,
-                    }}>
-                      {t(`team.members.${key}.name`).charAt(0)}
-                    </Box>
-                    <Typography variant="h6" gutterBottom>{t(`team.members.${key}.name`)}</Typography>
-                    <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
-                      {t(`team.members.${key}.role`)}
-                    </Typography>
-                    <Typography color="text.secondary" variant="body2">{t(`team.members.${key}.bio`)}</Typography>
-                  </CardContent>
-                </Card>
-              ))
-          }
-        </Stagger>
-      </Container>
+                    }}
+                  >
+                    {!member.photoUrl && member.name?.charAt(0)?.toUpperCase()}
+                  </Avatar>
+                  <Typography variant="h6" gutterBottom>
+                    {i18n.language === 'ar' && member.nameAr ? member.nameAr : member.name}
+                  </Typography>
+                  <Typography color="primary.main" variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
+                    {i18n.language === 'ar' && member.roleAr ? member.roleAr : member.role}
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    {i18n.language === 'ar' && member.bioAr ? member.bioAr : member.bio}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Stagger>
+        </Container>
+      )}
 
       {/* ── CTA / Contact ────────────────────────────────────────────────── */}
       <Reveal variant="slide" direction="up" timeout={640}>
