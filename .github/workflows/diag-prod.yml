@@ -1,0 +1,51 @@
+name: Production Diagnostics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    name: Container status & tail logs
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Container status
+        run: |
+          echo "=== docker ps (all) ==="
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" | sort
+
+      - name: Memory pressure
+        run: |
+          echo "=== host memory ==="
+          free -h
+          echo ""
+          echo "=== per-container memory ==="
+          docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.MemPerc}}" | sort
+
+      - name: OOM / restart counts
+        run: |
+          echo "=== restart counts ==="
+          docker inspect --format '{{.Name}}  restarts={{.RestartCount}}  status={{.State.Status}}  oom={{.State.OOMKilled}}' \
+            $(docker ps -aq) 2>/dev/null | sort | grep -v "^$"
+
+      - name: Logs — notification-service
+        run: docker logs notification-service --tail=60 2>&1 || echo "(container missing)"
+
+      - name: Logs — maintenance-service
+        run: docker logs maintenance-service --tail=60 2>&1 || echo "(container missing)"
+
+      - name: Logs — work-order-service
+        run: docker logs work-order-service --tail=40 2>&1 || echo "(container missing)"
+
+      - name: Logs — api-gateway (recent)
+        run: docker logs api-gateway --tail=40 2>&1 || echo "(container missing)"
+
+      - name: Eureka registry
+        run: |
+          echo "=== registered instances ==="
+          curl -s http://localhost:8761/eureka/apps 2>/dev/null \
+            | grep -oE '<app>[^<]+</app>' | sort \
+            || curl -s http://discovery-service:8761/eureka/apps 2>/dev/null \
+            | grep -oE '<app>[^<]+</app>' | sort \
+            || echo "(eureka unreachable from runner)"
