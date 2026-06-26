@@ -30,7 +30,7 @@ jobs:
             $(docker ps -aq) 2>/dev/null | sort | grep -v "^$"
 
       - name: Logs — discovery-service
-        run: docker logs discovery-service --tail=100 2>&1 || echo "(container missing)"
+        run: docker logs discovery-service --tail=300 2>&1 || echo "(container missing)"
 
       - name: Logs — maintenance-service
         run: docker logs maintenance-service --tail=200 2>&1 || echo "(container missing)"

@@ -84,6 +84,13 @@ public class VesselClient {
             log.warn("vessel ownership lookup unreachable: vesselId={} clientId={} cause={}",
                 vesselId, ownerClientId, network.getMessage());
             throw new VesselLookupUnavailableException("vessel-service unreachable", network);
+        } catch (IllegalArgumentException | IllegalStateException lbEx) {
+            // Spring Cloud LoadBalancer throws IllegalArgumentException ("No loadbalancer
+            // available for vessel-service") when the LB child context hasn't initialised,
+            // and IllegalStateException ("No instances available") when Eureka has no live
+            // instances. Both are transient conditions — surface as 503 so callers retry.
+            log.warn("vessel ownership LB error: vesselId={} — {}", vesselId, lbEx.getMessage());
+            throw new VesselLookupUnavailableException("vessel-service load-balancer unavailable", lbEx);
         }
     }
 
@@ -132,6 +139,9 @@ public class VesselClient {
         } catch (ResourceAccessException network) {
             log.warn("engineHours lookup unreachable: vesselId={} cause={}", vesselId, network.getMessage());
             throw new VesselLookupUnavailableException("vessel-service unreachable", network);
+        } catch (IllegalArgumentException | IllegalStateException lbEx) {
+            log.warn("engineHours LB error: vesselId={} — {}", vesselId, lbEx.getMessage());
+            throw new VesselLookupUnavailableException("vessel-service load-balancer unavailable", lbEx);
         }
     }
 
@@ -154,6 +164,9 @@ public class VesselClient {
                 "vessel-service rejected engine-hours update: " + upstream.getStatusCode(), upstream);
         } catch (ResourceAccessException network) {
             throw new VesselLookupUnavailableException("vessel-service unreachable", network);
+        } catch (IllegalArgumentException | IllegalStateException lbEx) {
+            log.warn("engineHours update LB error: vesselId={} — {}", vesselId, lbEx.getMessage());
+            throw new VesselLookupUnavailableException("vessel-service load-balancer unavailable", lbEx);
         }
     }
 
