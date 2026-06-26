@@ -22,6 +22,7 @@ COPY delivery-module/pom.xml    delivery-module/pom.xml
 
 RUN mvn -B dependency:resolve -pl common-security,shop-module --fail-never -q
 
+ARG BUILD_SHA=unknown
 COPY common-security/src  common-security/src
 # Install common modules into the local repo first.
 RUN mvn -B install -pl common-security -DskipTests -q

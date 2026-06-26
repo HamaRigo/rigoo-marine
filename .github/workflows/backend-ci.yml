@@ -179,6 +179,7 @@ jobs:
           file: ./rigoo-marine-backend/discovery-service/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/discovery-service:latest
@@ -191,6 +192,7 @@ jobs:
           file: ./rigoo-marine-backend/gateway-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:latest
@@ -203,6 +205,7 @@ jobs:
           file: ./rigoo-marine-backend/client-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/client-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/client-service:latest
@@ -215,6 +218,7 @@ jobs:
           file: ./rigoo-marine-backend/vessel-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:latest
@@ -227,6 +231,7 @@ jobs:
           file: ./rigoo-marine-backend/service-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/service-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/service-service:latest
@@ -239,6 +244,7 @@ jobs:
           file: ./rigoo-marine-backend/work-order-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:latest
@@ -251,6 +257,7 @@ jobs:
           file: ./rigoo-marine-backend/technician-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:latest
@@ -263,6 +270,7 @@ jobs:
           file: ./rigoo-marine-backend/invoice-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:latest
@@ -275,6 +283,7 @@ jobs:
           file: ./rigoo-marine-backend/notification-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:latest
@@ -287,6 +296,7 @@ jobs:
           file: ./rigoo-marine-backend/delivery-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:latest
@@ -299,6 +309,7 @@ jobs:
           file: ./rigoo-marine-backend/marketplace-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/marketplace-service:latest
@@ -311,6 +322,7 @@ jobs:
           file: ./rigoo-marine-backend/shop-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/shop-service:latest
@@ -323,6 +335,7 @@ jobs:
           file: ./rigoo-marine-backend/maintenance-module/Dockerfile
           platforms: linux/arm64
           push: true
+          build-args: BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/maintenance-service:latest

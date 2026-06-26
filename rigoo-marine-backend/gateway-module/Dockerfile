@@ -22,6 +22,7 @@ COPY delivery-module/pom.xml    delivery-module/pom.xml
 
 RUN mvn -B dependency:resolve -pl gateway-module --fail-never -q
 
+ARG BUILD_SHA=unknown
 COPY gateway-module/src gateway-module/src
 RUN mvn -B package -pl gateway-module -DskipTests -q
 
