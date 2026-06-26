@@ -23,6 +23,7 @@ COPY delivery-module/pom.xml    delivery-module/pom.xml
 RUN mvn -B dependency:resolve -pl gateway-module --fail-never -q
 
 ARG BUILD_SHA=unknown
+RUN echo "build-sha=${BUILD_SHA}"
 COPY gateway-module/src gateway-module/src
 RUN mvn -B package -pl gateway-module -DskipTests -q
 

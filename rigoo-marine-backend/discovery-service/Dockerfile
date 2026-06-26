@@ -23,6 +23,7 @@ COPY delivery-module/pom.xml    delivery-module/pom.xml
 RUN mvn -B dependency:resolve -pl discovery-service --fail-never -q
 
 ARG BUILD_SHA=unknown
+RUN echo "build-sha=${BUILD_SHA}"
 COPY discovery-service/src discovery-service/src
 RUN mvn -B package -pl discovery-service -DskipTests -q
 
