@@ -79,6 +79,7 @@ public class MaintenanceExceptionHandler extends CommonExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.error("IllegalArgumentException → 400", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(error("VALIDATION_FAILED", ex.getMessage()));
     }

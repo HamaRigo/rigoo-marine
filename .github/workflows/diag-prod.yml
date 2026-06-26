@@ -33,7 +33,7 @@ jobs:
         run: docker logs notification-service --tail=60 2>&1 || echo "(container missing)"
 
       - name: Logs — maintenance-service
-        run: docker logs maintenance-service --tail=60 2>&1 || echo "(container missing)"
+        run: docker logs maintenance-service --tail=200 2>&1 || echo "(container missing)"
 
       - name: Logs — work-order-service
         run: docker logs work-order-service --tail=40 2>&1 || echo "(container missing)"
