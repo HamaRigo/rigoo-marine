@@ -1,3 +1,12 @@
+# Shared log-rotation config — applied to every service via <<: *logging.
+# json-file with 10 MB / 5 files per container caps log disk usage at 50 MB
+# per service, ~900 MB total across 18 containers (safe on a 50 GB boot volume).
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # Netflix Eureka - Service Discovery
   discovery-service:
@@ -21,6 +30,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # API Gateway — the ONLY service with an external port (Nginx terminates SSL in front)
   # container_name removed so `docker compose up --scale api-gateway=2` works.
@@ -61,6 +71,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Client Service (internal, no exposed port)
   client-service:
@@ -121,6 +132,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Vessel Service (internal, no exposed port)
   vessel-service:
@@ -163,6 +175,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Service Service (internal, no exposed port)
   service-service:
@@ -204,6 +217,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Work Order Service (internal, no exposed port)
   work-order-service:
@@ -249,6 +263,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Technician Service (internal, no exposed port)
   technician-service:
@@ -290,6 +305,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   delivery-service:
     image: ${DOCKERHUB_USERNAME:-rigoomarine}/delivery-service:${DOCKER_TAG:-latest}
@@ -335,6 +351,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Invoice Service (internal, no exposed port)
   invoice-service:
@@ -381,6 +398,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Marketplace Service (internal, no exposed port)
   marketplace-service:
@@ -422,6 +440,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Shop Service — Parts & Tools catalog + cart + orders
   # container_name removed so `docker compose up --scale shop-service=2` works.
@@ -471,6 +490,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Notification Service (internal, no exposed port)
   notification-service:
@@ -529,6 +549,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Maintenance Service — service history, scheduling, vessel inspections
   maintenance-service:
@@ -568,6 +589,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Zookeeper (for Kafka)
   zookeeper:
@@ -591,6 +613,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Kafka Message Broker — internal only, no external port
   kafka:
@@ -622,6 +645,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # PostgreSQL Database (SECURED - internal network only, no external port)
   postgres:
@@ -664,6 +688,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Redis Cache — internal only, no external port
   redis:
@@ -689,6 +714,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
   # Elasticsearch (commented out — disabled by default to conserve memory on dev hosts)
   # elasticsearch:
@@ -774,6 +800,7 @@ services:
     networks:
       - marine-network
     restart: unless-stopped
+    logging: *logging
 
 networks:
   marine-network:
