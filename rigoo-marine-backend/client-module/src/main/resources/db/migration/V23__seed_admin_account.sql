@@ -3,7 +3,7 @@
 
 DO $$
 DECLARE
-  pwd TEXT := '$2b$12$EAgEzQV9q11VYJINrGzY4uV0BADmAcIsBCvN032t.sHsoO.GXD3Ki';
+  pwd TEXT := '$2b$12$3UNZEET7LCvPQjK7YxkAu.271O00EHJlaX66f44C.PjxMgHR0Q75i';
 BEGIN
   INSERT INTO clients (name, email, phone, password, role,
                        email_verified, unsubscribe_token,

@@ -93,6 +93,10 @@ logs/
 **/secrets.yml
 **/application-local.yml
 **/application-prod.yml
+# SSH private/public key files — never commit
+*.key
+*.pem
+*.pub
 
 # CI/CD secrets (keep templates, ignore actual secrets)
 .github/workflows/*-secrets.yml
