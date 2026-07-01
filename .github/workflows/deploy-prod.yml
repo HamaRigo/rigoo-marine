@@ -16,77 +16,62 @@ env:
 jobs:
   deploy:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    # Runs directly on the production server — no inbound SSH from internet needed
+    runs-on: [self-hosted, Linux, ARM64, production]
     environment: production
 
     steps:
       - name: Pull all images and redeploy
-        uses: appleboy/ssh-action@v1.0.3
         env:
           DOCKER_TAG: ${{ env.DOCKER_TAG }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        with:
-          host: ${{ secrets.PROD_SERVER_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.PROD_SSH_FINGERPRINT }}
-          envs: DOCKER_TAG,DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
-          timeout: 30s
-          command_timeout: 15m
-          script: |
-            set -euo pipefail
+        run: |
+          set -euo pipefail
 
-            # Sync compose file from repo (avoids a separate SCP connection)
-            curl -fsSL \
-              https://raw.githubusercontent.com/HamaRigo/rigoo-marine/production/docker-compose.yml \
-              -o /opt/rigoo-marine-prod/docker-compose.yml
+          # Sync compose file from the production branch
+          curl -fsSL \
+            https://raw.githubusercontent.com/HamaRigo/rigoo-marine/production/docker-compose.yml \
+            -o /opt/rigoo-marine-prod/docker-compose.yml
 
-            echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+          echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
-            echo "Deploying tag: ${DOCKER_TAG}"
+          echo "Deploying tag: ${DOCKER_TAG}"
 
-            for svc in discovery-service api-gateway client-service vessel-service \
-                       service-service work-order-service technician-service invoice-service \
-                       notification-service delivery-service marketplace-service shop-service \
-                       maintenance-service marine-frontend; do
-              docker pull "${DOCKERHUB_USERNAME}/${svc}:${DOCKER_TAG}"
-            done
+          for svc in discovery-service api-gateway client-service vessel-service \
+                     service-service work-order-service technician-service invoice-service \
+                     notification-service delivery-service marketplace-service shop-service \
+                     maintenance-service marine-frontend; do
+            docker pull "${DOCKERHUB_USERNAME}/${svc}:${DOCKER_TAG}"
+          done
 
-            docker compose \
-              -f /opt/rigoo-marine-prod/docker-compose.yml \
-              --env-file /opt/rigoo-marine-prod/.env \
-              up -d --force-recreate --remove-orphans
+          docker compose \
+            -f /opt/rigoo-marine-prod/docker-compose.yml \
+            --env-file /opt/rigoo-marine-prod/.env \
+            up -d --force-recreate --remove-orphans
 
-            echo "Waiting 60s for services to start..."
-            sleep 60
+          echo "Waiting 60s for services to start..."
+          sleep 60
 
-            docker compose \
-              -f /opt/rigoo-marine-prod/docker-compose.yml \
-              --env-file /opt/rigoo-marine-prod/.env \
-              ps
+          docker compose \
+            -f /opt/rigoo-marine-prod/docker-compose.yml \
+            --env-file /opt/rigoo-marine-prod/.env \
+            ps
 
-            docker image prune -f
+          docker image prune -f
 
       - name: Health check
         run: |
           sleep 30
-          curl -f https://${{ secrets.PROD_DOMAIN }}/actuator/health || echo "API health check failed"
-          curl -f https://rigoomarine.com/ || echo "Frontend health check failed"
+          curl -sf http://127.0.0.1:8080/actuator/health && echo "API OK" || echo "API health check failed"
+          curl -sf http://127.0.0.1:3080/ && echo "Frontend OK" || echo "Frontend health check failed"
 
       - name: Collect diagnostics on failure
         if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PROD_SERVER_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.PROD_SSH_FINGERPRINT }}
-          timeout: 30s
-          script: |
-            docker compose -f /opt/rigoo-marine-prod/docker-compose.yml \
-              --env-file /opt/rigoo-marine-prod/.env ps 2>/dev/null || true
-            for svc in discovery-service client-service api-gateway; do
-              echo "=== $svc ==="
-              docker logs $svc --tail=40 2>&1 || true
-            done
+        run: |
+          docker compose -f /opt/rigoo-marine-prod/docker-compose.yml \
+            --env-file /opt/rigoo-marine-prod/.env ps 2>/dev/null || true
+          for svc in discovery-service client-service api-gateway; do
+            echo "=== $svc ==="
+            docker logs $svc --tail=40 2>&1 || true
+          done
