@@ -1,0 +1,10 @@
+; Cloudflare DNS import file — rigoomarine.com
+; Import via: Cloudflare Dashboard → DNS → Import DNS Records → upload this file
+; All records set to DNS-only (grey cloud) after import — do NOT enable proxy
+
+$ORIGIN rigoomarine.com.
+$TTL 300
+
+@    IN  A  84.8.99.36
+www  IN  A  84.8.99.36
+api  IN  A  84.8.99.36
