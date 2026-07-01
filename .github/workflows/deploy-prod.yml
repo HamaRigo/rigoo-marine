@@ -20,19 +20,6 @@ jobs:
     environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Copy docker-compose.yml to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.PROD_SERVER_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.PROD_SSH_FINGERPRINT }}
-          source: "docker-compose.yml"
-          target: "/opt/rigoo-marine-prod/"
-
       - name: Pull all images and redeploy
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -45,9 +32,15 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.PROD_SSH_FINGERPRINT }}
           envs: DOCKER_TAG,DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
-          timeout: 600s
+          timeout: 30s
+          command_timeout: 15m
           script: |
             set -euo pipefail
+
+            # Sync compose file from repo (avoids a separate SCP connection)
+            curl -fsSL \
+              https://raw.githubusercontent.com/HamaRigo/rigoo-marine/production/docker-compose.yml \
+              -o /opt/rigoo-marine-prod/docker-compose.yml
 
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
@@ -89,9 +82,10 @@ jobs:
           username: ${{ secrets.PROD_SSH_USER }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.PROD_SSH_FINGERPRINT }}
+          timeout: 30s
           script: |
             docker compose -f /opt/rigoo-marine-prod/docker-compose.yml \
-              --env-file /opt/rigoo-marine-prod/.env ps
+              --env-file /opt/rigoo-marine-prod/.env ps 2>/dev/null || true
             for svc in discovery-service client-service api-gateway; do
               echo "=== $svc ==="
               docker logs $svc --tail=40 2>&1 || true
