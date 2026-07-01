@@ -8,10 +8,10 @@ services:
     container_name: discovery-service
     # Port not exposed externally — only gateway and services need Eureka
     environment:
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=55 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=20 -XX:+UseG1GC -XX:MaxGCPauseMillis=100
       - SPRING_PROFILES_ACTIVE=prod
-    mem_limit: 768m
-    mem_reservation: 512m
+    mem_limit: 1g
+    mem_reservation: 768m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 30s

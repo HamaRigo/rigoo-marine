@@ -15,6 +15,7 @@
 set -euo pipefail
 
 DOMAIN_API="api.rigoomarine.com"
+DOMAIN_FRONTEND="rigoomarine.com"
 DEPLOY_DIR="/opt/rigoo-marine-prod"
 DEPLOY_USER="rigoo"
 
@@ -46,6 +47,9 @@ if ! id "$DEPLOY_USER" &>/dev/null; then
     useradd -m -s /bin/bash "$DEPLOY_USER"
     usermod -aG docker "$DEPLOY_USER"
 fi
+# Also add the default Oracle Cloud SSH user to the docker group so SSH-based
+# GitHub Actions deploys (appleboy/ssh-action as ubuntu) can run docker compose.
+usermod -aG docker ubuntu 2>/dev/null || true
 
 # ── 4. Deploy directory ───────────────────────────────────────────────────────
 mkdir -p "$DEPLOY_DIR"
@@ -109,10 +113,13 @@ cp "$(dirname "$0")/nginx.conf" /etc/nginx/sites-available/rigoomarine
 ln -sf /etc/nginx/sites-available/rigoomarine /etc/nginx/sites-enabled/rigoomarine
 rm -f /etc/nginx/sites-enabled/default
 
-# Obtain SSL certificates (requires DNS A record pointing to this server)
+# Obtain SSL certificates (requires DNS A records pointing to this server for both domains)
 certbot --nginx -d "$DOMAIN_API" --non-interactive --agree-tos \
     --email admin@rigoomarine.com --redirect || \
-    echo "WARNING: certbot failed — DNS may not point here yet. Run manually: certbot --nginx -d $DOMAIN_API"
+    echo "WARNING: certbot failed for $DOMAIN_API — DNS may not point here yet. Run manually."
+certbot --nginx -d "$DOMAIN_FRONTEND" -d "www.$DOMAIN_FRONTEND" --non-interactive --agree-tos \
+    --email admin@rigoomarine.com --redirect || \
+    echo "WARNING: certbot failed for $DOMAIN_FRONTEND — DNS may not point here yet. Run manually."
 
 nginx -t && systemctl reload nginx
 
@@ -139,11 +146,14 @@ JWT_SECRET=CHANGE_ME_min_64_chars
 # Internal service token — generate with: openssl rand -hex 32
 INTERNAL_API_TOKEN=CHANGE_ME_min_32_chars
 
-# CORS — your Vercel production URL
-ALLOWED_ORIGINS=https://rigoo-marine-frontend.vercel.app
+# Public API URL (used in uploaded-file links returned by the API)
+PUBLIC_API_URL=https://api.rigoomarine.com
+
+# CORS — accepted browser origins
+ALLOWED_ORIGINS=https://rigoomarine.com
 
 # Frontend base URL (for email links, Stripe redirects)
-FRONTEND_BASE_URL=https://rigoo-marine-frontend.vercel.app
+FRONTEND_BASE_URL=https://rigoomarine.com
 
 # WhatsApp verify token — any secret string
 WHATSAPP_META_VERIFY_TOKEN=CHANGE_ME
