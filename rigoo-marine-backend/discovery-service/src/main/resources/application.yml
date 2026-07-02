@@ -13,6 +13,11 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # Default 30s — new instances are invisible to gateway for up to 30s after registering.
+    # 5s cache + 10s gateway fetch + 15s LB cache = ~30s total instead of ~75s.
+    response-cache-update-interval-ms: 5000
+    eviction-interval-timer-in-ms: 10000
 
 logging:
   level:
