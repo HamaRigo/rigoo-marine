@@ -29,6 +29,9 @@ jobs:
           docker inspect --format '{{.Name}}  restarts={{.RestartCount}}  status={{.State.Status}}  oom={{.State.OOMKilled}}' \
             $(docker ps -aq) 2>/dev/null | sort | grep -v "^$"
 
+      - name: Logs — client-service (full recent)
+        run: docker logs client-service --tail=400 2>&1 || echo "(container missing)"
+
       - name: Logs — discovery-service
         run: docker logs discovery-service --tail=300 2>&1 || echo "(container missing)"
 
