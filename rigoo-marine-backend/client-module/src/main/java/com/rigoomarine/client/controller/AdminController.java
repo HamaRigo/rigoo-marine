@@ -534,10 +534,10 @@ public class AdminController {
             return ResponseEntity.ok(out);
         }
         try {
-            String principal = SecurityContextHolder.getContext().getAuthentication().getName();
-            dynamicMailSender.send(principal, "Rigoo Marine — SMTP Test", "SMTP connection is working correctly.");
+            String adminEmail = actorEmail();
+            dynamicMailSender.send(adminEmail, "Rigoo Marine — SMTP Test", "SMTP connection is working correctly.");
             out.put("success", true);
-            out.put("message", "Test email sent to " + principal);
+            out.put("message", "Test email sent to " + adminEmail);
         } catch (Exception e) {
             out.put("success", false);
             out.put("error", e.getMessage());
