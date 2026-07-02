@@ -6,7 +6,7 @@ import {
   Switch, FormControlLabel, Tabs, Tab, IconButton, InputAdornment,
   Stack,
 } from '@mui/material';
-import { Save as SaveIcon, Email as EmailIcon, Business as BusinessIcon, Security as SecurityIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
+import { Save as SaveIcon, Email as EmailIcon, Business as BusinessIcon, Security as SecurityIcon, Receipt as ReceiptIcon, Send as SendIcon } from '@mui/icons-material';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import CompareRoundedIcon   from '@mui/icons-material/CompareRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -65,6 +65,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(loadCompanySettings);
   const [tempPassword, setTempPassword] = useState('');
+  const [testingSmtp, setTestingSmtp] = useState(false);
 
   // Fields synced to the Contact Info backend API
   const CONTACT_MAP = [
@@ -78,7 +79,7 @@ export default function Settings() {
   ];
 
   useEffect(() => {
-    // Pre-populate from API if available, merge over localStorage defaults
+    // Load company info from Contact Info API
     adminApi.getAllContactInfo().then((data) => {
       if (!Array.isArray(data) || data.length === 0) return;
       const map = Object.fromEntries(data.map((d) => [d.keyName, d.value]));
@@ -93,7 +94,32 @@ export default function Settings() {
         ...(map.website       && { companyWebsite: map.website }),
       }));
     }).catch(() => {});
+
+    // Load SMTP settings from backend
+    adminApi.getSmtpSettings().then((data) => {
+      setSettings((prev) => ({
+        ...prev,
+        smtpHost:               data.host     || prev.smtpHost,
+        smtpPort:               String(data.port || prev.smtpPort),
+        smtpUser:               data.username || prev.smtpUser,
+        emailFromAddress:       data.from     || prev.emailFromAddress,
+        enableEmailNotifications: data.enabled ?? prev.enableEmailNotifications,
+      }));
+    }).catch(() => {});
   }, []);
+
+  const handleTestSmtp = async () => {
+    setTestingSmtp(true);
+    try {
+      const result = await adminApi.testSmtpConnection();
+      if (result.success) toast.success(result.message || 'Test email sent successfully');
+      else toast.error(result.error || 'SMTP test failed');
+    } catch {
+      toast.error('Could not reach SMTP test endpoint');
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -101,7 +127,7 @@ export default function Settings() {
       // 1. Persist to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 
-      // 2. Sync to backend Contact Info API
+      // 2. Sync company info to Contact Info API
       const existing = await adminApi.getAllContactInfo().catch(() => []);
       const byKey = Object.fromEntries((existing || []).map((d) => [d.keyName, d]));
 
@@ -115,6 +141,17 @@ export default function Settings() {
         })
       );
 
+      // 3. Save SMTP settings to backend
+      await adminApi.saveSmtpSettings({
+        enabled:  settings.enableEmailNotifications,
+        host:     settings.smtpHost,
+        port:     parseInt(settings.smtpPort, 10) || 587,
+        username: settings.smtpUser,
+        password: tempPassword || undefined,
+        from:     settings.emailFromAddress,
+      });
+
+      setTempPassword('');
       toast.success('Settings saved successfully');
     } catch {
       toast.error('Failed to save settings');
@@ -254,6 +291,16 @@ export default function Settings() {
                     onChange={(e) => handleChange('enableEmailNotifications', e.target.checked)} />}
                   label="Enable Email Notifications"
                 />
+              </Grid>
+              <Grid size={12}>
+                <Button
+                  variant="outlined"
+                  startIcon={<SendIcon />}
+                  onClick={handleTestSmtp}
+                  disabled={testingSmtp}
+                >
+                  {testingSmtp ? 'Sending…' : 'Test Connection'}
+                </Button>
               </Grid>
             </Grid>
           </CardContent>

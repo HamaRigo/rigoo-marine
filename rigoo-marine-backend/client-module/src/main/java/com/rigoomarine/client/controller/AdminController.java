@@ -19,6 +19,9 @@ import com.rigoomarine.client.service.GalleryItemService;
 import com.rigoomarine.client.service.MediaService;
 import com.rigoomarine.client.service.ContactInfoService;
 import com.rigoomarine.client.service.TeamMemberService;
+import com.rigoomarine.client.mail.MailConfig;
+import com.rigoomarine.client.mail.MailConfigService;
+import com.rigoomarine.client.mail.DynamicMailSender;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +54,8 @@ public class AdminController {
     private final AdminAuditService adminAuditService;
     private final GalleryItemService galleryItemService;
     private final TeamMemberService teamMemberService;
+    private final MailConfigService mailConfigService;
+    private final DynamicMailSender dynamicMailSender;
 
     // ============== Dashboard Stats ==============
 
@@ -475,5 +480,63 @@ public class AdminController {
         log.info("Delete team member: {}", id);
         teamMemberService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── SMTP settings ────────────────────────────────────────────────────────
+
+    @GetMapping("/settings/smtp")
+    public ResponseEntity<Map<String, Object>> getSmtpSettings() {
+        MailConfig cfg = mailConfigService.getConfig();
+        Map<String, Object> out = new HashMap<>();
+        out.put("enabled",  cfg.isEnabled());
+        out.put("host",     cfg.getHost());
+        out.put("port",     cfg.getPort());
+        out.put("username", cfg.getUsername());
+        out.put("from",     cfg.getFrom());
+        // Never return the password — client sends it back only when changing it
+        out.put("passwordSet", cfg.getPassword() != null && !cfg.getPassword().isBlank());
+        return ResponseEntity.ok(out);
+    }
+
+    @PutMapping("/settings/smtp")
+    public ResponseEntity<Map<String, Object>> saveSmtpSettings(@RequestBody Map<String, Object> body) {
+        MailConfig existing = mailConfigService.getConfig();
+        String password = (String) body.get("password");
+
+        MailConfig updated = MailConfig.builder()
+            .enabled(  Boolean.TRUE.equals(body.get("enabled")) )
+            .host(     (String) body.getOrDefault("host",     existing.getHost()) )
+            .port(     body.get("port") != null ? Integer.parseInt(body.get("port").toString()) : existing.getPort() )
+            .username( (String) body.getOrDefault("username", existing.getUsername()) )
+            .password( (password != null && !password.isBlank()) ? password : existing.getPassword() )
+            .from(     (String) body.getOrDefault("from",     existing.getFrom()) )
+            .build();
+
+        mailConfigService.saveConfig(updated);
+        Map<String, Object> out = new HashMap<>();
+        out.put("success", true);
+        out.put("enabled", updated.isEnabled());
+        return ResponseEntity.ok(out);
+    }
+
+    @PostMapping("/settings/smtp/test")
+    public ResponseEntity<Map<String, Object>> testSmtpConnection() {
+        MailConfig cfg = mailConfigService.getConfig();
+        Map<String, Object> out = new HashMap<>();
+        if (!cfg.isValid()) {
+            out.put("success", false);
+            out.put("error", "SMTP credentials incomplete. Set host, username and password first.");
+            return ResponseEntity.ok(out);
+        }
+        try {
+            String principal = SecurityContextHolder.getContext().getAuthentication().getName();
+            dynamicMailSender.send(principal, "Rigoo Marine — SMTP Test", "SMTP connection is working correctly.");
+            out.put("success", true);
+            out.put("message", "Test email sent to " + principal);
+        } catch (Exception e) {
+            out.put("success", false);
+            out.put("error", e.getMessage());
+        }
+        return ResponseEntity.ok(out);
     }
 }

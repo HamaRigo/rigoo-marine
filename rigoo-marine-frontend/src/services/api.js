@@ -597,6 +597,21 @@ export const adminApi = {
     return response.data; // List<ClientDTO> (used by AdminDashboard stats)
   },
 
+  getSmtpSettings: async () => {
+    const response = await httpClient.get('/admin/settings/smtp');
+    return response.data;
+  },
+
+  saveSmtpSettings: async (settings) => {
+    const response = await httpClient.put('/admin/settings/smtp', settings);
+    return response.data;
+  },
+
+  testSmtpConnection: async () => {
+    const response = await httpClient.post('/admin/settings/smtp/test');
+    return response.data;
+  },
+
   createUser: async (userData) => {
     const response = await httpClient.post('/admin/users', userData);
     return response.data;
