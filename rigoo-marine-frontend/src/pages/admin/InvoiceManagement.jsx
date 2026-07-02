@@ -41,7 +41,9 @@ export default function InvoiceManagement() {
   const [downloadingAr, setDownloadingAr] = useState(false);
 
   useEffect(() => {
-    adminApi.getAllUsers().then(setClients).catch(() => {});
+    adminApi.getAllUsers()
+      .then(users => setClients(users.filter(u => u.role === 'CLIENT' || u.role === 'TECHNICIAN')))
+      .catch(() => {});
   }, []);
 
   const openPreview = async (row) => {

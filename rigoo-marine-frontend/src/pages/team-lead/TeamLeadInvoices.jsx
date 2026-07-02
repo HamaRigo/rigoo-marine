@@ -39,7 +39,9 @@ export default function TeamLeadInvoices() {
   const [downloadingAr, setDownloadingAr]         = useState(false);
 
   useEffect(() => {
-    clientApi.getAll().then(setClients).catch(() => {});
+    clientApi.getAll()
+      .then(users => setClients(users.filter(u => u.role === 'CLIENT' || u.role === 'TECHNICIAN')))
+      .catch(() => {});
   }, []);
 
   const openPreview = async (row) => {
