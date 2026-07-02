@@ -48,7 +48,7 @@ jobs:
           docker compose \
             -f /opt/rigoo-marine-prod/docker-compose.yml \
             --env-file /opt/rigoo-marine-prod/.env \
-            up -d --force-recreate --remove-orphans
+            up -d --remove-orphans
 
           echo "Waiting 60s for services to start..."
           sleep 60
