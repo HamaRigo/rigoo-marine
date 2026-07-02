@@ -534,11 +534,33 @@ public class AdminController {
             return ResponseEntity.ok(out);
         }
         try {
+            // Build sender directly — bypasses @Retryable/@Recover so auth errors surface immediately.
+            org.springframework.mail.javamail.JavaMailSenderImpl s = new org.springframework.mail.javamail.JavaMailSenderImpl();
+            s.setHost(cfg.getHost());
+            s.setPort(cfg.getPort());
+            s.setUsername(cfg.getUsername());
+            s.setPassword(cfg.getPassword());
+            java.util.Properties p = s.getJavaMailProperties();
+            p.put("mail.transport.protocol", "smtp");
+            p.put("mail.smtp.auth", "true");
+            p.put("mail.smtp.starttls.enable", "true");
+            p.put("mail.smtp.connectiontimeout", "5000");
+            p.put("mail.smtp.timeout", "5000");
+            // testConnection() authenticates without sending — throws MessagingException on failure.
+            s.testConnection();
+
             String adminEmail = actorEmail();
-            dynamicMailSender.send(adminEmail, "Rigoo Marine — SMTP Test", "SMTP connection is working correctly.");
+            org.springframework.mail.SimpleMailMessage msg = new org.springframework.mail.SimpleMailMessage();
+            msg.setFrom(cfg.getFrom());
+            msg.setTo(adminEmail);
+            msg.setSubject("Rigoo Marine — SMTP Test");
+            msg.setText("SMTP connection is working correctly. This is a test email from the admin settings.");
+            s.send(msg);
+            log.info("smtp.test.success recipient={}", adminEmail);
             out.put("success", true);
             out.put("message", "Test email sent to " + adminEmail);
         } catch (Exception e) {
+            log.warn("smtp.test.failed error={}", e.getMessage());
             out.put("success", false);
             out.put("error", e.getMessage());
         }
