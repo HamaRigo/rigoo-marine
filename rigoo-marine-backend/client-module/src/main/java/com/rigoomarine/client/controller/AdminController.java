@@ -500,6 +500,10 @@ public class AdminController {
 
     @PutMapping("/settings/smtp")
     public ResponseEntity<Map<String, Object>> saveSmtpSettings(@RequestBody Map<String, Object> body) {
+        log.info("smtp.save.received enabled={} host={} user={} passwordProvided={}",
+            body.get("enabled"), body.get("host"), body.get("username"),
+            body.get("password") != null && !((String) body.get("password")).isBlank());
+
         MailConfig existing = mailConfigService.getConfig();
         String password = (String) body.get("password");
 
@@ -513,6 +517,7 @@ public class AdminController {
             .build();
 
         mailConfigService.saveConfig(updated);
+        log.info("smtp.save.done enabled={} host={} user={}", updated.isEnabled(), updated.getHost(), updated.getUsername());
         Map<String, Object> out = new HashMap<>();
         out.put("success", true);
         out.put("enabled", updated.isEnabled());

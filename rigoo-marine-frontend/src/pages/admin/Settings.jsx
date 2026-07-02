@@ -261,8 +261,11 @@ export default function Settings() {
                   onChange={(e) => handleChange('smtpPort', e.target.value)} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }} >
-                <TextField fullWidth label="SMTP Username" value={settings.smtpUser}
-                  onChange={(e) => handleChange('smtpUser', e.target.value)} />
+                <TextField fullWidth label="SMTP Username (Gmail address)"
+                  value={settings.smtpUser}
+                  onChange={(e) => handleChange('smtpUser', e.target.value)}
+                  placeholder="e.g. youraddress@gmail.com"
+                  helperText="Must be the full Gmail address, not a display name" />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }} >
                 <TextField fullWidth label="SMTP Password" type="password" value={tempPassword}
@@ -288,8 +291,18 @@ export default function Settings() {
               <Grid size={12} >
                 <FormControlLabel
                   control={<Switch checked={settings.enableEmailNotifications}
-                    onChange={(e) => handleChange('enableEmailNotifications', e.target.checked)} />}
-                  label="Enable Email Notifications"
+                    onChange={(e) => handleChange('enableEmailNotifications', e.target.checked)}
+                    color="success" />}
+                  label={
+                    <Box component="span">
+                      <strong>Enable Email Notifications</strong>
+                      {!settings.enableEmailNotifications && (
+                        <Box component="span" sx={{ ml: 1, color: 'warning.main', fontSize: '0.8em' }}>
+                          ⚠ Currently OFF — emails will not be sent
+                        </Box>
+                      )}
+                    </Box>
+                  }
                 />
               </Grid>
               <Grid size={12}>
