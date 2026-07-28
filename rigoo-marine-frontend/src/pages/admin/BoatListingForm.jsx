@@ -24,7 +24,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { marketplaceApi } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 
-const STATUS_OPTIONS = ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'];
+const STATUS_OPTIONS = ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED', 'REJECTED'];
 const SELLER_TYPES = ['DEALER', 'PRIVATE'];
 const CAPTAIN_OPTIONS = ['NEVER', 'OPTIONAL', 'INCLUDED'];
 

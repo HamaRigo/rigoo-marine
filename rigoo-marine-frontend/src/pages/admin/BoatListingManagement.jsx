@@ -247,7 +247,7 @@ export default function BoatListingManagement() {
           {
             id: 'status',
             label: t('admin.fields.status'),
-            options: ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED'].map((s) => ({
+            options: ['PENDING_REVIEW', 'DRAFT', 'AVAILABLE', 'RESERVED', 'SOLD', 'ARCHIVED', 'REJECTED'].map((s) => ({
               value: s,
               label: t(`status.${s}`),
             })),
