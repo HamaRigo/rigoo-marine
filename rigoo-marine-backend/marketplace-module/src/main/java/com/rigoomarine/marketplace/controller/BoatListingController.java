@@ -43,12 +43,15 @@ public class BoatListingController {
             @RequestParam(required = false) String adminStatus,     // ADMIN-only filter; ignored for public callers
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort
+            @RequestParam(defaultValue = "createdAt,desc") String sort,
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         Pageable pageable = pageable(page, size, sort);
+        boolean canUseAdminStatus = principal != null
+                && (principal.hasRole("ADMIN") || principal.hasRole("TEAM_LEAD"));
         return ResponseEntity.ok(service.search(
                 mode, q, boatType, lengthMin, lengthMax, yearMin, yearMax,
-                priceMin, priceMax, location, adminStatus, pageable));
+                priceMin, priceMax, location, adminStatus, canUseAdminStatus, pageable));
     }
 
     @GetMapping("/boat-types")

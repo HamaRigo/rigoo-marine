@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -146,15 +147,16 @@ public class BoatListingService {
             BigDecimal priceMax,
             String location,
             String adminStatus,           // optional: ADMIN can filter by status
+            boolean canUseAdminStatus,
             Pageable pageable
     ) {
         Specification<BoatListing> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Public callers see only AVAILABLE + RESERVED. Admin can override via adminStatus.
-            if (adminStatus != null && !adminStatus.isBlank() && !"ALL".equalsIgnoreCase(adminStatus)) {
-                predicates.add(cb.equal(root.get("status"), BoatListing.ListingStatus.valueOf(adminStatus)));
-            } else if (adminStatus == null) {
+            if (canUseAdminStatus && adminStatus != null && !adminStatus.isBlank() && !"ALL".equalsIgnoreCase(adminStatus)) {
+                predicates.add(cb.equal(root.get("status"), parseListingStatus(adminStatus)));
+            } else if (!canUseAdminStatus || adminStatus == null || adminStatus.isBlank()) {
                 predicates.add(root.get("status").in(
                         BoatListing.ListingStatus.AVAILABLE, BoatListing.ListingStatus.RESERVED));
             }
@@ -202,6 +204,14 @@ public class BoatListingService {
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
         return repository.findAll(spec, pageable).map(this::toDTO);
+    }
+
+    private static BoatListing.ListingStatus parseListingStatus(String status) {
+        try {
+            return BoatListing.ListingStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid listing status: " + status);
+        }
     }
 
     // -------- Mapping --------
