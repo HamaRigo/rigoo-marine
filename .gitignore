@@ -136,7 +136,7 @@ INVOICE_*.pdf
 ACTIVITY.md
 
 
-.dns-records.md
+deploy/.dns-records.md
 # Runtime file uploads (stored on server disk, not in VCS)
 uploads/
 
