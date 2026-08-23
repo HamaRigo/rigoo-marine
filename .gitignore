@@ -135,8 +135,7 @@ INVOICE_*.pdf
 .activity-push.sh
 ACTIVITY.md
 
-
-deploy/.dns-records.md
+deploy/dns-records.md
 # Runtime file uploads (stored on server disk, not in VCS)
 uploads/
 
