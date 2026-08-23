@@ -4,10 +4,79 @@
 
 Rigoo Marine connects boat owners, technicians, and operations staff in one place: register vessels, request and track marine services, buy parts and tools, browse used-boat listings, manage invoices, and run field delivery and maintenance workflows. The stack is a React SPA fronting a Spring Cloud microservices backend, deployed with Docker Compose on Oracle Cloud and optionally on Vercel for the frontend.
 
-| Surface | URL (production) |
+---
+
+## Live product & repository
+
+| Resource | Link |
 |---|---|
-| Website | [rigoomarine.com](https://rigoomarine.com) |
-| API | [api.rigoomarine.com](https://api.rigoomarine.com) |
+| **Website (live)** | [rigoomarine.com](https://rigoomarine.com) |
+| **API (live)** | [api.rigoomarine.com](https://api.rigoomarine.com) |
+| **Health check** | [api.rigoomarine.com/actuator/health](https://api.rigoomarine.com/actuator/health) |
+| **GitHub** | [github.com/HamaRigo/rigoo-marine](https://github.com/HamaRigo/rigoo-marine) |
+| **Stack** | 12 microservices · React SPA · Kafka · PostgreSQL · Redis · Stripe |
+
+> Production-deployed, role-based SaaS — not a mockup or tutorial project.
+
+---
+
+## Portfolio snapshot
+
+Quick map for reviewers evaluating hands-on engineering experience (including AI/agentic roles):
+
+| # | What reviewers typically ask for | Covered by Rigoo Marine? | Where to look |
+|---|---|---|---|
+| 1 | **RAG / retrieval-augmented generation pipelines** | **No** — no LLM, embeddings, or vector store in this repo | — |
+| 2 | **Multi-agent or agentic orchestration** | **Partial (systems orchestration)** — event-driven, multi-service workflows over Kafka; not LLM tool-calling or agent frameworks | [Event orchestration](#event-driven-orchestration-kafka) · `notification-module` consumers |
+| 3 | **Hands-on AI / agentic development** | **No direct AI** — traditional production SaaS; demonstrates patterns useful for building agent backends (async events, idempotent handlers, multi-tenant auth) | [Transferable patterns](#transferable-patterns-for-aibackend-work) |
+| 4 | **Live product, app, or website** | **Yes** | [rigoomarine.com](https://rigoomarine.com) · [api.rigoomarine.com](https://api.rigoomarine.com) |
+| 5 | **Role and contribution** | **Yes** | [Author & contribution](#author--contribution) |
+
+**Honest scope:** Rigoo Marine is a **full-stack production platform**, not an AI/RAG demo. It is strongest as evidence of shipping a live, multi-service product end-to-end. Pair it with separate repos for RAG or agent projects when applying to AI-focused roles.
+
+---
+
+## Author & contribution
+
+| | |
+|---|---|
+| **Project** | Rigoo Marine — marine services platform (Qatar market) |
+| **Role** | Lead / solo full-stack developer — architecture, implementation, and production deployment |
+| **Contribution** | Designed and built the full system: 12 Spring Boot microservices, API Gateway + Eureka, React bilingual frontend, Kafka event pipelines, Stripe payments, PDF invoicing, marketplace, e-commerce shop, delivery & maintenance modules, CI/CD, and Oracle Cloud production ops |
+| **Live delivery** | Deployed at [rigoomarine.com](https://rigoomarine.com) with TLS, Docker Compose, GitHub Actions, and self-hosted production runner |
+| **Codebase scale** | Multi-module Maven backend, 5 user roles, 18 Docker containers, EN+AR i18n |
+
+---
+
+## Transferable patterns (for AI/backend work)
+
+Patterns in this codebase that translate well to RAG pipelines and agentic systems:
+
+| Pattern | Implementation here | AI/agent analogue |
+|---|---|---|
+| **Async orchestration** | Kafka topics chain work-order → notification → maintenance | Agent event bus / task queue between planner and workers |
+| **Idempotent handlers** | Stripe webhooks dedupe by `event.id`; Flyway migrations are replay-safe | Tool-call retry safety; RAG ingest deduplication |
+| **Specialized workers** | Each microservice owns one domain (shop, delivery, invoice…) | Single-responsibility agents or tool services |
+| **Gateway + auth** | JWT validated across services; rate limits on sensitive endpoints | API layer in front of LLM/tool endpoints |
+| **Templated outputs** | Bilingual email templates (EN/AR) driven by event payloads | Prompt templates + structured LLM responses |
+| **Observability hooks** | Actuator health, structured logging, CI test artifacts | Agent tracing, eval runs, production monitoring |
+
+---
+
+## Event-driven orchestration (Kafka)
+
+Multi-step business flows are coordinated asynchronously — services publish domain events; downstream consumers react without tight coupling:
+
+```
+work-order-service  ──▶  work-order-events          ──▶  notification-service (email / WhatsApp)
+work-order-service  ──▶  workorder.completed.v1     ──▶  maintenance-service (service history)
+shop-service        ──▶  shop.order.status          ──▶  notification-service (order paid)
+delivery-service    ──▶  delivery.status.v1         ──▶  notification-service (status updates)
+maintenance-service ──▶  maintenance.service-due.v1 ──▶  notification-service (due reminders)
+marketplace-service ──▶  listing-review-events      ──▶  notification-service (review alerts)
+```
+
+This is **distributed workflow orchestration**, not LLM multi-agent routing — but the same publish/subscribe and fan-out patterns apply when wiring retrieval, reasoning, and action steps in agent pipelines.
 
 ---
 
@@ -127,7 +196,7 @@ Rigoo Marine connects boat owners, technicians, and operations staff in one plac
 ### 1. Configure environment
 
 ```bash
-cp .env.example .env
+cp env.template .env
 ```
 
 Edit `.env` for local development. Minimum overrides:
@@ -187,7 +256,7 @@ docker compose stop frontend
 
 # Terminal 2 — Vite dev server with hot reload
 cd rigoo-marine-frontend
-cp .env.example .env          # VITE_API_BASE_URL=http://localhost:8080
+cp env.template .env          # VITE_API_BASE_URL=http://localhost:8080
 npm ci && npm run dev         # http://localhost:5173
 ```
 
@@ -274,7 +343,7 @@ A seed admin account is created by Flyway migration `V23__seed_admin_account.sql
 
 ## Environment variables
 
-Copy `.env.example` → `.env`. Never commit `.env`.
+Copy `env.template` → `.env`. Never commit `.env` or `.env.example`.
 
 | Variable | Used by | Notes |
 |---|---|---|
@@ -291,7 +360,7 @@ Copy `.env.example` → `.env`. Never commit `.env`.
 | `SPRING_MAIL_*` / `MAIL_FROM` | client, notification | Required when `MAIL_ENABLED=true` |
 | `WHATSAPP_ENABLED` + provider vars | notification | Optional Twilio or Meta WhatsApp |
 
-Frontend variables live in `rigoo-marine-frontend/.env` — see `rigoo-marine-frontend/.env.example` (`VITE_API_BASE_URL` is the critical one).
+Frontend variables live in `rigoo-marine-frontend/.env` — copy from `rigoo-marine-frontend/env.template` (`VITE_API_BASE_URL` is the critical one).
 
 ---
 
@@ -361,7 +430,7 @@ Rigoomarine/
 │
 ├── deploy/                        nginx.conf, setup-server.sh, DNS notes
 ├── docker-compose.yml             Full production-shaped stack (18 containers)
-├── .env.example                   Root environment template
+├── env.template                   Root environment template (safe to commit)
 └── .github/workflows/             CI/CD pipelines
 ```
 

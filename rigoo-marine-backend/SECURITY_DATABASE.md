@@ -19,7 +19,7 @@ The application uses **Spring Boot + HikariCP** for PostgreSQL connections with 
 
 ```bash
 # Copy the template
-cp .env.example .env
+cp env.template .env
 
 # Edit .env with your actual values
 # NEVER commit .env to git
@@ -159,7 +159,7 @@ Monitor slow queries in logs (marked with `SLOW_QUERY`).
 | File | Purpose |
 |------|---------|
 | `.env` | Actual secrets (gitignored) |
-| `.env.example` | Template for developers |
+| `env.template` | Safe template for developers (copy to `.env`) |
 | `DatabaseConfig.java` | Secure datasource configuration |
 | `DatabaseAuditLogger.java` | Security audit logging |
 | `application.yml` | Spring Boot configuration |
