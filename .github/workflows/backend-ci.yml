@@ -61,7 +61,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push API Gateway
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/gateway-module/Dockerfile
@@ -71,7 +71,7 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:buildcache,mode=max
 
       - name: Build and push Client Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/client-module/Dockerfile
@@ -79,7 +79,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/client-service:${{ github.sha }}
 
       - name: Build and push Vessel Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/vessel-module/Dockerfile
@@ -87,7 +87,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/vessel-service:${{ github.sha }}
 
       - name: Build and push Service Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/service-module/Dockerfile
@@ -95,7 +95,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/service-service:${{ github.sha }}
 
       - name: Build and push Work Order Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/work-order-module/Dockerfile
@@ -103,7 +103,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/work-order-service:${{ github.sha }}
 
       - name: Build and push Technician Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/technician-module/Dockerfile
@@ -111,7 +111,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/technician-service:${{ github.sha }}
 
       - name: Build and push Invoice Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/invoice-module/Dockerfile
@@ -119,7 +119,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/invoice-service:${{ github.sha }}
 
       - name: Build and push Notification Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/notification-module/Dockerfile
@@ -127,7 +127,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/notification-service:${{ github.sha }}
 
       - name: Build and push Discovery Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./rigoo-marine-backend/discovery-service/Dockerfile

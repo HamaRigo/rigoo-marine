@@ -86,7 +86,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./rigoo-marine-frontend
           file: ./rigoo-marine-frontend/Dockerfile
